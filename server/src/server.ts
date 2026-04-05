@@ -1,0 +1,54 @@
+import dotenv from "dotenv";
+import express from "express";
+import cors from "cors";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Load .env from project root (two levels up from src/)
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+import { sessionMiddleware, devModeAutoLogin } from "./middleware/auth.js";
+import authRoutes from "./routes/auth.js";
+import apiRoutes from "./routes/api.js";
+import uploadRoutes from "./routes/uploads.js";
+import walletRoutes from "./routes/wallets.js";
+
+const PORT = parseInt(process.env.PORT || "3000", 10);
+
+// Validate required env vars (unless DEV_MODE)
+if (process.env.DEV_MODE !== "true") {
+  const required = ["SESSION_SECRET", "POCKET_ID_URL", "CLIENT_ID", "CLIENT_SECRET", "CALLBACK_URL"];
+  const missing = required.filter((k) => !process.env[k]);
+  if (missing.length) {
+    console.error(`Missing required env vars: ${missing.join(", ")}`);
+    process.exit(1);
+  }
+}
+
+const app = express();
+
+// Middleware
+app.use(cors({ origin: process.env.NODE_ENV !== "production" ? "http://localhost:5173" : false, credentials: true }));
+app.use(express.json());
+app.use(sessionMiddleware());
+app.use(devModeAutoLogin);
+
+// Routes
+app.use("/auth", authRoutes);
+app.use("/api", apiRoutes);
+app.use("/api/uploads", uploadRoutes);
+app.use("/api/wallets", walletRoutes);
+
+// Serve frontend in production
+const clientDist = path.resolve(__dirname, "../../client/dist");
+app.use(express.static(clientDist));
+app.get("*", (_req, res) => {
+  res.sendFile(path.join(clientDist, "index.html"));
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+  if (process.env.DEV_MODE === "true") {
+    console.log("DEV_MODE enabled — auto-login active");
+  }
+});

@@ -1,4 +1,4 @@
-const ETHERSCAN_BASE = "https://api.etherscan.io/api";
+const ETHERSCAN_BASE = "https://api.etherscan.io/v2/api";
 
 interface EtherscanResponse<T> {
   status: string;
@@ -35,6 +35,7 @@ function getApiKey(): string {
 async function etherscanFetch<T>(params: Record<string, string>): Promise<T> {
   const url = new URL(ETHERSCAN_BASE);
   params.apikey = getApiKey();
+  params.chainid = "1"; // Ethereum mainnet
   for (const [k, v] of Object.entries(params)) {
     url.searchParams.set(k, v);
   }

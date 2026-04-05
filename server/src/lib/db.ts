@@ -1,188 +1,178 @@
-import Database, { type Database as DatabaseType } from "better-sqlite3";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import pg from "pg";
 import type { User, Holding, Wallet, Upload, ParsedHolding } from "../types/index.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = path.resolve(__dirname, "../../data.db");
-
-const db: DatabaseType = new Database(DB_PATH);
-
-// Enable WAL mode for better concurrent read performance
-db.pragma("journal_mode = WAL");
-db.pragma("foreign_keys = ON");
+const pool = new pg.Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : undefined,
+});
 
 // Auto-create tables on startup
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    email TEXT,
-    name TEXT,
-    created_at TEXT DEFAULT (datetime('now'))
+export async function initDb(): Promise<void> {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      email TEXT,
+      name TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS wallets (
+      id SERIAL PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      address TEXT NOT NULL,
+      chain TEXT DEFAULT 'ethereum',
+      label TEXT,
+      added_at TIMESTAMP DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS holdings (
+      id SERIAL PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      source_type TEXT NOT NULL,
+      source_id TEXT,
+      name TEXT NOT NULL,
+      ticker TEXT,
+      asset_type TEXT,
+      quantity REAL,
+      value_usd REAL,
+      currency TEXT DEFAULT 'USD',
+      last_updated TIMESTAMP DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS uploads (
+      id SERIAL PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      filename TEXT,
+      file_type TEXT,
+      uploaded_at TIMESTAMP DEFAULT NOW(),
+      status TEXT DEFAULT 'processed'
+    );
+  `);
+}
+
+// Users
+export async function getUserById(id: string): Promise<User | undefined> {
+  const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
+  return rows[0] as User | undefined;
+}
+
+export async function createOrUpdateUser(id: string, email: string | null, name: string | null): Promise<User> {
+  const { rows } = await pool.query(
+    `INSERT INTO users (id, email, name) VALUES ($1, $2, $3)
+     ON CONFLICT(id) DO UPDATE SET email = EXCLUDED.email, name = EXCLUDED.name
+     RETURNING *`,
+    [id, email, name]
   );
+  return rows[0] as User;
+}
 
-  CREATE TABLE IF NOT EXISTS wallets (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    address TEXT NOT NULL,
-    chain TEXT DEFAULT 'ethereum',
-    label TEXT,
-    added_at TEXT DEFAULT (datetime('now'))
+// Holdings
+export async function getHoldingsByUser(userId: string): Promise<Holding[]> {
+  const { rows } = await pool.query(
+    "SELECT * FROM holdings WHERE user_id = $1 ORDER BY value_usd DESC",
+    [userId]
   );
+  return rows as Holding[];
+}
 
-  CREATE TABLE IF NOT EXISTS holdings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    source_type TEXT NOT NULL,
-    source_id TEXT,
-    name TEXT NOT NULL,
-    ticker TEXT,
-    asset_type TEXT,
-    quantity REAL,
-    value_usd REAL,
-    currency TEXT DEFAULT 'USD',
-    last_updated TEXT DEFAULT (datetime('now'))
+// Wallets
+export async function getWalletsByUser(userId: string): Promise<Wallet[]> {
+  const { rows } = await pool.query(
+    "SELECT * FROM wallets WHERE user_id = $1 ORDER BY added_at DESC",
+    [userId]
   );
+  return rows as Wallet[];
+}
 
-  CREATE TABLE IF NOT EXISTS uploads (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    filename TEXT,
-    file_type TEXT,
-    uploaded_at TEXT DEFAULT (datetime('now')),
-    status TEXT DEFAULT 'processed'
+// Uploads
+export async function createUpload(userId: string, filename: string, fileType: string): Promise<Upload> {
+  const { rows } = await pool.query(
+    "INSERT INTO uploads (user_id, filename, file_type, status) VALUES ($1, $2, $3, $4) RETURNING *",
+    [userId, filename, fileType, "processing"]
   );
-`);
-
-// Prepared statements
-const stmts = {
-  getUserById: db.prepare("SELECT * FROM users WHERE id = ?"),
-  createOrUpdateUser: db.prepare(`
-    INSERT INTO users (id, email, name) VALUES (?, ?, ?)
-    ON CONFLICT(id) DO UPDATE SET email = excluded.email, name = excluded.name
-  `),
-  getHoldingsByUser: db.prepare("SELECT * FROM holdings WHERE user_id = ? ORDER BY value_usd DESC"),
-  getWalletsByUser: db.prepare("SELECT * FROM wallets WHERE user_id = ? ORDER BY added_at DESC"),
-  createUpload: db.prepare("INSERT INTO uploads (user_id, filename, file_type, status) VALUES (?, ?, ?, ?)"),
-  getUploadById: db.prepare("SELECT * FROM uploads WHERE id = ?"),
-  getUploadsByUser: db.prepare("SELECT * FROM uploads WHERE user_id = ? ORDER BY uploaded_at DESC"),
-  updateUploadStatus: db.prepare("UPDATE uploads SET status = ? WHERE id = ?"),
-  deleteUpload: db.prepare("DELETE FROM uploads WHERE id = ? AND user_id = ?"),
-  createHolding: db.prepare(`
-    INSERT INTO holdings (user_id, source_type, source_id, name, ticker, asset_type, quantity, value_usd, currency)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `),
-  deleteHoldingsByUpload: db.prepare("DELETE FROM holdings WHERE source_type = 'upload' AND source_id = ?"),
-  getHoldingsByUpload: db.prepare("SELECT * FROM holdings WHERE source_type = 'upload' AND source_id = ?"),
-  createWallet: db.prepare("INSERT INTO wallets (user_id, address, chain, label) VALUES (?, ?, ?, ?)"),
-  getWalletById: db.prepare("SELECT * FROM wallets WHERE id = ?"),
-  deleteWallet: db.prepare("DELETE FROM wallets WHERE id = ? AND user_id = ?"),
-  deleteHoldingsByWallet: db.prepare("DELETE FROM holdings WHERE source_type = 'wallet' AND source_id = ?"),
-  getHoldingsByWallet: db.prepare("SELECT * FROM holdings WHERE source_type = 'wallet' AND source_id = ?"),
-};
-
-export function getUserById(id: string): User | undefined {
-  return stmts.getUserById.get(id) as User | undefined;
+  return rows[0] as Upload;
 }
 
-export function createOrUpdateUser(id: string, email: string | null, name: string | null): User {
-  stmts.createOrUpdateUser.run(id, email, name);
-  return getUserById(id)!;
+export async function getUploadById(id: number): Promise<Upload | undefined> {
+  const { rows } = await pool.query("SELECT * FROM uploads WHERE id = $1", [id]);
+  return rows[0] as Upload | undefined;
 }
 
-export function getHoldingsByUser(userId: string): Holding[] {
-  return stmts.getHoldingsByUser.all(userId) as Holding[];
+export async function getUploadsByUser(userId: string): Promise<Upload[]> {
+  const { rows } = await pool.query(
+    "SELECT * FROM uploads WHERE user_id = $1 ORDER BY uploaded_at DESC",
+    [userId]
+  );
+  return rows as Upload[];
 }
 
-export function getWalletsByUser(userId: string): Wallet[] {
-  return stmts.getWalletsByUser.all(userId) as Wallet[];
+export async function updateUploadStatus(id: number, status: string): Promise<void> {
+  await pool.query("UPDATE uploads SET status = $1 WHERE id = $2", [status, id]);
 }
 
-export function createUpload(userId: string, filename: string, fileType: string): Upload {
-  const result = stmts.createUpload.run(userId, filename, fileType, "processing");
-  return stmts.getUploadById.get(result.lastInsertRowid) as Upload;
+export async function deleteUpload(id: number, userId: string): Promise<boolean> {
+  await pool.query("DELETE FROM holdings WHERE source_type = 'upload' AND source_id = $1", [String(id)]);
+  const { rowCount } = await pool.query("DELETE FROM uploads WHERE id = $1 AND user_id = $2", [id, userId]);
+  return (rowCount ?? 0) > 0;
 }
 
-export function getUploadById(id: number): Upload | undefined {
-  return stmts.getUploadById.get(id) as Upload | undefined;
-}
-
-export function getUploadsByUser(userId: string): Upload[] {
-  return stmts.getUploadsByUser.all(userId) as Upload[];
-}
-
-export function updateUploadStatus(id: number, status: string): void {
-  stmts.updateUploadStatus.run(status, id);
-}
-
-export function deleteUpload(id: number, userId: string): boolean {
-  const uploadId = String(id);
-  stmts.deleteHoldingsByUpload.run(uploadId);
-  const result = stmts.deleteUpload.run(id, userId);
-  return result.changes > 0;
-}
-
-export function createHoldingFromUpload(userId: string, uploadId: number, holding: ParsedHolding): Holding {
+// Holdings creation
+export async function createHoldingFromUpload(userId: string, uploadId: number, holding: ParsedHolding): Promise<Holding> {
   return createHoldingRecord(userId, "upload", String(uploadId), holding);
 }
 
-export function createHoldingFromWallet(userId: string, walletId: number, holding: ParsedHolding): Holding {
+export async function createHoldingFromWallet(userId: string, walletId: number, holding: ParsedHolding): Promise<Holding> {
   return createHoldingRecord(userId, "wallet", String(walletId), holding);
 }
 
-function createHoldingRecord(userId: string, sourceType: string, sourceId: string, holding: ParsedHolding): Holding {
-  const result = stmts.createHolding.run(
-    userId,
-    sourceType,
-    sourceId,
-    holding.name,
-    holding.ticker,
-    holding.asset_type,
-    holding.quantity,
-    holding.value_usd,
-    holding.currency
+async function createHoldingRecord(userId: string, sourceType: string, sourceId: string, holding: ParsedHolding): Promise<Holding> {
+  const { rows } = await pool.query(
+    `INSERT INTO holdings (user_id, source_type, source_id, name, ticker, asset_type, quantity, value_usd, currency)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+    [userId, sourceType, sourceId, holding.name, holding.ticker, holding.asset_type, holding.quantity, holding.value_usd, holding.currency]
   );
-  return {
-    id: Number(result.lastInsertRowid),
-    user_id: userId,
-    source_type: sourceType,
-    source_id: sourceId,
-    name: holding.name,
-    ticker: holding.ticker,
-    asset_type: holding.asset_type,
-    quantity: holding.quantity,
-    value_usd: holding.value_usd,
-    currency: holding.currency,
-    last_updated: new Date().toISOString(),
-  };
+  return rows[0] as Holding;
 }
 
-export function getHoldingsByUpload(uploadId: number): Holding[] {
-  return stmts.getHoldingsByUpload.all(String(uploadId)) as Holding[];
+export async function getHoldingsByUpload(uploadId: number): Promise<Holding[]> {
+  const { rows } = await pool.query(
+    "SELECT * FROM holdings WHERE source_type = 'upload' AND source_id = $1",
+    [String(uploadId)]
+  );
+  return rows as Holding[];
 }
 
-export function createWallet(userId: string, address: string, label: string | null = null): Wallet {
-  const result = stmts.createWallet.run(userId, address.toLowerCase(), "ethereum", label);
-  return stmts.getWalletById.get(result.lastInsertRowid) as Wallet;
+// Wallets CRUD
+export async function createWallet(userId: string, address: string, label: string | null = null): Promise<Wallet> {
+  const { rows } = await pool.query(
+    "INSERT INTO wallets (user_id, address, chain, label) VALUES ($1, $2, $3, $4) RETURNING *",
+    [userId, address.toLowerCase(), "ethereum", label]
+  );
+  return rows[0] as Wallet;
 }
 
-export function getWalletById(id: number): Wallet | undefined {
-  return stmts.getWalletById.get(id) as Wallet | undefined;
+export async function getWalletById(id: number): Promise<Wallet | undefined> {
+  const { rows } = await pool.query("SELECT * FROM wallets WHERE id = $1", [id]);
+  return rows[0] as Wallet | undefined;
 }
 
-export function deleteWallet(id: number, userId: string): boolean {
-  const walletId = String(id);
-  stmts.deleteHoldingsByWallet.run(walletId);
-  const result = stmts.deleteWallet.run(id, userId);
-  return result.changes > 0;
+export async function deleteWallet(id: number, userId: string): Promise<boolean> {
+  await pool.query("DELETE FROM holdings WHERE source_type = 'wallet' AND source_id = $1", [String(id)]);
+  const { rowCount } = await pool.query("DELETE FROM wallets WHERE id = $1 AND user_id = $2", [id, userId]);
+  return (rowCount ?? 0) > 0;
 }
 
-export function deleteHoldingsByWallet(walletId: number): void {
-  stmts.deleteHoldingsByWallet.run(String(walletId));
+export async function deleteHoldingsByWallet(walletId: number): Promise<void> {
+  await pool.query("DELETE FROM holdings WHERE source_type = 'wallet' AND source_id = $1", [String(walletId)]);
 }
 
-export function getHoldingsByWallet(walletId: number): Holding[] {
-  return stmts.getHoldingsByWallet.all(String(walletId)) as Holding[];
+export async function getHoldingsByWallet(walletId: number): Promise<Holding[]> {
+  const { rows } = await pool.query(
+    "SELECT * FROM holdings WHERE source_type = 'wallet' AND source_id = $1",
+    [String(walletId)]
+  );
+  return rows as Holding[];
 }
 
-export default db;
+export { pool };
+export default pool;

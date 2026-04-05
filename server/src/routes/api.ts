@@ -9,8 +9,8 @@ const router = Router();
 router.use(requireAuth);
 
 // GET /api/portfolio/summary
-router.get("/portfolio/summary", (req: Request, res: Response) => {
-  const holdings = getHoldingsByUser(req.session.userId!);
+router.get("/portfolio/summary", async (req: Request, res: Response) => {
+  const holdings = await getHoldingsByUser(req.session.userId!);
 
   const breakdown = { stocks: 0, crypto: 0, bonds: 0, cash: 0, other: 0 };
   let totalValue = 0;
@@ -31,8 +31,8 @@ router.get("/portfolio/summary", (req: Request, res: Response) => {
 });
 
 // GET /api/holdings
-router.get("/holdings", (req: Request, res: Response) => {
-  const holdings = getHoldingsByUser(req.session.userId!);
+router.get("/holdings", async (req: Request, res: Response) => {
+  const holdings = await getHoldingsByUser(req.session.userId!);
   res.json({ success: true, data: holdings });
 });
 

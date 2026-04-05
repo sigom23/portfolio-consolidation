@@ -43,14 +43,16 @@ router.post("/", upload.single("file"), async (req: Request, res: Response) => {
     const isPdf = mimetype === "application/pdf";
     const fileType = isPdf ? "pdf" : "csv";
 
-    const uploadRecord = createUpload(userId, originalname, fileType);
+    const uploadRecord = await createUpload(userId, originalname, fileType);
 
     try {
       const holdings = isPdf ? await parsePdf(buffer) : parseCsv(buffer);
 
-      const created = holdings.map((h) => createHoldingFromUpload(userId, uploadRecord.id, h));
+      const created = await Promise.all(
+        holdings.map((h) => createHoldingFromUpload(userId, uploadRecord.id, h))
+      );
 
-      updateUploadStatus(uploadRecord.id, "processed");
+      await updateUploadStatus(uploadRecord.id, "processed");
 
       res.json({
         success: true,
@@ -60,7 +62,7 @@ router.post("/", upload.single("file"), async (req: Request, res: Response) => {
         },
       });
     } catch (parseError) {
-      updateUploadStatus(uploadRecord.id, "failed");
+      await updateUploadStatus(uploadRecord.id, "failed");
       const message = parseError instanceof Error ? parseError.message : "Parsing failed";
       res.status(422).json({ success: false, error: `Failed to parse file: ${message}` });
     }
@@ -71,38 +73,38 @@ router.post("/", upload.single("file"), async (req: Request, res: Response) => {
 });
 
 // GET /api/uploads — list user's uploads
-router.get("/", (req: Request, res: Response) => {
-  const uploads = getUploadsByUser(req.session.userId!);
+router.get("/", async (req: Request, res: Response) => {
+  const uploads = await getUploadsByUser(req.session.userId!);
   res.json({ success: true, data: uploads });
 });
 
 // GET /api/uploads/:id — get upload with its holdings
-router.get("/:id", (req: Request, res: Response) => {
+router.get("/:id", async (req: Request, res: Response) => {
   const id = parseInt(String(req.params.id), 10);
   if (isNaN(id)) {
     res.status(400).json({ success: false, error: "Invalid upload ID" });
     return;
   }
 
-  const upload = getUploadById(id);
-  if (!upload || upload.user_id !== req.session.userId!) {
+  const uploadRecord = await getUploadById(id);
+  if (!uploadRecord || uploadRecord.user_id !== req.session.userId!) {
     res.status(404).json({ success: false, error: "Upload not found" });
     return;
   }
 
-  const holdings = getHoldingsByUpload(id);
-  res.json({ success: true, data: { upload, holdings } });
+  const holdings = await getHoldingsByUpload(id);
+  res.json({ success: true, data: { upload: uploadRecord, holdings } });
 });
 
 // DELETE /api/uploads/:id — delete upload and its holdings
-router.delete("/:id", (req: Request, res: Response) => {
+router.delete("/:id", async (req: Request, res: Response) => {
   const id = parseInt(String(req.params.id), 10);
   if (isNaN(id)) {
     res.status(400).json({ success: false, error: "Invalid upload ID" });
     return;
   }
 
-  const deleted = deleteUpload(id, req.session.userId!);
+  const deleted = await deleteUpload(id, req.session.userId!);
   if (!deleted) {
     res.status(404).json({ success: false, error: "Upload not found" });
     return;

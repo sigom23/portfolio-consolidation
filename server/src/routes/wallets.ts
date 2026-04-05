@@ -8,7 +8,6 @@ import {
   deleteWallet,
   deleteHoldingsByWallet,
   createHoldingFromWallet,
-  getHoldingsByWallet,
 } from "../lib/db.js";
 import { getWalletBalances } from "../lib/etherscan.js";
 import { getEthPrice, getTokenPrices } from "../lib/coingecko.js";
@@ -20,13 +19,13 @@ router.use(requireAuth);
 const ETH_ADDRESS_RE = /^0x[0-9a-fA-F]{40}$/;
 
 // GET /api/wallets — list user's wallets
-router.get("/", (req: Request, res: Response) => {
-  const wallets = getWalletsByUser(req.session.userId!);
+router.get("/", async (req: Request, res: Response) => {
+  const wallets = await getWalletsByUser(req.session.userId!);
   res.json({ success: true, data: wallets });
 });
 
 // POST /api/wallets — add a wallet
-router.post("/", (req: Request, res: Response) => {
+router.post("/", async (req: Request, res: Response) => {
   const { address, label } = req.body as { address?: string; label?: string };
 
   if (!address || !ETH_ADDRESS_RE.test(address)) {
@@ -34,19 +33,19 @@ router.post("/", (req: Request, res: Response) => {
     return;
   }
 
-  const wallet = createWallet(req.session.userId!, address, label ?? null);
+  const wallet = await createWallet(req.session.userId!, address, label ?? null);
   res.json({ success: true, data: wallet });
 });
 
 // DELETE /api/wallets/:id — remove wallet and its holdings
-router.delete("/:id", (req: Request, res: Response) => {
+router.delete("/:id", async (req: Request, res: Response) => {
   const id = parseInt(String(req.params.id), 10);
   if (isNaN(id)) {
     res.status(400).json({ success: false, error: "Invalid wallet ID" });
     return;
   }
 
-  const deleted = deleteWallet(id, req.session.userId!);
+  const deleted = await deleteWallet(id, req.session.userId!);
   if (!deleted) {
     res.status(404).json({ success: false, error: "Wallet not found" });
     return;
@@ -64,7 +63,7 @@ router.post("/:id/refresh", async (req: Request, res: Response) => {
       return;
     }
 
-    const wallet = getWalletById(id);
+    const wallet = await getWalletById(id);
     if (!wallet || wallet.user_id !== req.session.userId!) {
       res.status(404).json({ success: false, error: "Wallet not found" });
       return;
@@ -79,7 +78,7 @@ router.post("/:id/refresh", async (req: Request, res: Response) => {
     const tokenPrices = await getTokenPrices(tokenAddresses);
 
     // Clear old holdings for this wallet
-    deleteHoldingsByWallet(id);
+    await deleteHoldingsByWallet(id);
 
     // Create ETH holding
     const holdings: ParsedHolding[] = [];
@@ -108,7 +107,9 @@ router.post("/:id/refresh", async (req: Request, res: Response) => {
       });
     }
 
-    const created = holdings.map((h) => createHoldingFromWallet(req.session.userId!, id, h));
+    const created = await Promise.all(
+      holdings.map((h) => createHoldingFromWallet(req.session.userId!, id, h))
+    );
 
     res.json({ success: true, data: { wallet, holdings: created } });
   } catch (err) {

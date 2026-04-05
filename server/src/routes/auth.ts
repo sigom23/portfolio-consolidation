@@ -9,7 +9,7 @@ const router = Router();
 router.get("/login", async (req: Request, res: Response) => {
   try {
     if (process.env.DEV_MODE === "true") {
-      const devUser = createOrUpdateUser("dev-user-1", "dev@localhost", "Dev User");
+      const devUser = await createOrUpdateUser("dev-user-1", "dev@localhost", "Dev User");
       req.session.userId = devUser.id;
       res.redirect("/dashboard");
       return;
@@ -37,7 +37,7 @@ router.get("/callback", async (req: Request, res: Response) => {
       state: req.session.state!,
     });
 
-    const user = createOrUpdateUser(userinfo.sub, userinfo.email, userinfo.name);
+    const user = await createOrUpdateUser(userinfo.sub, userinfo.email, userinfo.name);
     req.session.userId = user.id;
     delete req.session.nonce;
     delete req.session.state;
@@ -57,13 +57,13 @@ router.get("/logout", (req: Request, res: Response) => {
 });
 
 // GET /auth/me — return current user
-router.get("/me", (req: Request, res: Response) => {
+router.get("/me", async (req: Request, res: Response) => {
   if (!req.session.userId) {
     res.json({ success: true, data: null });
     return;
   }
 
-  const user = getUserById(req.session.userId);
+  const user = await getUserById(req.session.userId);
   res.json({ success: true, data: user ?? null });
 });
 

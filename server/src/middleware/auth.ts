@@ -1,9 +1,17 @@
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
 import type { RequestHandler, Request, Response, NextFunction } from "express";
+import { pool } from "../lib/db.js";
 import { createOrUpdateUser } from "../lib/db.js";
+
+const PgSession = connectPgSimple(session);
 
 export function sessionMiddleware(): RequestHandler {
   return session({
+    store: new PgSession({
+      pool,
+      createTableIfMissing: true,
+    }),
     secret: process.env.SESSION_SECRET || "dev-secret-change-me",
     resave: false,
     saveUninitialized: false,
@@ -24,9 +32,9 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
 }
 
 // In DEV_MODE, auto-login as a test user on every request if not already logged in
-export function devModeAutoLogin(req: Request, _res: Response, next: NextFunction): void {
+export async function devModeAutoLogin(req: Request, _res: Response, next: NextFunction): Promise<void> {
   if (process.env.DEV_MODE === "true" && !req.session.userId) {
-    const devUser = createOrUpdateUser("dev-user-1", "dev@localhost", "Dev User");
+    const devUser = await createOrUpdateUser("dev-user-1", "dev@localhost", "Dev User");
     req.session.userId = devUser.id;
   }
   next();

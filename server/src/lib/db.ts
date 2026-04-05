@@ -1,7 +1,7 @@
 import Database, { type Database as DatabaseType } from "better-sqlite3";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { User, Holding, Wallet } from "../types/index.js";
+import type { User, Holding, Wallet, Upload, ParsedHolding } from "../types/index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_PATH = path.resolve(__dirname, "../../data.db");
@@ -63,6 +63,17 @@ const stmts = {
   `),
   getHoldingsByUser: db.prepare("SELECT * FROM holdings WHERE user_id = ? ORDER BY value_usd DESC"),
   getWalletsByUser: db.prepare("SELECT * FROM wallets WHERE user_id = ? ORDER BY added_at DESC"),
+  createUpload: db.prepare("INSERT INTO uploads (user_id, filename, file_type, status) VALUES (?, ?, ?, ?)"),
+  getUploadById: db.prepare("SELECT * FROM uploads WHERE id = ?"),
+  getUploadsByUser: db.prepare("SELECT * FROM uploads WHERE user_id = ? ORDER BY uploaded_at DESC"),
+  updateUploadStatus: db.prepare("UPDATE uploads SET status = ? WHERE id = ?"),
+  deleteUpload: db.prepare("DELETE FROM uploads WHERE id = ? AND user_id = ?"),
+  createHolding: db.prepare(`
+    INSERT INTO holdings (user_id, source_type, source_id, name, ticker, asset_type, quantity, value_usd, currency)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `),
+  deleteHoldingsByUpload: db.prepare("DELETE FROM holdings WHERE source_type = 'upload' AND source_id = ?"),
+  getHoldingsByUpload: db.prepare("SELECT * FROM holdings WHERE source_type = 'upload' AND source_id = ?"),
 };
 
 export function getUserById(id: string): User | undefined {
@@ -80,6 +91,61 @@ export function getHoldingsByUser(userId: string): Holding[] {
 
 export function getWalletsByUser(userId: string): Wallet[] {
   return stmts.getWalletsByUser.all(userId) as Wallet[];
+}
+
+export function createUpload(userId: string, filename: string, fileType: string): Upload {
+  const result = stmts.createUpload.run(userId, filename, fileType, "processing");
+  return stmts.getUploadById.get(result.lastInsertRowid) as Upload;
+}
+
+export function getUploadById(id: number): Upload | undefined {
+  return stmts.getUploadById.get(id) as Upload | undefined;
+}
+
+export function getUploadsByUser(userId: string): Upload[] {
+  return stmts.getUploadsByUser.all(userId) as Upload[];
+}
+
+export function updateUploadStatus(id: number, status: string): void {
+  stmts.updateUploadStatus.run(status, id);
+}
+
+export function deleteUpload(id: number, userId: string): boolean {
+  const uploadId = String(id);
+  stmts.deleteHoldingsByUpload.run(uploadId);
+  const result = stmts.deleteUpload.run(id, userId);
+  return result.changes > 0;
+}
+
+export function createHolding(userId: string, uploadId: number, holding: ParsedHolding): Holding {
+  const result = stmts.createHolding.run(
+    userId,
+    "upload",
+    String(uploadId),
+    holding.name,
+    holding.ticker,
+    holding.asset_type,
+    holding.quantity,
+    holding.value_usd,
+    holding.currency
+  );
+  return {
+    id: Number(result.lastInsertRowid),
+    user_id: userId,
+    source_type: "upload",
+    source_id: String(uploadId),
+    name: holding.name,
+    ticker: holding.ticker,
+    asset_type: holding.asset_type,
+    quantity: holding.quantity,
+    value_usd: holding.value_usd,
+    currency: holding.currency,
+    last_updated: new Date().toISOString(),
+  };
+}
+
+export function getHoldingsByUpload(uploadId: number): Holding[] {
+  return stmts.getHoldingsByUpload.all(String(uploadId)) as Holding[];
 }
 
 export default db;

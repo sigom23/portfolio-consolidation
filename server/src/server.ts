@@ -51,4 +51,7 @@ app.listen(PORT, () => {
   if (process.env.DEV_MODE === "true") {
     console.log("DEV_MODE enabled — auto-login active");
   }
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.warn("WARNING: ANTHROPIC_API_KEY not set — PDF parsing will not work");
+  }
 });

@@ -37,6 +37,15 @@ export interface Upload {
   status: string;
 }
 
+export interface ParsedHolding {
+  name: string;
+  ticker: string | null;
+  asset_type: "stocks" | "crypto" | "bonds" | "cash" | "other";
+  quantity: number | null;
+  value_usd: number | null;
+  currency: string;
+}
+
 export interface PortfolioSummary {
   totalValue: number;
   breakdown: {

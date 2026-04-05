@@ -26,6 +26,19 @@ export interface PortfolioSummary {
   };
 }
 
+export interface Upload {
+  id: number;
+  filename: string | null;
+  file_type: string | null;
+  uploaded_at: string;
+  status: string;
+}
+
+export interface UploadResult {
+  upload: Upload;
+  holdings: Holding[];
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;

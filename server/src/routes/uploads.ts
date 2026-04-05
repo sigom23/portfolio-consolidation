@@ -8,7 +8,7 @@ import {
   getUploadsByUser,
   getUploadById,
   deleteUpload,
-  createHolding,
+  createHoldingFromUpload,
   getHoldingsByUpload,
 } from "../lib/db.js";
 import { parsePdf } from "../lib/pdf-parser.js";
@@ -48,7 +48,7 @@ router.post("/", upload.single("file"), async (req: Request, res: Response) => {
     try {
       const holdings = isPdf ? await parsePdf(buffer) : parseCsv(buffer);
 
-      const created = holdings.map((h) => createHolding(userId, uploadRecord.id, h));
+      const created = holdings.map((h) => createHoldingFromUpload(userId, uploadRecord.id, h));
 
       updateUploadStatus(uploadRecord.id, "processed");
 

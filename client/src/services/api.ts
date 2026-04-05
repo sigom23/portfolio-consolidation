@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { User, PortfolioSummary, Holding, Upload, UploadResult, ApiResponse } from "../types";
+import type { User, PortfolioSummary, Holding, Upload, UploadResult, Wallet, WalletRefreshResult, ApiResponse } from "../types";
 
 const api = axios.create({
   baseURL: "/",
@@ -39,4 +39,26 @@ export async function fetchUploads(): Promise<Upload[]> {
 export async function deleteUpload(id: number): Promise<void> {
   const { data } = await api.delete<ApiResponse<null>>(`/api/uploads/${id}`);
   if (!data.success) throw new Error(data.error ?? "Delete failed");
+}
+
+export async function fetchWallets(): Promise<Wallet[]> {
+  const { data } = await api.get<ApiResponse<Wallet[]>>("/api/wallets");
+  return data.data ?? [];
+}
+
+export async function addWallet(address: string, label?: string): Promise<Wallet> {
+  const { data } = await api.post<ApiResponse<Wallet>>("/api/wallets", { address, label });
+  if (!data.success) throw new Error(data.error ?? "Failed to add wallet");
+  return data.data!;
+}
+
+export async function deleteWallet(id: number): Promise<void> {
+  const { data } = await api.delete<ApiResponse<null>>(`/api/wallets/${id}`);
+  if (!data.success) throw new Error(data.error ?? "Delete failed");
+}
+
+export async function refreshWallet(id: number): Promise<WalletRefreshResult> {
+  const { data } = await api.post<ApiResponse<WalletRefreshResult>>(`/api/wallets/${id}/refresh`);
+  if (!data.success) throw new Error(data.error ?? "Refresh failed");
+  return data.data!;
 }

@@ -1,16 +1,33 @@
-import { createRoute } from "@tanstack/react-router";
+import { createRoute, useNavigate } from "@tanstack/react-router";
 import { Route as rootRoute } from "./__root";
+import { useAuth } from "../hooks/useAuth";
+import { useWallets } from "../hooks/usePortfolio";
+import { useEffect } from "react";
+import { WalletList } from "../components/WalletList";
 
 function WalletsPage() {
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const { data: wallets, isLoading } = useWallets();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate({ to: "/" });
+    }
+  }, [authLoading, user, navigate]);
+
+  if (authLoading || !user) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-4">Wallet Management</h1>
-      <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
-        <p className="text-gray-500 text-lg">Coming soon — Phase 3</p>
-        <p className="text-gray-400 mt-2 text-sm">
-          Connect Ethereum wallets to automatically track crypto holdings.
-        </p>
-      </div>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Wallet Management</h1>
+      <WalletList wallets={wallets ?? []} loading={isLoading} />
     </div>
   );
 }

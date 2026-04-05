@@ -39,6 +39,19 @@ export interface UploadResult {
   holdings: Holding[];
 }
 
+export interface Wallet {
+  id: number;
+  address: string;
+  chain: string;
+  label: string | null;
+  added_at: string;
+}
+
+export interface WalletRefreshResult {
+  wallet: Wallet;
+  holdings: Holding[];
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;

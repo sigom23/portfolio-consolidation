@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchPortfolioSummary, fetchHoldings, fetchUploads, uploadStatement, deleteUpload } from "../services/api";
+import {
+  fetchPortfolioSummary, fetchHoldings, fetchUploads, uploadStatement, deleteUpload,
+  fetchWallets, addWallet, deleteWallet, refreshWallet,
+} from "../services/api";
 
 export function usePortfolioSummary() {
   return useQuery({
@@ -43,5 +46,44 @@ export function useDeleteUpload() {
       queryClient.invalidateQueries({ queryKey: ["holdings"] });
       queryClient.invalidateQueries({ queryKey: ["portfolio", "summary"] });
     },
+  });
+}
+
+const walletInvalidations = ["wallets", "holdings", ["portfolio", "summary"]] as const;
+
+function invalidateWalletQueries(queryClient: ReturnType<typeof useQueryClient>) {
+  for (const key of walletInvalidations) {
+    queryClient.invalidateQueries({ queryKey: Array.isArray(key) ? key : [key] });
+  }
+}
+
+export function useWallets() {
+  return useQuery({
+    queryKey: ["wallets"],
+    queryFn: fetchWallets,
+  });
+}
+
+export function useAddWallet() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ address, label }: { address: string; label?: string }) => addWallet(address, label),
+    onSuccess: () => invalidateWalletQueries(queryClient),
+  });
+}
+
+export function useDeleteWallet() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteWallet,
+    onSuccess: () => invalidateWalletQueries(queryClient),
+  });
+}
+
+export function useRefreshWallet() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: refreshWallet,
+    onSuccess: () => invalidateWalletQueries(queryClient),
   });
 }

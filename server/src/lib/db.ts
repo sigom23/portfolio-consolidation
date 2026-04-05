@@ -74,6 +74,11 @@ const stmts = {
   `),
   deleteHoldingsByUpload: db.prepare("DELETE FROM holdings WHERE source_type = 'upload' AND source_id = ?"),
   getHoldingsByUpload: db.prepare("SELECT * FROM holdings WHERE source_type = 'upload' AND source_id = ?"),
+  createWallet: db.prepare("INSERT INTO wallets (user_id, address, chain, label) VALUES (?, ?, ?, ?)"),
+  getWalletById: db.prepare("SELECT * FROM wallets WHERE id = ?"),
+  deleteWallet: db.prepare("DELETE FROM wallets WHERE id = ? AND user_id = ?"),
+  deleteHoldingsByWallet: db.prepare("DELETE FROM holdings WHERE source_type = 'wallet' AND source_id = ?"),
+  getHoldingsByWallet: db.prepare("SELECT * FROM holdings WHERE source_type = 'wallet' AND source_id = ?"),
 };
 
 export function getUserById(id: string): User | undefined {
@@ -117,11 +122,19 @@ export function deleteUpload(id: number, userId: string): boolean {
   return result.changes > 0;
 }
 
-export function createHolding(userId: string, uploadId: number, holding: ParsedHolding): Holding {
+export function createHoldingFromUpload(userId: string, uploadId: number, holding: ParsedHolding): Holding {
+  return createHoldingRecord(userId, "upload", String(uploadId), holding);
+}
+
+export function createHoldingFromWallet(userId: string, walletId: number, holding: ParsedHolding): Holding {
+  return createHoldingRecord(userId, "wallet", String(walletId), holding);
+}
+
+function createHoldingRecord(userId: string, sourceType: string, sourceId: string, holding: ParsedHolding): Holding {
   const result = stmts.createHolding.run(
     userId,
-    "upload",
-    String(uploadId),
+    sourceType,
+    sourceId,
     holding.name,
     holding.ticker,
     holding.asset_type,
@@ -132,8 +145,8 @@ export function createHolding(userId: string, uploadId: number, holding: ParsedH
   return {
     id: Number(result.lastInsertRowid),
     user_id: userId,
-    source_type: "upload",
-    source_id: String(uploadId),
+    source_type: sourceType,
+    source_id: sourceId,
     name: holding.name,
     ticker: holding.ticker,
     asset_type: holding.asset_type,
@@ -146,6 +159,30 @@ export function createHolding(userId: string, uploadId: number, holding: ParsedH
 
 export function getHoldingsByUpload(uploadId: number): Holding[] {
   return stmts.getHoldingsByUpload.all(String(uploadId)) as Holding[];
+}
+
+export function createWallet(userId: string, address: string, label: string | null = null): Wallet {
+  const result = stmts.createWallet.run(userId, address.toLowerCase(), "ethereum", label);
+  return stmts.getWalletById.get(result.lastInsertRowid) as Wallet;
+}
+
+export function getWalletById(id: number): Wallet | undefined {
+  return stmts.getWalletById.get(id) as Wallet | undefined;
+}
+
+export function deleteWallet(id: number, userId: string): boolean {
+  const walletId = String(id);
+  stmts.deleteHoldingsByWallet.run(walletId);
+  const result = stmts.deleteWallet.run(id, userId);
+  return result.changes > 0;
+}
+
+export function deleteHoldingsByWallet(walletId: number): void {
+  stmts.deleteHoldingsByWallet.run(String(walletId));
+}
+
+export function getHoldingsByWallet(walletId: number): Holding[] {
+  return stmts.getHoldingsByWallet.all(String(walletId)) as Holding[];
 }
 
 export default db;

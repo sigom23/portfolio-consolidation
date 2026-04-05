@@ -54,4 +54,7 @@ app.listen(PORT, () => {
   if (!process.env.ANTHROPIC_API_KEY) {
     console.warn("WARNING: ANTHROPIC_API_KEY not set — PDF parsing will not work");
   }
+  if (!process.env.ETHERSCAN_API_KEY) {
+    console.warn("WARNING: ETHERSCAN_API_KEY not set — wallet refresh will not work");
+  }
 });

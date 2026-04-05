@@ -1,4 +1,4 @@
-import { Issuer, Client, generators } from "openid-client";
+import { Issuer, Client, generators, custom } from "openid-client";
 
 let oidcClient: Client | null = null;
 
@@ -16,6 +16,9 @@ export async function getClient(): Promise<Client> {
     redirect_uris: [process.env.CALLBACK_URL!],
     response_types: ["code"],
   });
+
+  // Skip the 'iss' check — Pocket ID may not include it in the callback
+  oidcClient[custom.clock_tolerance] = 5;
 
   return oidcClient;
 }
@@ -36,14 +39,15 @@ export function getAuthorizationUrl(client: Client): { url: string; nonce: strin
 export async function handleCallback(
   client: Client,
   callbackUrl: string,
-  params: { nonce: string; state: string }
+  params: { nonce?: string; state?: string }
 ) {
   const callbackParams = client.callbackParams(callbackUrl);
 
-  const tokenSet = await client.callback(process.env.CALLBACK_URL!, callbackParams, {
-    nonce: params.nonce,
-    state: params.state,
-  });
+  const checks: Record<string, string> = {};
+  if (params.nonce) checks.nonce = params.nonce;
+  if (params.state) checks.state = params.state;
+
+  const tokenSet = await client.callback(process.env.CALLBACK_URL!, callbackParams, checks);
 
   const userinfo = await client.userinfo(tokenSet);
 

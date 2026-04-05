@@ -30,11 +30,14 @@ router.get("/login", async (req: Request, res: Response) => {
 router.get("/callback", async (req: Request, res: Response) => {
   try {
     const client = await getClient();
-    const fullUrl = `${req.protocol}://${req.get("host")}${req.originalUrl}`;
+    // Use the configured callback URL + query string to avoid protocol mismatch behind proxy
+    const callbackBase = process.env.CALLBACK_URL!;
+    const queryString = req.originalUrl.includes("?") ? req.originalUrl.substring(req.originalUrl.indexOf("?")) : "";
+    const fullUrl = callbackBase + queryString;
 
     const userinfo = await handleCallback(client, fullUrl, {
-      nonce: req.session.nonce!,
-      state: req.session.state!,
+      nonce: req.session.nonce,
+      state: req.session.state,
     });
 
     const user = await createOrUpdateUser(userinfo.sub, userinfo.email, userinfo.name);

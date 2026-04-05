@@ -39,6 +39,9 @@ async function start() {
 
   const app = express();
 
+  // Trust Railway's reverse proxy (needed for secure cookies and correct protocol)
+  app.set("trust proxy", 1);
+
   // Middleware
   app.use(cors({ origin: process.env.NODE_ENV !== "production" ? "http://localhost:5173" : false, credentials: true }));
   app.use(express.json());

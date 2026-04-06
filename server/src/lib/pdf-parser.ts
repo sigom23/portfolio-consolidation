@@ -13,10 +13,12 @@ export async function parsePdf(fileBuffer: Buffer): Promise<ParsedHolding[]> {
 
   const base64 = fileBuffer.toString("base64");
 
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 4096,
-    messages: [
+  let response;
+  try {
+    response = await client.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 4096,
+      messages: [
       {
         role: "user",
         content: [
@@ -49,6 +51,10 @@ Example output:
       },
     ],
   });
+  } catch (apiError) {
+    console.error("Claude API error:", apiError);
+    throw new Error(`Claude API call failed: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
+  }
 
   const textBlock = response.content.find((b) => b.type === "text");
   if (!textBlock || textBlock.type !== "text") {

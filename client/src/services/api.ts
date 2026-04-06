@@ -112,6 +112,21 @@ export async function fetchCompanyProfile(ticker: string, exchCode?: string): Pr
   }
 }
 
+export interface HistoricalPrice {
+  date: string;
+  price: number;
+}
+
+export async function fetchPriceHistory(ticker: string, exchCode?: string): Promise<HistoricalPrice[]> {
+  try {
+    const params = exchCode ? `?exch=${exchCode}` : "";
+    const { data } = await api.get<ApiResponse<HistoricalPrice[]>>(`/api/company/${ticker}/history${params}`);
+    return data.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchExchangeRates(base: string = "USD"): Promise<ExchangeRateData> {
   const { data } = await api.get<ApiResponse<ExchangeRateData>>(`/api/exchange-rates?base=${base}`);
   return data.data!;

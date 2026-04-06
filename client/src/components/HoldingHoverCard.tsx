@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { fetchCompanyProfile, type CompanyProfile } from "../services/api";
+import { fetchCompanyProfile, fetchPriceHistory, type CompanyProfile, type HistoricalPrice } from "../services/api";
 import { useCurrency } from "../contexts/CurrencyContext";
+import { AreaChart, Area, ResponsiveContainer, Tooltip as RechartsTooltip, YAxis } from "recharts";
 
 interface Props {
   ticker: string;
@@ -15,11 +16,13 @@ function formatMarketCap(value: number): string {
   return `$${value.toLocaleString()}`;
 }
 
-// Cache profiles client-side
+// Client-side caches
 const profileCache = new Map<string, CompanyProfile>();
+const historyCache = new Map<string, HistoricalPrice[]>();
 
 export function HoldingHoverCard({ ticker, exchCode, children }: Props) {
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
+  const [history, setHistory] = useState<HistoricalPrice[]>([]);
   const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(false);
   const [position, setPosition] = useState<"below" | "above">("below");
@@ -27,27 +30,38 @@ export function HoldingHoverCard({ ticker, exchCode, children }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { format } = useCurrency();
 
+  const cacheKey = ticker.toUpperCase();
+
   const handleMouseEnter = () => {
     timeoutRef.current = setTimeout(() => {
       setVisible(true);
 
-      // Check position
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
-        setPosition(rect.bottom + 320 > window.innerHeight ? "above" : "below");
+        setPosition(rect.bottom + 420 > window.innerHeight ? "above" : "below");
       }
 
-      // Fetch profile if not cached
-      if (profileCache.has(ticker.toUpperCase())) {
-        setProfile(profileCache.get(ticker.toUpperCase())!);
+      // Load profile
+      if (profileCache.has(cacheKey)) {
+        setProfile(profileCache.get(cacheKey)!);
       } else {
         setLoading(true);
         fetchCompanyProfile(ticker, exchCode ?? undefined).then((p) => {
           if (p) {
-            profileCache.set(ticker.toUpperCase(), p);
+            profileCache.set(cacheKey, p);
             setProfile(p);
           }
           setLoading(false);
+        });
+      }
+
+      // Load history
+      if (historyCache.has(cacheKey)) {
+        setHistory(historyCache.get(cacheKey)!);
+      } else {
+        fetchPriceHistory(ticker, exchCode ?? undefined).then((h) => {
+          historyCache.set(cacheKey, h);
+          setHistory(h);
         });
       }
     }, 300);
@@ -61,6 +75,10 @@ export function HoldingHoverCard({ ticker, exchCode, children }: Props) {
   useEffect(() => {
     return () => clearTimeout(timeoutRef.current);
   }, []);
+
+  const chartColor = history.length >= 2 && history[history.length - 1].price >= history[0].price
+    ? "#22c55e"
+    : "#ef4444";
 
   return (
     <div
@@ -107,6 +125,48 @@ export function HoldingHoverCard({ ticker, exchCode, children }: Props) {
                   {profile.change >= 0 ? "+" : ""}{profile.changePercentage.toFixed(2)}%
                 </span>
               </div>
+
+              {/* Price Chart */}
+              {history.length > 0 && (
+                <div className="h-20 -mx-1">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={history}>
+                      <defs>
+                        <linearGradient id={`gradient-${cacheKey}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={chartColor} stopOpacity={0.2} />
+                          <stop offset="100%" stopColor={chartColor} stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <YAxis domain={["auto", "auto"]} hide />
+                      <RechartsTooltip
+                        contentStyle={{
+                          backgroundColor: "var(--bg-secondary)",
+                          border: "1px solid var(--border-color)",
+                          borderRadius: "6px",
+                          fontSize: "11px",
+                          color: "var(--text-primary)",
+                          padding: "4px 8px",
+                        }}
+                        labelFormatter={(_, payload) => {
+                          const item = payload?.[0]?.payload as HistoricalPrice | undefined;
+                          return item?.date ?? "";
+                        }}
+                        formatter={(value) => [`${format(Number(value))}`, "Price"]}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="price"
+                        stroke={chartColor}
+                        strokeWidth={1.5}
+                        fill={`url(#gradient-${cacheKey})`}
+                        dot={false}
+                        activeDot={{ r: 3, fill: chartColor }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                  <p className="text-[10px] text-[var(--text-muted)] text-right mt-0.5">6 months</p>
+                </div>
+              )}
 
               {/* Details grid */}
               <div className="grid grid-cols-2 gap-2 text-xs">

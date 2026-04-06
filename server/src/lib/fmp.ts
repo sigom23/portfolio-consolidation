@@ -102,6 +102,40 @@ export async function getCompanyProfile(ticker: string, exchCode?: string): Prom
   return profile;
 }
 
+// Historical prices
+export interface HistoricalPrice {
+  date: string;
+  price: number;
+}
+
+const historyCache = new Map<string, { data: HistoricalPrice[]; fetchedAt: number }>();
+
+export async function getHistoricalPrices(ticker: string, exchCode?: string): Promise<HistoricalPrice[]> {
+  const apiKey = process.env.FMP_API_KEY;
+  if (!apiKey) return [];
+
+  const symbol = resolveFmpSymbol(ticker, exchCode);
+  const cached = historyCache.get(symbol);
+  if (cached && Date.now() - cached.fetchedAt < PROFILE_CACHE_TTL) {
+    return cached.data;
+  }
+
+  const to = new Date().toISOString().slice(0, 10);
+  const from = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+  try {
+    const res = await fetch(`${FMP_BASE}/historical-price-eod/light?symbol=${symbol}&from=${from}&to=${to}&apikey=${apiKey}`);
+    if (!res.ok) return [];
+
+    const data = (await res.json()) as { date: string; price: number }[];
+    const prices = data.map((d) => ({ date: d.date, price: d.price })).reverse();
+    historyCache.set(symbol, { data: prices, fetchedAt: Date.now() });
+    return prices;
+  } catch {
+    return [];
+  }
+}
+
 // Resolve a ticker + optional exchange code to a FMP-compatible symbol
 export function resolveFmpSymbol(ticker: string, exchCode?: string | null): string {
   const key = ticker.toUpperCase();

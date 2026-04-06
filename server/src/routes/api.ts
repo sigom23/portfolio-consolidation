@@ -2,7 +2,7 @@ import { Router } from "express";
 import type { Request, Response } from "express";
 import { requireAuth } from "../middleware/auth.js";
 import { getHoldingsByUser, getStockHoldingsByUser, updateHoldingValue } from "../lib/db.js";
-import { getQuotes, getCompanyProfile } from "../lib/fmp.js";
+import { getQuotes, getCompanyProfile, getHistoricalPrices } from "../lib/fmp.js";
 import { getExchangeRates, SUPPORTED_CURRENCIES } from "../lib/forex.js";
 import type { PortfolioSummary } from "../types/index.js";
 
@@ -108,6 +108,14 @@ router.get("/company/:ticker", async (req: Request, res: Response) => {
   }
 
   res.json({ success: true, data: profile });
+});
+
+// GET /api/company/:ticker/history — 6 month price history for sparkline
+router.get("/company/:ticker/history", async (req: Request, res: Response) => {
+  const ticker = String(req.params.ticker).toUpperCase();
+  const exchCode = typeof req.query.exch === "string" ? req.query.exch : undefined;
+  const prices = await getHistoricalPrices(ticker, exchCode);
+  res.json({ success: true, data: prices });
 });
 
 export default router;

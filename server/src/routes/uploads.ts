@@ -10,6 +10,7 @@ import {
   deleteUpload,
   createHoldingFromUpload,
   getHoldingsByUpload,
+  getUploadFileData,
 } from "../lib/db.js";
 import { parsePdf } from "../lib/pdf-parser.js";
 import { parseCsv } from "../lib/csv-parser.js";
@@ -43,7 +44,7 @@ router.post("/", upload.single("file"), async (req: Request, res: Response) => {
     const isPdf = mimetype === "application/pdf";
     const fileType = isPdf ? "pdf" : "csv";
 
-    const uploadRecord = await createUpload(userId, originalname, fileType);
+    const uploadRecord = await createUpload(userId, originalname, fileType, buffer);
 
     try {
       const holdings = isPdf ? await parsePdf(buffer) : parseCsv(buffer);
@@ -94,6 +95,26 @@ router.get("/:id", async (req: Request, res: Response) => {
 
   const holdings = await getHoldingsByUpload(id);
   res.json({ success: true, data: { upload: uploadRecord, holdings } });
+});
+
+// GET /api/uploads/:id/download — download the original file
+router.get("/:id/download", async (req: Request, res: Response) => {
+  const id = parseInt(String(req.params.id), 10);
+  if (isNaN(id)) {
+    res.status(400).json({ success: false, error: "Invalid upload ID" });
+    return;
+  }
+
+  const file = await getUploadFileData(id, req.session.userId!);
+  if (!file) {
+    res.status(404).json({ success: false, error: "File not found" });
+    return;
+  }
+
+  const contentType = file.file_type === "pdf" ? "application/pdf" : "text/csv";
+  res.setHeader("Content-Type", contentType);
+  res.setHeader("Content-Disposition", `attachment; filename="${file.filename}"`);
+  res.send(file.file_data);
 });
 
 // DELETE /api/uploads/:id — delete upload and its holdings

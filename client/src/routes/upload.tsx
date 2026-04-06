@@ -74,7 +74,13 @@ function UploadPage() {
                   <td className="px-6 py-3 text-sm text-[var(--text-secondary)]">
                     {new Date(u.uploaded_at).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-3 text-sm">
+                  <td className="px-6 py-3 text-sm flex items-center gap-3">
+                    <a
+                      href={`/api/uploads/${u.id}/download`}
+                      className="text-blue-500 hover:text-blue-400 text-xs"
+                    >
+                      Download
+                    </a>
                     <button
                       onClick={() => deleteMutation.mutate(u.id)}
                       disabled={deleteMutation.isPending}

@@ -44,9 +44,16 @@ export async function initDb(): Promise<void> {
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       filename TEXT,
       file_type TEXT,
+      file_data BYTEA,
       uploaded_at TIMESTAMP DEFAULT NOW(),
       status TEXT DEFAULT 'processed'
     );
+
+    -- Add file_data column if it doesn't exist (migration for existing DBs)
+    DO $$ BEGIN
+      ALTER TABLE uploads ADD COLUMN IF NOT EXISTS file_data BYTEA;
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
   `);
 }
 
@@ -85,12 +92,20 @@ export async function getWalletsByUser(userId: string): Promise<Wallet[]> {
 }
 
 // Uploads
-export async function createUpload(userId: string, filename: string, fileType: string): Promise<Upload> {
+export async function createUpload(userId: string, filename: string, fileType: string, fileData?: Buffer): Promise<Upload> {
   const { rows } = await pool.query(
-    "INSERT INTO uploads (user_id, filename, file_type, status) VALUES ($1, $2, $3, $4) RETURNING *",
-    [userId, filename, fileType, "processing"]
+    "INSERT INTO uploads (user_id, filename, file_type, file_data, status) VALUES ($1, $2, $3, $4, $5) RETURNING id, user_id, filename, file_type, uploaded_at, status",
+    [userId, filename, fileType, fileData ?? null, "processing"]
   );
   return rows[0] as Upload;
+}
+
+export async function getUploadFileData(id: number, userId: string): Promise<{ filename: string; file_type: string; file_data: Buffer } | undefined> {
+  const { rows } = await pool.query(
+    "SELECT filename, file_type, file_data FROM uploads WHERE id = $1 AND user_id = $2 AND file_data IS NOT NULL",
+    [id, userId]
+  );
+  return rows[0] as { filename: string; file_type: string; file_data: Buffer } | undefined;
 }
 
 export async function getUploadById(id: number): Promise<Upload | undefined> {

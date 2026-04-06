@@ -67,22 +67,28 @@ async function parsePdfWithOpenAI(fileBuffer: Buffer): Promise<ParsedHolding[]> 
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
   const base64 = fileBuffer.toString("base64");
 
-  const response = await client.chat.completions.create({
-    model: "gpt-5.4-nano",
-    max_tokens: 4096,
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "image_url",
-            image_url: { url: `data:application/pdf;base64,${base64}` },
-          },
-          { type: "text", text: EXTRACTION_PROMPT },
-        ],
-      },
-    ],
-  });
+  let response;
+  try {
+    response = await client.chat.completions.create({
+      model: "gpt-4.1-mini",
+      max_tokens: 4096,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image_url",
+              image_url: { url: `data:application/pdf;base64,${base64}` },
+            },
+            { type: "text", text: EXTRACTION_PROMPT },
+          ],
+        },
+      ],
+    });
+  } catch (apiError) {
+    console.error("OpenAI API error:", apiError);
+    throw new Error(`OpenAI API call failed: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
+  }
 
   const text = response.choices[0]?.message?.content;
   if (!text) throw new Error("No response from OpenAI");

@@ -130,7 +130,15 @@ export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }:
                       }`}
                     >
                       <td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)]">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-2">
+                          {h.ticker && (
+                            <img
+                              src={`https://images.financialmodelingprep.com/symbol/${h.ticker.toUpperCase()}.png`}
+                              alt=""
+                              className="w-6 h-6 rounded-full object-cover bg-[var(--bg-tertiary)]"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                            />
+                          )}
                           {h.name}
                           {hasFigi && (
                             <svg

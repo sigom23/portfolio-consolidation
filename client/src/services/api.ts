@@ -102,9 +102,10 @@ export interface CompanyProfile {
   country: string;
 }
 
-export async function fetchCompanyProfile(ticker: string): Promise<CompanyProfile | null> {
+export async function fetchCompanyProfile(ticker: string, exchCode?: string): Promise<CompanyProfile | null> {
   try {
-    const { data } = await api.get<ApiResponse<CompanyProfile>>(`/api/company/${ticker}`);
+    const params = exchCode ? `?exch=${exchCode}` : "";
+    const { data } = await api.get<ApiResponse<CompanyProfile>>(`/api/company/${ticker}${params}`);
     return data.data ?? null;
   } catch {
     return null;

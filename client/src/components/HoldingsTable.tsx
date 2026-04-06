@@ -141,7 +141,7 @@ export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }:
                             />
                           )}
                           {h.ticker ? (
-                            <HoldingHoverCard ticker={h.ticker}>
+                            <HoldingHoverCard ticker={h.ticker} exchCode={h.exch_code}>
                               <span className="hover:text-blue-500 transition-colors cursor-default">{h.name}</span>
                             </HoldingHoverCard>
                           ) : (

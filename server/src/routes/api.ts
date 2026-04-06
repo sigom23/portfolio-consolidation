@@ -48,9 +48,16 @@ router.post("/holdings/refresh-prices", async (req: Request, res: Response) => {
       return;
     }
 
-    // Get unique tickers
-    const tickers = [...new Set(stockHoldings.filter((h) => h.ticker).map((h) => h.ticker!))];
-    const prices = await getQuotes(tickers);
+    // Get unique tickers with exchange codes
+    const seen = new Set<string>();
+    const tickerHoldings: { ticker: string; exchCode?: string | null }[] = [];
+    for (const h of stockHoldings) {
+      if (h.ticker && !seen.has(h.ticker.toUpperCase())) {
+        seen.add(h.ticker.toUpperCase());
+        tickerHoldings.push({ ticker: h.ticker, exchCode: h.exch_code });
+      }
+    }
+    const prices = await getQuotes(tickerHoldings);
 
     let updated = 0;
     for (const holding of stockHoldings) {
@@ -93,7 +100,8 @@ router.get("/company/:ticker", async (req: Request, res: Response) => {
     return;
   }
 
-  const profile = await getCompanyProfile(ticker);
+  const exchCode = typeof req.query.exch === "string" ? req.query.exch : undefined;
+  const profile = await getCompanyProfile(ticker, exchCode);
   if (!profile) {
     res.status(404).json({ success: false, error: "Company not found" });
     return;

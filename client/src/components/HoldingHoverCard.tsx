@@ -4,6 +4,7 @@ import { useCurrency } from "../contexts/CurrencyContext";
 
 interface Props {
   ticker: string;
+  exchCode?: string | null;
   children: React.ReactNode;
 }
 
@@ -17,7 +18,7 @@ function formatMarketCap(value: number): string {
 // Cache profiles client-side
 const profileCache = new Map<string, CompanyProfile>();
 
-export function HoldingHoverCard({ ticker, children }: Props) {
+export function HoldingHoverCard({ ticker, exchCode, children }: Props) {
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -41,7 +42,7 @@ export function HoldingHoverCard({ ticker, children }: Props) {
         setProfile(profileCache.get(ticker.toUpperCase())!);
       } else {
         setLoading(true);
-        fetchCompanyProfile(ticker).then((p) => {
+        fetchCompanyProfile(ticker, exchCode ?? undefined).then((p) => {
           if (p) {
             profileCache.set(ticker.toUpperCase(), p);
             setProfile(p);

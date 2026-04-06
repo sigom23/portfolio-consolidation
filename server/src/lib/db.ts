@@ -229,7 +229,7 @@ export async function updateHoldingValue(holdingId: number, valueUsd: number): P
 
 export async function getStockHoldingsByUser(userId: string): Promise<Holding[]> {
   const { rows } = await getPool().query(
-    "SELECT * FROM holdings WHERE user_id = $1 AND ticker IS NOT NULL AND asset_type = 'stocks' ORDER BY value_usd DESC",
+    "SELECT * FROM holdings WHERE user_id = $1 AND ticker IS NOT NULL AND LOWER(asset_type) = 'stocks' ORDER BY value_usd DESC",
     [userId]
   );
   return rows as Holding[];

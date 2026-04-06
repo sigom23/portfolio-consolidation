@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import { requireAuth } from "../middleware/auth.js";
 import { getHoldingsByUser, getStockHoldingsByUser, updateHoldingValue } from "../lib/db.js";
 import { getQuotes } from "../lib/fmp.js";
+import { getExchangeRates, SUPPORTED_CURRENCIES } from "../lib/forex.js";
 import type { PortfolioSummary } from "../types/index.js";
 
 const router = Router();
@@ -68,6 +69,18 @@ router.post("/holdings/refresh-prices", async (req: Request, res: Response) => {
     res.json({ success: true, data: { updated, holdings: allHoldings } });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Price refresh failed";
+    res.status(500).json({ success: false, error: message });
+  }
+});
+
+// GET /api/exchange-rates?base=USD
+router.get("/exchange-rates", async (req: Request, res: Response) => {
+  try {
+    const base = (typeof req.query.base === "string" ? req.query.base : "USD").toUpperCase();
+    const rates = await getExchangeRates(base);
+    res.json({ success: true, data: { base, rates, currencies: SUPPORTED_CURRENCIES } });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to fetch exchange rates";
     res.status(500).json({ success: false, error: message });
   }
 });

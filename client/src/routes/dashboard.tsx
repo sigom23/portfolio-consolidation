@@ -2,6 +2,7 @@ import { createRoute, useNavigate } from "@tanstack/react-router";
 import { Route as rootRoute } from "./__root";
 import { useAuth } from "../hooks/useAuth";
 import { usePortfolioSummary, useHoldings, useRefreshStockPrices } from "../hooks/usePortfolio";
+import { useCurrency } from "../contexts/CurrencyContext";
 import { useEffect } from "react";
 import { PortfolioChart } from "../components/PortfolioChart";
 import { BreakdownCards } from "../components/BreakdownCards";
@@ -13,6 +14,7 @@ function DashboardPage() {
   const { data: summary, isLoading: summaryLoading } = usePortfolioSummary();
   const { data: holdings, isLoading: holdingsLoading } = useHoldings();
   const refreshPrices = useRefreshStockPrices();
+  const { format, baseCurrency, flag } = useCurrency();
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -40,12 +42,15 @@ function DashboardPage() {
 
       {/* Total Value Card */}
       <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 mb-6 transition-colors">
-        <p className="text-sm text-[var(--text-muted)] mb-1">Total Portfolio Value</p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-[var(--text-muted)] mb-1">Total Portfolio Value</p>
+          <span className="text-sm text-[var(--text-muted)]">{flag} {baseCurrency}</span>
+        </div>
         {summaryLoading ? (
           <div className="h-9 w-48 bg-[var(--bg-tertiary)] rounded animate-pulse" />
         ) : (
           <p className="text-3xl font-bold text-[var(--text-primary)] tabular-nums">
-            ${totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {format(totalValue)}
           </p>
         )}
       </div>

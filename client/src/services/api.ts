@@ -68,3 +68,21 @@ export async function refreshStockPrices(): Promise<{ updated: number }> {
   if (!data.success) throw new Error(data.error ?? "Price refresh failed");
   return data.data!;
 }
+
+export interface CurrencyInfo {
+  code: string;
+  symbol: string;
+  name: string;
+  flag: string;
+}
+
+export interface ExchangeRateData {
+  base: string;
+  rates: Record<string, number>;
+  currencies: CurrencyInfo[];
+}
+
+export async function fetchExchangeRates(base: string = "USD"): Promise<ExchangeRateData> {
+  const { data } = await api.get<ApiResponse<ExchangeRateData>>(`/api/exchange-rates?base=${base}`);
+  return data.data!;
+}

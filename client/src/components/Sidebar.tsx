@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
+import { useCurrency } from "../contexts/CurrencyContext";
 import { useState } from "react";
 
 const NAV_ITEMS = [
@@ -12,6 +13,7 @@ const NAV_ITEMS = [
 export function Sidebar() {
   const { user, logout } = useAuth();
   const { theme, toggle } = useTheme();
+  const { baseCurrency, setBaseCurrency, currencies } = useCurrency();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -70,6 +72,24 @@ export function Sidebar() {
 
         {/* Bottom section */}
         <div className="px-3 py-4 border-t border-white/10 space-y-2">
+          {/* Currency selector */}
+          {currencies.length > 0 && (
+            <div className="px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wide text-[var(--sidebar-text)] mb-1.5">Base Currency</p>
+              <select
+                value={baseCurrency}
+                onChange={(e) => setBaseCurrency(e.target.value)}
+                className="w-full px-2 py-1.5 rounded-lg bg-white/10 text-white text-sm border-0 outline-none cursor-pointer"
+              >
+                {currencies.map((c) => (
+                  <option key={c.code} value={c.code} className="bg-[var(--sidebar-bg)] text-white">
+                    {c.flag} {c.code} — {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* Theme toggle */}
           <button
             onClick={toggle}

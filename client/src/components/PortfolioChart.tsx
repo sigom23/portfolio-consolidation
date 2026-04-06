@@ -1,5 +1,6 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import type { PortfolioSummary } from "../types";
+import { useCurrency } from "../contexts/CurrencyContext";
 
 const CATEGORY_CONFIG: Record<string, { color: string; label: string }> = {
   stocks: { color: "#3b82f6", label: "Stocks" },
@@ -14,13 +15,15 @@ interface Props {
   loading: boolean;
 }
 
-function formatCurrency(value: number): string {
-  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`;
-  if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
-  return `$${value.toFixed(2)}`;
-}
-
 export function PortfolioChart({ summary, loading }: Props) {
+  const { format, convert, symbol } = useCurrency();
+
+  function formatShort(value: number): string {
+    const converted = convert(value);
+    if (converted >= 1_000_000) return `${symbol}${(converted / 1_000_000).toFixed(2)}M`;
+    if (converted >= 1_000) return `${symbol}${(converted / 1_000).toFixed(1)}K`;
+    return `${symbol}${converted.toFixed(2)}`;
+  }
   if (loading) {
     return (
       <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full flex items-center justify-center transition-colors">
@@ -68,7 +71,7 @@ export function PortfolioChart({ summary, loading }: Props) {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value) => formatCurrency(Number(value))}
+                  formatter={(value) => formatShort(Number(value))}
                   contentStyle={{
                     backgroundColor: "var(--bg-secondary)",
                     border: "1px solid var(--border-color)",
@@ -83,7 +86,7 @@ export function PortfolioChart({ summary, loading }: Props) {
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="text-center">
                 <p className="text-xs text-[var(--text-muted)]">Total</p>
-                <p className="text-lg font-bold text-[var(--text-primary)]">{formatCurrency(totalValue)}</p>
+                <p className="text-lg font-bold text-[var(--text-primary)]">{formatShort(totalValue)}</p>
               </div>
             </div>
           </div>

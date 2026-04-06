@@ -1,4 +1,5 @@
 import type { PortfolioSummary } from "../types";
+import { useCurrency } from "../contexts/CurrencyContext";
 
 const CATEGORIES: { key: keyof PortfolioSummary["breakdown"]; label: string; color: string }[] = [
   { key: "stocks", label: "Stocks", color: "#3b82f6" },
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function BreakdownCards({ summary, loading }: Props) {
+  const { format } = useCurrency();
   const total = summary?.totalValue ?? 0;
 
   return (
@@ -39,7 +41,7 @@ export function BreakdownCards({ summary, loading }: Props) {
                   <span className="text-xs font-medium text-[var(--text-secondary)]">{cat.label}</span>
                 </div>
                 <p className="text-lg font-bold text-[var(--text-primary)]">
-                  ${value.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  {format(value)}
                 </p>
                 <p className="text-xs text-[var(--text-muted)] mt-0.5">{pct.toFixed(1)}%</p>
               </>

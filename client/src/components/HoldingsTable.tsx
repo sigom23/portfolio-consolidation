@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Holding } from "../types";
+import { useCurrency } from "../contexts/CurrencyContext";
 
 interface Props {
   holdings: Holding[];
@@ -34,6 +35,7 @@ function FigiDetail({ label, value }: { label: string; value: string | null }) {
 const SPAM_THRESHOLD = 1;
 
 export function HoldingsTable({ holdings, loading }: Props) {
+  const { format, baseCurrency } = useCurrency();
   const [hideSpam, setHideSpam] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
@@ -75,7 +77,7 @@ export function HoldingsTable({ holdings, loading }: Props) {
               <th className="px-6 py-3 font-medium">Type</th>
               <th className="px-6 py-3 font-medium">Source</th>
               <th className="px-6 py-3 font-medium text-right">Quantity</th>
-              <th className="px-6 py-3 font-medium text-right">Value (USD)</th>
+              <th className="px-6 py-3 font-medium text-right">Value ({baseCurrency})</th>
             </tr>
           </thead>
           <tbody>
@@ -131,9 +133,7 @@ export function HoldingsTable({ holdings, loading }: Props) {
                         {h.quantity != null ? h.quantity.toLocaleString(undefined, { maximumFractionDigits: 6 }) : "—"}
                       </td>
                       <td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right font-medium tabular-nums">
-                        {h.value_usd != null
-                          ? `$${h.value_usd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                          : "—"}
+                        {h.value_usd != null ? format(h.value_usd) : "—"}
                       </td>
                     </tr>
                     {isExpanded && hasFigi && (

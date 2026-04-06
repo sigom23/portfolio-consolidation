@@ -220,5 +220,20 @@ export async function updateHoldingFigi(
   );
 }
 
+export async function updateHoldingValue(holdingId: number, valueUsd: number): Promise<void> {
+  await getPool().query(
+    "UPDATE holdings SET value_usd = $1, last_updated = NOW() WHERE id = $2",
+    [valueUsd, holdingId]
+  );
+}
+
+export async function getStockHoldingsByUser(userId: string): Promise<Holding[]> {
+  const { rows } = await getPool().query(
+    "SELECT * FROM holdings WHERE user_id = $1 AND ticker IS NOT NULL AND asset_type = 'stocks' ORDER BY value_usd DESC",
+    [userId]
+  );
+  return rows as Holding[];
+}
+
 export { getPool as pool };
 export default getPool;

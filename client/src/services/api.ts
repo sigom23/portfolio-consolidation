@@ -62,3 +62,9 @@ export async function refreshWallet(id: number): Promise<WalletRefreshResult> {
   if (!data.success) throw new Error(data.error ?? "Refresh failed");
   return data.data!;
 }
+
+export async function refreshStockPrices(): Promise<{ updated: number }> {
+  const { data } = await api.post<ApiResponse<{ updated: number }>>("/api/holdings/refresh-prices");
+  if (!data.success) throw new Error(data.error ?? "Price refresh failed");
+  return data.data!;
+}

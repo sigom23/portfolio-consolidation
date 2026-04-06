@@ -1,7 +1,8 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { requireAuth } from "../middleware/auth.js";
-import { getHoldingsByUser } from "../lib/db.js";
+import { getHoldingsByUser, getStockHoldingsByUser, updateHoldingValue } from "../lib/db.js";
+import { getQuotes } from "../lib/fmp.js";
 import type { PortfolioSummary } from "../types/index.js";
 
 const router = Router();
@@ -34,6 +35,41 @@ router.get("/portfolio/summary", async (req: Request, res: Response) => {
 router.get("/holdings", async (req: Request, res: Response) => {
   const holdings = await getHoldingsByUser(req.session.userId!);
   res.json({ success: true, data: holdings });
+});
+
+// POST /api/holdings/refresh-prices — update stock holdings with latest prices
+router.post("/holdings/refresh-prices", async (req: Request, res: Response) => {
+  try {
+    const stockHoldings = await getStockHoldingsByUser(req.session.userId!);
+
+    if (stockHoldings.length === 0) {
+      res.json({ success: true, data: { updated: 0 } });
+      return;
+    }
+
+    // Get unique tickers
+    const tickers = [...new Set(stockHoldings.filter((h) => h.ticker).map((h) => h.ticker!))];
+    const prices = await getQuotes(tickers);
+
+    let updated = 0;
+    for (const holding of stockHoldings) {
+      if (holding.ticker && holding.quantity) {
+        const price = prices.get(holding.ticker.toUpperCase());
+        if (price !== undefined) {
+          const newValue = holding.quantity * price;
+          await updateHoldingValue(holding.id, newValue);
+          updated++;
+        }
+      }
+    }
+
+    // Return updated holdings
+    const allHoldings = await getHoldingsByUser(req.session.userId!);
+    res.json({ success: true, data: { updated, holdings: allHoldings } });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Price refresh failed";
+    res.status(500).json({ success: false, error: message });
+  }
 });
 
 export default router;

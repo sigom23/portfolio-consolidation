@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchPortfolioSummary, fetchHoldings, fetchUploads, uploadStatement, deleteUpload,
-  fetchWallets, addWallet, deleteWallet, refreshWallet,
+  fetchWallets, addWallet, deleteWallet, refreshWallet, refreshStockPrices,
 } from "../services/api";
 
 export function usePortfolioSummary() {
@@ -85,5 +85,16 @@ export function useRefreshWallet() {
   return useMutation({
     mutationFn: refreshWallet,
     onSuccess: () => invalidateWalletQueries(queryClient),
+  });
+}
+
+export function useRefreshStockPrices() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: refreshStockPrices,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["holdings"] });
+      queryClient.invalidateQueries({ queryKey: ["portfolio", "summary"] });
+    },
   });
 }

@@ -77,9 +77,9 @@ async function parsePdfWithOpenAI(fileBuffer: Buffer): Promise<ParsedHolding[]> 
           role: "user",
           content: [
             {
-              type: "image_url",
-              image_url: { url: `data:application/pdf;base64,${base64}` },
-            },
+              type: "file",
+              file: { data: base64, filename: "statement.pdf" },
+            } as never,
             { type: "text", text: EXTRACTION_PROMPT },
           ],
         },

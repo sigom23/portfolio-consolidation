@@ -2,7 +2,7 @@ import { Router } from "express";
 import type { Request, Response } from "express";
 import { requireAuth } from "../middleware/auth.js";
 import { getHoldingsByUser, getStockHoldingsByUser, updateHoldingValue } from "../lib/db.js";
-import { getQuotes } from "../lib/fmp.js";
+import { getQuotes, getCompanyProfile } from "../lib/fmp.js";
 import { getExchangeRates, SUPPORTED_CURRENCIES } from "../lib/forex.js";
 import type { PortfolioSummary } from "../types/index.js";
 
@@ -83,6 +83,23 @@ router.get("/exchange-rates", async (req: Request, res: Response) => {
     const message = err instanceof Error ? err.message : "Failed to fetch exchange rates";
     res.status(500).json({ success: false, error: message });
   }
+});
+
+// GET /api/company/:ticker — company profile for hover card
+router.get("/company/:ticker", async (req: Request, res: Response) => {
+  const ticker = String(req.params.ticker).toUpperCase();
+  if (!ticker) {
+    res.status(400).json({ success: false, error: "Ticker required" });
+    return;
+  }
+
+  const profile = await getCompanyProfile(ticker);
+  if (!profile) {
+    res.status(404).json({ success: false, error: "Company not found" });
+    return;
+  }
+
+  res.json({ success: true, data: profile });
 });
 
 export default router;

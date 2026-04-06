@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Holding, Upload, Wallet } from "../types";
 import { useCurrency } from "../contexts/CurrencyContext";
+import { HoldingHoverCard } from "./HoldingHoverCard";
 
 interface Props {
   holdings: Holding[];
@@ -139,7 +140,13 @@ export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }:
                               onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                             />
                           )}
-                          {h.name}
+                          {h.ticker ? (
+                            <HoldingHoverCard ticker={h.ticker}>
+                              <span className="hover:text-blue-500 transition-colors cursor-default">{h.name}</span>
+                            </HoldingHoverCard>
+                          ) : (
+                            h.name
+                          )}
                           {hasFigi && (
                             <svg
                               className={`w-3 h-3 text-[var(--text-muted)] transition-transform ${isExpanded ? "rotate-180" : ""}`}

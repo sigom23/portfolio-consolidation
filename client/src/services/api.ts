@@ -82,6 +82,35 @@ export interface ExchangeRateData {
   currencies: CurrencyInfo[];
 }
 
+export interface CompanyProfile {
+  symbol: string;
+  companyName: string;
+  price: number;
+  change: number;
+  changePercentage: number;
+  marketCap: number;
+  sector: string;
+  industry: string;
+  description: string;
+  ceo: string;
+  website: string;
+  exchange: string;
+  currency: string;
+  range: string;
+  image: string;
+  ipoDate: string;
+  country: string;
+}
+
+export async function fetchCompanyProfile(ticker: string): Promise<CompanyProfile | null> {
+  try {
+    const { data } = await api.get<ApiResponse<CompanyProfile>>(`/api/company/${ticker}`);
+    return data.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchExchangeRates(base: string = "USD"): Promise<ExchangeRateData> {
   const { data } = await api.get<ApiResponse<ExchangeRateData>>(`/api/exchange-rates?base=${base}`);
   return data.data!;

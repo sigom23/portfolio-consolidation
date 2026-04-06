@@ -65,10 +65,15 @@ async function parsePdfWithAnthropic(fileBuffer: Buffer): Promise<ParsedHolding[
 
 async function parsePdfWithOpenAI(fileBuffer: Buffer): Promise<ParsedHolding[]> {
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
-  const base64 = fileBuffer.toString("base64");
 
   let response;
   try {
+    // Upload file to OpenAI first
+    const file = await client.files.create({
+      file: new File([fileBuffer], "statement.pdf", { type: "application/pdf" }),
+      purpose: "assistants",
+    });
+
     response = await client.chat.completions.create({
       model: "gpt-5.4-nano",
       max_tokens: 4096,
@@ -78,13 +83,16 @@ async function parsePdfWithOpenAI(fileBuffer: Buffer): Promise<ParsedHolding[]> 
           content: [
             {
               type: "file",
-              file: { data: base64, filename: "statement.pdf" },
+              file: { file_id: file.id },
             } as never,
             { type: "text", text: EXTRACTION_PROMPT },
           ],
         },
       ],
     });
+
+    // Clean up uploaded file
+    await client.files.delete(file.id).catch(() => {});
   } catch (apiError) {
     console.error("OpenAI API error:", apiError);
     throw new Error(`OpenAI API call failed: ${apiError instanceof Error ? apiError.message : String(apiError)}`);

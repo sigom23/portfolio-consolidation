@@ -16,6 +16,7 @@ import {
 import { parsePdf } from "../lib/pdf-parser.js";
 import { lookupTickers } from "../lib/openfigi.js";
 import { parseCsv } from "../lib/csv-parser.js";
+import { getExchangeRates } from "../lib/forex.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -51,15 +52,28 @@ router.post("/", upload.single("file"), async (req: Request, res: Response) => {
     try {
       const holdings = isPdf ? await parsePdf(buffer) : parseCsv(buffer);
 
+      // Convert parsed values to USD
+      const rates = await getExchangeRates("USD");
+      for (const h of holdings) {
+        const ccy = (h.currency ?? "USD").toUpperCase();
+        if (ccy !== "USD" && rates[ccy] && h.value_usd) {
+          h.value_usd = h.value_usd / rates[ccy];
+        }
+      }
+
       const created = await Promise.all(
         holdings.map((h) => createHoldingFromUpload(userId, uploadRecord.id, h))
       );
 
       // Enrich holdings with OpenFIGI data
       const tickers = created.filter((h) => h.ticker).map((h) => h.ticker!);
+      const currencyMap = new Map<string, string>();
+      for (const h of created) {
+        if (h.ticker && h.currency) currencyMap.set(h.ticker.toUpperCase(), h.currency);
+      }
       if (tickers.length > 0) {
         try {
-          const figiData = await lookupTickers(tickers);
+          const figiData = await lookupTickers(tickers, currencyMap);
           for (const holding of created) {
             if (holding.ticker) {
               const figi = figiData.get(holding.ticker.toUpperCase());

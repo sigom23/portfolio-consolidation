@@ -11,13 +11,15 @@ Return ONLY a JSON array with no other text. Each item should have these fields:
 - "ticker": string or null — ticker symbol if applicable (e.g. "AAPL", "BTC", null for bank accounts)
 - "asset_type": one of "stocks", "crypto", "bonds", "cash", "other"
 - "quantity": number or null — number of shares/units, null for cash accounts
-- "value_usd": number — the value in USD
-- "currency": string — the currency code (usually "USD")
+- "value": number — the market value as stated in the document, in the currency shown for that line item
+- "currency": string — the currency code for this holding's value (e.g. "USD", "CHF", "EUR"). Use the per-line currency if available, otherwise use the statement's base currency.
 
-For bank accounts (checking, savings), use asset_type "cash" with the balance as value_usd.
+IMPORTANT: Use the value exactly as shown in the document. Do NOT convert currencies. If a CHF statement shows a USD stock valued at CHF 10,000, use value 10000 and currency "CHF". If the document shows the value in the stock's native currency (e.g. USD), use that currency.
+
+For bank accounts (checking, savings, liquidity), use asset_type "cash" with the balance as value.
 
 Example output:
-[{"name": "Checking Account", "ticker": null, "asset_type": "cash", "quantity": null, "value_usd": 5432.10, "currency": "USD"}]`;
+[{"name": "Checking Account", "ticker": null, "asset_type": "cash", "quantity": null, "value": 5432.10, "currency": "USD"}]`;
 
 export async function parsePdf(fileBuffer: Buffer): Promise<ParsedHolding[]> {
   // Try Anthropic first, fall back to OpenAI
@@ -120,6 +122,8 @@ function parseJsonResponse(raw: string): ParsedHolding[] {
   return parsed.map((item: unknown) => {
     const h = item as Record<string, unknown>;
     const assetType = String(h.asset_type ?? "other").toLowerCase();
+    // Support both "value" (new) and "value_usd" (legacy) fields
+    const rawValue = typeof h.value === "number" ? h.value : (typeof h.value_usd === "number" ? h.value_usd : 0);
     return {
       name: String(h.name ?? "Unknown"),
       ticker: h.ticker ? String(h.ticker) : null,
@@ -127,7 +131,7 @@ function parseJsonResponse(raw: string): ParsedHolding[] {
         ? assetType
         : "other") as ParsedHolding["asset_type"],
       quantity: typeof h.quantity === "number" ? h.quantity : null,
-      value_usd: typeof h.value_usd === "number" ? h.value_usd : 0,
+      value_usd: rawValue,
       currency: String(h.currency ?? "USD"),
     };
   });

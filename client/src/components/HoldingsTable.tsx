@@ -1,7 +1,7 @@
-import { useState } from "react";
 import type { Holding, Upload, Wallet } from "../types";
 import { useCurrency } from "../contexts/CurrencyContext";
 import { HoldingHoverCard } from "./HoldingHoverCard";
+import { useState } from "react";
 
 interface Props {
   holdings: Holding[];
@@ -41,16 +41,6 @@ function SourceBadge({ holding, uploads, wallets }: { holding: Holding; uploads:
   );
 }
 
-function FigiDetail({ label, value }: { label: string; value: string | null }) {
-  if (!value) return null;
-  return (
-    <div>
-      <span className="text-[var(--text-muted)] text-[10px] uppercase tracking-wide">{label}</span>
-      <p className="text-xs text-[var(--text-primary)] font-mono">{value}</p>
-    </div>
-  );
-}
-
 const EXCH_SUFFIX: Record<string, string> = {
   SW: ".SW", LN: ".L", GR: ".DE", FP: ".PA", IM: ".MI",
   SM: ".MC", NA: ".AS", BB: ".BR", JP: ".T", HK: ".HK",
@@ -66,12 +56,25 @@ function getLogoUrl(ticker: string, exchCode?: string | null): string {
   return `https://images.financialmodelingprep.com/symbol/${symbol}.png`;
 }
 
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  USD: "$", EUR: "€", GBP: "£", CHF: "Fr", JPY: "¥",
+  CAD: "C$", AUD: "A$", HKD: "HK$", CNY: "¥", KRW: "₩",
+  SEK: "kr", NOK: "kr", DKK: "kr", SGD: "S$", INR: "₹",
+};
+
+function formatLocal(value: number, currency: string): string {
+  const sym = CURRENCY_SYMBOLS[currency] ?? currency + " ";
+  if (currency === "JPY" || currency === "KRW") {
+    return `${sym}${Math.round(value).toLocaleString()}`;
+  }
+  return `${sym}${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 const SPAM_THRESHOLD = 1;
 
 export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }: Props) {
   const { format, baseCurrency } = useCurrency();
   const [hideSpam, setHideSpam] = useState(true);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const spamCount = holdings.filter((h) => (h.value_usd ?? 0) < SPAM_THRESHOLD && h.source_type === "wallet").length;
   const filtered = hideSpam
@@ -111,7 +114,7 @@ export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }:
               <th className="px-6 py-3 font-medium">Type</th>
               <th className="px-6 py-3 font-medium">Source</th>
               <th className="px-6 py-3 font-medium text-right">Quantity</th>
-              <th className="px-6 py-3 font-medium text-right">Value ({baseCurrency})</th>
+              <th className="px-6 py-3 font-medium text-right">Value</th>
             </tr>
           </thead>
           <tbody>
@@ -133,18 +136,11 @@ export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }:
               </tr>
             ) : (
               filtered.map((h) => {
-                const hasFigi = h.figi || h.composite_figi || h.security_type;
-                const isExpanded = expandedId === h.id;
-
                 return (
-                  <>
-                    <tr
-                      key={h.id}
-                      onClick={() => hasFigi && setExpandedId(isExpanded ? null : h.id)}
-                      className={`border-b border-[var(--border-color)]/50 hover:bg-[var(--bg-tertiary)]/50 transition-colors ${
-                        hasFigi ? "cursor-pointer" : ""
-                      }`}
-                    >
+                  <tr
+                    key={h.id}
+                    className="border-b border-[var(--border-color)]/50 hover:bg-[var(--bg-tertiary)]/50 transition-colors"
+                  >
                       <td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)]">
                         <div className="flex items-center gap-2">
                           {h.ticker && (
@@ -152,23 +148,34 @@ export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }:
                               src={getLogoUrl(h.ticker, h.exch_code)}
                               alt=""
                               className="w-6 h-6 rounded-full object-cover bg-[var(--bg-tertiary)]"
-                              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                              onError={(e) => {
+                                const img = e.target as HTMLImageElement;
+                                const plainUrl = `https://images.financialmodelingprep.com/symbol/${h.ticker!.toUpperCase()}.png`;
+                                if (img.src !== plainUrl) {
+                                  img.src = plainUrl;
+                                } else {
+                                  img.style.display = "none";
+                                }
+                              }}
                             />
                           )}
                           {h.ticker ? (
-                            <HoldingHoverCard ticker={h.ticker} exchCode={h.exch_code}>
+                            <HoldingHoverCard
+                              ticker={h.ticker}
+                              exchCode={h.exch_code}
+                              figiData={{
+                                figi: h.figi,
+                                composite_figi: h.composite_figi,
+                                share_class_figi: h.share_class_figi,
+                                security_type: h.security_type,
+                                market_sector: h.market_sector,
+                                exch_code: h.exch_code,
+                              }}
+                            >
                               <span className="hover:text-blue-500 transition-colors cursor-default">{h.name}</span>
                             </HoldingHoverCard>
                           ) : (
                             h.name
-                          )}
-                          {hasFigi && (
-                            <svg
-                              className={`w-3 h-3 text-[var(--text-muted)] transition-transform ${isExpanded ? "rotate-180" : ""}`}
-                              fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
                           )}
                         </div>
                       </td>
@@ -180,25 +187,25 @@ export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }:
                       <td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right tabular-nums">
                         {h.quantity != null ? h.quantity.toLocaleString(undefined, { maximumFractionDigits: 6 }) : "—"}
                       </td>
-                      <td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right font-medium tabular-nums">
-                        {h.value_usd != null ? format(h.value_usd) : "—"}
-                      </td>
-                    </tr>
-                    {isExpanded && hasFigi && (
-                      <tr key={`${h.id}-figi`} className="border-b border-[var(--border-color)]/50">
-                        <td colSpan={6} className="px-6 py-3 bg-[var(--bg-tertiary)]/30">
-                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                            <FigiDetail label="FIGI" value={h.figi} />
-                            <FigiDetail label="Composite FIGI" value={h.composite_figi} />
-                            <FigiDetail label="Share Class FIGI" value={h.share_class_figi} />
-                            <FigiDetail label="Security Type" value={h.security_type} />
-                            <FigiDetail label="Market Sector" value={h.market_sector} />
-                            <FigiDetail label="Exchange" value={h.exch_code} />
+                      <td className="px-6 py-3 text-sm text-right tabular-nums">
+                        {h.value_local != null && h.currency ? (
+                          <div>
+                            <span className="font-medium text-[var(--text-primary)]">
+                              {formatLocal(h.value_local, h.currency.toUpperCase())}
+                            </span>
+                            {h.currency.toUpperCase() !== baseCurrency && h.value_usd != null && (
+                              <span className="block text-xs text-[var(--text-muted)]">
+                                {format(h.value_usd)}
+                              </span>
+                            )}
                           </div>
-                        </td>
-                      </tr>
-                    )}
-                  </>
+                        ) : h.value_usd != null ? (
+                          <span className="font-medium text-[var(--text-primary)]">{format(h.value_usd)}</span>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
+                  </tr>
                 );
               })
             )}

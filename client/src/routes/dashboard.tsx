@@ -1,12 +1,15 @@
 import { createRoute, useNavigate } from "@tanstack/react-router";
 import { Route as rootRoute } from "./__root";
 import { useAuth } from "../hooks/useAuth";
-import { useHoldings, useUploads, useWallets, useRefreshStockPrices } from "../hooks/usePortfolio";
+import { useHoldings, useUploads, useWallets, useRefreshStockPrices, useSectorAllocation, useGeographyAllocation } from "../hooks/usePortfolio";
 import { useCurrency } from "../contexts/CurrencyContext";
 import { useEffect, useMemo, useState } from "react";
 import { PortfolioChart } from "../components/PortfolioChart";
 import { BreakdownCards } from "../components/BreakdownCards";
 import { HoldingsTable } from "../components/HoldingsTable";
+import { SectorChart } from "../components/SectorChart";
+import { CurrencyChart } from "../components/CurrencyChart";
+import { GeographyChart } from "../components/GeographyChart";
 import { SourceFilter, type SourceSelection } from "../components/SourceFilter";
 import type { Holding, PortfolioSummary, Upload, Wallet } from "../types";
 
@@ -35,6 +38,8 @@ function DashboardPage() {
   const { data: uploads } = useUploads();
   const { data: wallets } = useWallets();
   const refreshPrices = useRefreshStockPrices();
+  const { data: sectorData, isLoading: sectorLoading } = useSectorAllocation();
+  const { data: geographyData, isLoading: geographyLoading } = useGeographyAllocation();
   const { format, baseCurrency, flag } = useCurrency();
   const [sourceFilter, setSourceFilter] = useState<SourceSelection>({ type: "all" });
 
@@ -118,11 +123,17 @@ function DashboardPage() {
         <BreakdownCards summary={summary} loading={summaryLoading} />
       </div>
 
-      {/* Chart + Actions row */}
+      {/* Charts grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <PortfolioChart summary={summary} loading={summaryLoading} />
+        <CurrencyChart holdings={filteredHoldings} loading={holdingsLoading} />
+        <GeographyChart regions={geographyData ?? []} loading={geographyLoading} />
+        <SectorChart sectors={sectorData ?? []} loading={sectorLoading} />
+      </div>
+
+      {/* Actions row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div className="lg:col-span-2">
-          <PortfolioChart summary={summary} loading={summaryLoading} />
-        </div>
+        <div className="lg:col-span-3">
         <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 flex flex-col gap-3 transition-colors">
           <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-2">Quick Actions</h2>
           <a
@@ -159,6 +170,7 @@ function DashboardPage() {
             </p>
           )}
         </div>
+      </div>
       </div>
 
       {/* Holdings Table */}

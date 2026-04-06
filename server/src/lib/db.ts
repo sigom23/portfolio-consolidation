@@ -75,6 +75,25 @@ export async function initDb(): Promise<void> {
     ALTER TABLE holdings ADD COLUMN IF NOT EXISTS security_type TEXT;
     ALTER TABLE holdings ADD COLUMN IF NOT EXISTS market_sector TEXT;
     ALTER TABLE holdings ADD COLUMN IF NOT EXISTS exch_code TEXT;
+    ALTER TABLE holdings ADD COLUMN IF NOT EXISTS value_local REAL;
+
+    CREATE TABLE IF NOT EXISTS companies (
+      symbol TEXT PRIMARY KEY,
+      company_name TEXT,
+      sector TEXT,
+      industry TEXT,
+      country TEXT,
+      description TEXT,
+      ceo TEXT,
+      website TEXT,
+      exchange TEXT,
+      currency TEXT,
+      market_cap REAL,
+      image TEXT,
+      ipo_date TEXT,
+      price_range TEXT,
+      last_fetched TIMESTAMP DEFAULT NOW()
+    );
   `);
 }
 
@@ -220,11 +239,18 @@ export async function updateHoldingFigi(
   );
 }
 
-export async function updateHoldingValue(holdingId: number, valueUsd: number): Promise<void> {
-  await getPool().query(
-    "UPDATE holdings SET value_usd = $1, last_updated = NOW() WHERE id = $2",
-    [valueUsd, holdingId]
-  );
+export async function updateHoldingValue(holdingId: number, valueUsd: number, valueLocal?: number): Promise<void> {
+  if (valueLocal !== undefined) {
+    await getPool().query(
+      "UPDATE holdings SET value_usd = $1, value_local = $2, last_updated = NOW() WHERE id = $3",
+      [valueUsd, valueLocal, holdingId]
+    );
+  } else {
+    await getPool().query(
+      "UPDATE holdings SET value_usd = $1, last_updated = NOW() WHERE id = $2",
+      [valueUsd, holdingId]
+    );
+  }
 }
 
 export async function getStockHoldingsByUser(userId: string): Promise<Holding[]> {
@@ -233,6 +259,48 @@ export async function getStockHoldingsByUser(userId: string): Promise<Holding[]>
     [userId]
   );
   return rows as Holding[];
+}
+
+// Company profile cache
+export interface CachedCompany {
+  symbol: string;
+  company_name: string | null;
+  sector: string | null;
+  industry: string | null;
+  country: string | null;
+  description: string | null;
+  ceo: string | null;
+  website: string | null;
+  exchange: string | null;
+  currency: string | null;
+  market_cap: number | null;
+  image: string | null;
+  ipo_date: string | null;
+  price_range: string | null;
+  last_fetched: string;
+}
+
+export async function getCachedCompany(symbol: string): Promise<CachedCompany | undefined> {
+  const { rows } = await getPool().query("SELECT * FROM companies WHERE symbol = $1", [symbol.toUpperCase()]);
+  return rows[0] as CachedCompany | undefined;
+}
+
+export async function upsertCompany(company: Omit<CachedCompany, "last_fetched">): Promise<void> {
+  await getPool().query(
+    `INSERT INTO companies (symbol, company_name, sector, industry, country, description, ceo, website, exchange, currency, market_cap, image, ipo_date, price_range, last_fetched)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW())
+     ON CONFLICT(symbol) DO UPDATE SET
+       company_name = EXCLUDED.company_name, sector = EXCLUDED.sector, industry = EXCLUDED.industry,
+       country = EXCLUDED.country, description = EXCLUDED.description, ceo = EXCLUDED.ceo,
+       website = EXCLUDED.website, exchange = EXCLUDED.exchange, currency = EXCLUDED.currency,
+       market_cap = EXCLUDED.market_cap, image = EXCLUDED.image, ipo_date = EXCLUDED.ipo_date,
+       price_range = EXCLUDED.price_range, last_fetched = NOW()`,
+    [
+      company.symbol.toUpperCase(), company.company_name, company.sector, company.industry,
+      company.country, company.description, company.ceo, company.website, company.exchange,
+      company.currency, company.market_cap, company.image, company.ipo_date, company.price_range,
+    ]
+  );
 }
 
 export { getPool as pool };

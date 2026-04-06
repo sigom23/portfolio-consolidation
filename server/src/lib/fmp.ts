@@ -1,3 +1,5 @@
+import { getCachedCompany, upsertCompany } from "./db.js";
+
 const FMP_BASE = "https://financialmodelingprep.com/stable";
 
 interface FmpQuote {
@@ -58,22 +60,49 @@ async function fetchProfile(symbol: string, apiKey: string): Promise<Record<stri
 }
 
 export async function getCompanyProfile(ticker: string, exchCode?: string): Promise<CompanyProfile | null> {
+  const symbol = resolveFmpSymbol(ticker, exchCode);
+
+  // 1. Check in-memory cache (hot path)
+  const memCached = profileCache.get(symbol);
+  if (memCached && Date.now() - memCached.fetchedAt < PROFILE_CACHE_TTL) {
+    return memCached.data;
+  }
+
+  // 2. Check DB cache (persistent, survives restarts)
+  try {
+    const dbCached = await getCachedCompany(symbol);
+    if (dbCached) {
+      const profile: CompanyProfile = {
+        symbol: dbCached.symbol,
+        companyName: dbCached.company_name ?? "",
+        price: 0, change: 0, changePercentage: 0, // dynamic fields not cached
+        marketCap: dbCached.market_cap ?? 0,
+        sector: dbCached.sector ?? "",
+        industry: dbCached.industry ?? "",
+        description: dbCached.description ?? "",
+        ceo: dbCached.ceo ?? "",
+        website: dbCached.website ?? "",
+        exchange: dbCached.exchange ?? "",
+        currency: dbCached.currency ?? "",
+        range: dbCached.price_range ?? "",
+        image: dbCached.image ?? "",
+        ipoDate: dbCached.ipo_date ?? "",
+        country: dbCached.country ?? "",
+      };
+      profileCache.set(symbol, { data: profile, fetchedAt: Date.now() });
+      return profile;
+    }
+  } catch {
+    // DB read failed, continue to FMP
+  }
+
+  // 3. Fetch from FMP API
   const apiKey = process.env.FMP_API_KEY;
   if (!apiKey) return null;
 
-  const key = ticker.toUpperCase();
-  const cached = profileCache.get(key);
-  if (cached && Date.now() - cached.fetchedAt < PROFILE_CACHE_TTL) {
-    return cached.data;
-  }
-
-  // Try plain ticker first, then with exchange suffix
-  let data = await fetchProfile(key, apiKey);
+  let data = await fetchProfile(symbol, apiKey);
   if (!data && exchCode) {
-    const suffix = EXCH_SUFFIX[exchCode.toUpperCase()];
-    if (suffix) {
-      data = await fetchProfile(`${key}${suffix}`, apiKey);
-    }
+    data = await fetchProfile(ticker.toUpperCase(), apiKey);
   }
   if (!data) return null;
 
@@ -98,7 +127,29 @@ export async function getCompanyProfile(ticker: string, exchCode?: string): Prom
     country: String(d.country ?? ""),
   };
 
-  profileCache.set(key, { data: profile, fetchedAt: Date.now() });
+  // 4. Persist to DB cache
+  try {
+    await upsertCompany({
+      symbol: profile.symbol || symbol,
+      company_name: profile.companyName,
+      sector: profile.sector,
+      industry: profile.industry,
+      country: profile.country,
+      description: profile.description,
+      ceo: profile.ceo,
+      website: profile.website,
+      exchange: profile.exchange,
+      currency: profile.currency,
+      market_cap: profile.marketCap,
+      image: profile.image,
+      ipo_date: profile.ipoDate,
+      price_range: profile.range,
+    });
+  } catch {
+    // DB write failed, still return the profile
+  }
+
+  profileCache.set(symbol, { data: profile, fetchedAt: Date.now() });
   return profile;
 }
 
@@ -124,16 +175,27 @@ export async function getHistoricalPrices(ticker: string, exchCode?: string): Pr
   const from = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
   try {
-    const res = await fetch(`${FMP_BASE}/historical-price-eod/light?symbol=${symbol}&from=${from}&to=${to}&apikey=${apiKey}`);
-    if (!res.ok) return [];
+    let data = await fetchHistoryRaw(symbol, from, to, apiKey);
 
-    const data = (await res.json()) as { date: string; price: number }[];
+    // Fallback to plain ticker if suffixed version returns no data
+    const plain = ticker.toUpperCase();
+    if (data.length === 0 && symbol !== plain) {
+      data = await fetchHistoryRaw(plain, from, to, apiKey);
+    }
+
     const prices = data.map((d) => ({ date: d.date, price: d.price })).reverse();
     historyCache.set(symbol, { data: prices, fetchedAt: Date.now() });
     return prices;
   } catch {
     return [];
   }
+}
+
+async function fetchHistoryRaw(symbol: string, from: string, to: string, apiKey: string): Promise<{ date: string; price: number }[]> {
+  const res = await fetch(`${FMP_BASE}/historical-price-eod/light?symbol=${symbol}&from=${from}&to=${to}&apikey=${apiKey}`);
+  if (!res.ok) return [];
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
 }
 
 // Resolve a ticker + optional exchange code to a FMP-compatible symbol

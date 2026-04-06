@@ -25,15 +25,20 @@ interface FigiResponse {
   warning?: string;
 }
 
-export async function lookupTickers(tickers: string[]): Promise<Map<string, FigiResult>> {
+export async function lookupTickers(tickers: string[], currencies?: Map<string, string>): Promise<Map<string, FigiResult>> {
   const apiKey = process.env.OPENFIGI_API_KEY;
   if (!apiKey || tickers.length === 0) return new Map();
 
-  // Build mapping jobs — one per ticker
-  const jobs = tickers.map((ticker) => ({
-    idType: "TICKER",
-    idValue: ticker.toUpperCase(),
-  }));
+  // Build mapping jobs — one per ticker, with optional currency hint
+  const jobs = tickers.map((ticker) => {
+    const job: Record<string, string> = {
+      idType: "TICKER",
+      idValue: ticker.toUpperCase(),
+    };
+    const currency = currencies?.get(ticker.toUpperCase());
+    if (currency) job.currency = currency.toUpperCase();
+    return job;
+  });
 
   // OpenFIGI allows max 100 jobs per request
   const results = new Map<string, FigiResult>();

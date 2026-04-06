@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchPortfolioSummary, fetchHoldings, fetchUploads, uploadStatement, deleteUpload,
   fetchWallets, addWallet, deleteWallet, refreshWallet, refreshStockPrices,
+  fetchSectorAllocation, fetchGeographyAllocation,
 } from "../services/api";
 
 export function usePortfolioSummary() {
@@ -85,6 +86,20 @@ export function useRefreshWallet() {
   return useMutation({
     mutationFn: refreshWallet,
     onSuccess: () => invalidateWalletQueries(queryClient),
+  });
+}
+
+export function useSectorAllocation() {
+  return useQuery({
+    queryKey: ["holdings", "sector-allocation"],
+    queryFn: fetchSectorAllocation,
+  });
+}
+
+export function useGeographyAllocation() {
+  return useQuery({
+    queryKey: ["holdings", "geography-allocation"],
+    queryFn: fetchGeographyAllocation,
   });
 }
 

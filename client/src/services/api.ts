@@ -127,6 +127,34 @@ export async function fetchPriceHistory(ticker: string, exchCode?: string): Prom
   }
 }
 
+export interface SectorAllocation {
+  name: string;
+  value: number;
+}
+
+export async function fetchSectorAllocation(): Promise<SectorAllocation[]> {
+  try {
+    const { data } = await api.get<ApiResponse<SectorAllocation[]>>("/api/holdings/sector-allocation");
+    return data.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export interface GeographyAllocation {
+  name: string;
+  value: number;
+}
+
+export async function fetchGeographyAllocation(): Promise<GeographyAllocation[]> {
+  try {
+    const { data } = await api.get<ApiResponse<GeographyAllocation[]>>("/api/holdings/geography-allocation");
+    return data.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchExchangeRates(base: string = "USD"): Promise<ExchangeRateData> {
   const { data } = await api.get<ApiResponse<ExchangeRateData>>(`/api/exchange-rates?base=${base}`);
   return data.data!;

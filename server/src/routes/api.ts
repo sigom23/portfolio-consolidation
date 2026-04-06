@@ -59,13 +59,24 @@ router.post("/holdings/refresh-prices", async (req: Request, res: Response) => {
     }
     const prices = await getQuotes(tickerHoldings);
 
+    // Get exchange rates for currency conversion to USD
+    const rates = await getExchangeRates("USD");
+
     let updated = 0;
     for (const holding of stockHoldings) {
       if (holding.ticker && holding.quantity) {
         const price = prices.get(holding.ticker.toUpperCase());
         if (price !== undefined) {
-          const newValue = holding.quantity * price;
-          await updateHoldingValue(holding.id, newValue);
+          const valueLocal = holding.quantity * price;
+          let valueUsd = valueLocal;
+
+          // Convert from holding's native currency to USD
+          const ccy = (holding.currency ?? "USD").toUpperCase();
+          if (ccy !== "USD" && rates[ccy]) {
+            valueUsd = valueLocal / rates[ccy];
+          }
+
+          await updateHoldingValue(holding.id, valueUsd, valueLocal);
           updated++;
         }
       }
@@ -91,6 +102,76 @@ router.get("/exchange-rates", async (req: Request, res: Response) => {
     res.status(500).json({ success: false, error: message });
   }
 });
+
+// GET /api/holdings/sector-allocation — sector breakdown for stock holdings
+router.get("/holdings/sector-allocation", async (req: Request, res: Response) => {
+  try {
+    const stockHoldings = await getStockHoldingsByUser(req.session.userId!);
+    const sectorMap = new Map<string, number>();
+
+    // Fetch profiles to get sector info
+    for (const h of stockHoldings) {
+      if (!h.ticker || !h.value_usd) continue;
+      const profile = await getCompanyProfile(h.ticker, h.exch_code ?? undefined);
+      const sector = profile?.sector || "Unknown";
+      sectorMap.set(sector, (sectorMap.get(sector) ?? 0) + h.value_usd);
+    }
+
+    const sectors = [...sectorMap.entries()]
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+
+    res.json({ success: true, data: sectors });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to compute sector allocation";
+    res.status(500).json({ success: false, error: message });
+  }
+});
+
+// GET /api/holdings/geography-allocation — geography breakdown for stock holdings
+router.get("/holdings/geography-allocation", async (req: Request, res: Response) => {
+  try {
+    const stockHoldings = await getStockHoldingsByUser(req.session.userId!);
+    const regionMap = new Map<string, number>();
+
+    for (const h of stockHoldings) {
+      if (!h.ticker || !h.value_usd) continue;
+      const profile = await getCompanyProfile(h.ticker, h.exch_code ?? undefined);
+      const country = profile?.country || "Unknown";
+      const region = countryToRegion(country);
+      regionMap.set(region, (regionMap.get(region) ?? 0) + h.value_usd);
+    }
+
+    const regions = [...regionMap.entries()]
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+
+    res.json({ success: true, data: regions });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to compute geography allocation";
+    res.status(500).json({ success: false, error: message });
+  }
+});
+
+function countryToRegion(country: string): string {
+  const c = country.toUpperCase();
+  const northAmerica = ["US", "CA", "UNITED STATES", "CANADA", "USA", "MX", "MEXICO"];
+  const europe = [
+    "GB", "UK", "DE", "FR", "CH", "NL", "SE", "NO", "DK", "FI", "IE", "ES", "IT", "PT", "AT", "BE", "LU",
+    "UNITED KINGDOM", "GERMANY", "FRANCE", "SWITZERLAND", "NETHERLANDS", "SWEDEN", "NORWAY", "DENMARK",
+    "FINLAND", "IRELAND", "SPAIN", "ITALY", "PORTUGAL", "AUSTRIA", "BELGIUM", "LUXEMBOURG",
+  ];
+  const asiaPacific = [
+    "JP", "CN", "HK", "KR", "TW", "AU", "NZ", "SG", "IN",
+    "JAPAN", "CHINA", "HONG KONG", "SOUTH KOREA", "TAIWAN", "AUSTRALIA", "NEW ZEALAND", "SINGAPORE", "INDIA",
+  ];
+
+  if (northAmerica.includes(c)) return "North America";
+  if (europe.includes(c)) return "Europe";
+  if (asiaPacific.includes(c)) return "Asia Pacific";
+  if (c === "UNKNOWN" || c === "") return "Unknown";
+  return "Emerging Markets";
+}
 
 // GET /api/company/:ticker — company profile for hover card
 router.get("/company/:ticker", async (req: Request, res: Response) => {

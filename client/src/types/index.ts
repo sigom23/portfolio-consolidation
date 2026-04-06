@@ -20,6 +20,8 @@ export interface Holding {
   security_type: string | null;
   market_sector: string | null;
   exch_code: string | null;
+  currency: string | null;
+  value_local: number | null;
 }
 
 export interface PortfolioSummary {

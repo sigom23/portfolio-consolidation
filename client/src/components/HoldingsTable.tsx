@@ -51,6 +51,21 @@ function FigiDetail({ label, value }: { label: string; value: string | null }) {
   );
 }
 
+const EXCH_SUFFIX: Record<string, string> = {
+  SW: ".SW", LN: ".L", GR: ".DE", FP: ".PA", IM: ".MI",
+  SM: ".MC", NA: ".AS", BB: ".BR", JP: ".T", HK: ".HK",
+  AU: ".AX", CN: ".TO",
+};
+
+function getLogoUrl(ticker: string, exchCode?: string | null): string {
+  let symbol = ticker.toUpperCase();
+  if (exchCode) {
+    const suffix = EXCH_SUFFIX[exchCode.toUpperCase()];
+    if (suffix) symbol = `${symbol}${suffix}`;
+  }
+  return `https://images.financialmodelingprep.com/symbol/${symbol}.png`;
+}
+
 const SPAM_THRESHOLD = 1;
 
 export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }: Props) {
@@ -134,7 +149,7 @@ export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }:
                         <div className="flex items-center gap-2">
                           {h.ticker && (
                             <img
-                              src={`https://images.financialmodelingprep.com/symbol/${h.ticker.toUpperCase()}.png`}
+                              src={getLogoUrl(h.ticker, h.exch_code)}
                               alt=""
                               className="w-6 h-6 rounded-full object-cover bg-[var(--bg-tertiary)]"
                               onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}

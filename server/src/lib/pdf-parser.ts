@@ -70,7 +70,7 @@ async function parsePdfWithOpenAI(fileBuffer: Buffer): Promise<ParsedHolding[]> 
   let response;
   try {
     response = await client.chat.completions.create({
-      model: "gpt-4.1-mini",
+      model: "gpt-5.4-nano",
       max_tokens: 4096,
       messages: [
         {

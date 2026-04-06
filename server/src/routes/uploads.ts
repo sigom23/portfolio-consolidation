@@ -11,8 +11,10 @@ import {
   createHoldingFromUpload,
   getHoldingsByUpload,
   getUploadFileData,
+  updateHoldingFigi,
 } from "../lib/db.js";
 import { parsePdf } from "../lib/pdf-parser.js";
+import { lookupTickers } from "../lib/openfigi.js";
 import { parseCsv } from "../lib/csv-parser.js";
 
 const router = Router();
@@ -52,6 +54,32 @@ router.post("/", upload.single("file"), async (req: Request, res: Response) => {
       const created = await Promise.all(
         holdings.map((h) => createHoldingFromUpload(userId, uploadRecord.id, h))
       );
+
+      // Enrich holdings with OpenFIGI data
+      const tickers = created.filter((h) => h.ticker).map((h) => h.ticker!);
+      if (tickers.length > 0) {
+        try {
+          const figiData = await lookupTickers(tickers);
+          for (const holding of created) {
+            if (holding.ticker) {
+              const figi = figiData.get(holding.ticker.toUpperCase());
+              if (figi) {
+                await updateHoldingFigi(holding.id, figi);
+                Object.assign(holding, {
+                  figi: figi.figi,
+                  composite_figi: figi.compositeFIGI,
+                  share_class_figi: figi.shareClassFIGI,
+                  security_type: figi.securityType,
+                  market_sector: figi.marketSector,
+                  exch_code: figi.exchCode,
+                });
+              }
+            }
+          }
+        } catch (figiErr) {
+          console.warn("OpenFIGI enrichment failed:", figiErr);
+        }
+      }
 
       await updateUploadStatus(uploadRecord.id, "processed");
 

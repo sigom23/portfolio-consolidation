@@ -13,6 +13,12 @@ export interface Holding {
   quantity: number | null;
   value_usd: number | null;
   source_type: string;
+  figi: string | null;
+  composite_figi: string | null;
+  share_class_figi: string | null;
+  security_type: string | null;
+  market_sector: string | null;
+  exch_code: string | null;
 }
 
 export interface PortfolioSummary {

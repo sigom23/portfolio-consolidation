@@ -21,10 +21,21 @@ function SourceBadge({ type }: { type: string }) {
   );
 }
 
-const SPAM_THRESHOLD = 1; // $1
+function FigiDetail({ label, value }: { label: string; value: string | null }) {
+  if (!value) return null;
+  return (
+    <div>
+      <span className="text-[var(--text-muted)] text-[10px] uppercase tracking-wide">{label}</span>
+      <p className="text-xs text-[var(--text-primary)] font-mono">{value}</p>
+    </div>
+  );
+}
+
+const SPAM_THRESHOLD = 1;
 
 export function HoldingsTable({ holdings, loading }: Props) {
   const [hideSpam, setHideSpam] = useState(true);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const spamCount = holdings.filter((h) => (h.value_usd ?? 0) < SPAM_THRESHOLD && h.source_type === "wallet").length;
   const filtered = hideSpam
@@ -85,27 +96,63 @@ export function HoldingsTable({ holdings, loading }: Props) {
                 </td>
               </tr>
             ) : (
-              filtered.map((h) => (
-                <tr
-                  key={h.id}
-                  className="border-b border-[var(--border-color)]/50 hover:bg-[var(--bg-tertiary)]/50 transition-colors"
-                >
-                  <td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)]">{h.name}</td>
-                  <td className="px-6 py-3 text-sm text-[var(--text-secondary)] font-mono">{h.ticker ?? "—"}</td>
-                  <td className="px-6 py-3 text-sm text-[var(--text-secondary)] capitalize">{h.asset_type ?? "—"}</td>
-                  <td className="px-6 py-3 text-sm">
-                    <SourceBadge type={h.source_type} />
-                  </td>
-                  <td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right tabular-nums">
-                    {h.quantity != null ? h.quantity.toLocaleString(undefined, { maximumFractionDigits: 6 }) : "—"}
-                  </td>
-                  <td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right font-medium tabular-nums">
-                    {h.value_usd != null
-                      ? `$${h.value_usd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                      : "—"}
-                  </td>
-                </tr>
-              ))
+              filtered.map((h) => {
+                const hasFigi = h.figi || h.composite_figi || h.security_type;
+                const isExpanded = expandedId === h.id;
+
+                return (
+                  <>
+                    <tr
+                      key={h.id}
+                      onClick={() => hasFigi && setExpandedId(isExpanded ? null : h.id)}
+                      className={`border-b border-[var(--border-color)]/50 hover:bg-[var(--bg-tertiary)]/50 transition-colors ${
+                        hasFigi ? "cursor-pointer" : ""
+                      }`}
+                    >
+                      <td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)]">
+                        <div className="flex items-center gap-1.5">
+                          {h.name}
+                          {hasFigi && (
+                            <svg
+                              className={`w-3 h-3 text-[var(--text-muted)] transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-3 text-sm text-[var(--text-secondary)] font-mono">{h.ticker ?? "—"}</td>
+                      <td className="px-6 py-3 text-sm text-[var(--text-secondary)] capitalize">{h.asset_type ?? "—"}</td>
+                      <td className="px-6 py-3 text-sm">
+                        <SourceBadge type={h.source_type} />
+                      </td>
+                      <td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right tabular-nums">
+                        {h.quantity != null ? h.quantity.toLocaleString(undefined, { maximumFractionDigits: 6 }) : "—"}
+                      </td>
+                      <td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right font-medium tabular-nums">
+                        {h.value_usd != null
+                          ? `$${h.value_usd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                          : "—"}
+                      </td>
+                    </tr>
+                    {isExpanded && hasFigi && (
+                      <tr key={`${h.id}-figi`} className="border-b border-[var(--border-color)]/50">
+                        <td colSpan={6} className="px-6 py-3 bg-[var(--bg-tertiary)]/30">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                            <FigiDetail label="FIGI" value={h.figi} />
+                            <FigiDetail label="Composite FIGI" value={h.composite_figi} />
+                            <FigiDetail label="Share Class FIGI" value={h.share_class_figi} />
+                            <FigiDetail label="Security Type" value={h.security_type} />
+                            <FigiDetail label="Market Sector" value={h.market_sector} />
+                            <FigiDetail label="Exchange" value={h.exch_code} />
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                );
+              })
             )}
           </tbody>
         </table>

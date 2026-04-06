@@ -1,7 +1,7 @@
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import type { RequestHandler, Request, Response, NextFunction } from "express";
-import { pool } from "../lib/db.js";
+import { pool as getPool } from "../lib/db.js";
 import { createOrUpdateUser } from "../lib/db.js";
 
 const PgSession = connectPgSimple(session);
@@ -9,7 +9,7 @@ const PgSession = connectPgSimple(session);
 export function sessionMiddleware(): RequestHandler {
   return session({
     store: new PgSession({
-      pool,
+      pool: getPool(),
       createTableIfMissing: true,
     }),
     secret: process.env.SESSION_SECRET || "dev-secret-change-me",

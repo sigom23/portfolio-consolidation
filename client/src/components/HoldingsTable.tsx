@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Holding } from "../types";
 
 interface Props {
@@ -20,11 +21,39 @@ function SourceBadge({ type }: { type: string }) {
   );
 }
 
+const SPAM_THRESHOLD = 1; // $1
+
 export function HoldingsTable({ holdings, loading }: Props) {
+  const [hideSpam, setHideSpam] = useState(true);
+
+  const spamCount = holdings.filter((h) => (h.value_usd ?? 0) < SPAM_THRESHOLD && h.source_type === "wallet").length;
+  const filtered = hideSpam
+    ? holdings.filter((h) => (h.value_usd ?? 0) >= SPAM_THRESHOLD || h.source_type !== "wallet")
+    : holdings;
+
   return (
     <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden transition-colors">
-      <div className="px-6 py-4 border-b border-[var(--border-color)]">
+      <div className="px-6 py-4 border-b border-[var(--border-color)] flex items-center justify-between">
         <h2 className="text-lg font-semibold text-[var(--text-primary)]">Holdings</h2>
+        {spamCount > 0 && (
+          <button
+            onClick={() => setHideSpam(!hideSpam)}
+            className="flex items-center gap-2 text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
+          >
+            <div
+              className={`w-8 h-4 rounded-full relative transition-colors ${
+                hideSpam ? "bg-blue-500" : "bg-[var(--bg-tertiary)]"
+              }`}
+            >
+              <div
+                className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform ${
+                  hideSpam ? "translate-x-4" : "translate-x-0.5"
+                }`}
+              />
+            </div>
+            Hide spam ({spamCount})
+          </button>
+        )}
       </div>
       <div className="overflow-x-auto">
         <table className="w-full">
@@ -49,14 +78,14 @@ export function HoldingsTable({ holdings, loading }: Props) {
                   ))}
                 </tr>
               ))
-            ) : holdings.length === 0 ? (
+            ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-6 py-12 text-center text-[var(--text-muted)]">
                   No holdings yet. Upload a statement or connect a wallet to get started.
                 </td>
               </tr>
             ) : (
-              holdings.map((h) => (
+              filtered.map((h) => (
                 <tr
                   key={h.id}
                   className="border-b border-[var(--border-color)]/50 hover:bg-[var(--bg-tertiary)]/50 transition-colors"

@@ -4,6 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import { usePortfolioSummary, useHoldings } from "../hooks/usePortfolio";
 import { useEffect } from "react";
 import { PortfolioChart } from "../components/PortfolioChart";
+import { BreakdownCards } from "../components/BreakdownCards";
 import { HoldingsTable } from "../components/HoldingsTable";
 
 function DashboardPage() {
@@ -20,8 +21,8 @@ function DashboardPage() {
 
   if (authLoading || !user) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-gray-500">Loading...</p>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -29,41 +30,53 @@ function DashboardPage() {
   const totalValue = summary?.totalValue ?? 0;
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto">
+      {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500 mt-1">Welcome back, {user.name ?? user.email}</p>
+        <h1 className="text-2xl font-bold text-[var(--text-primary)]">Dashboard</h1>
+        <p className="text-sm text-[var(--text-muted)] mt-1">Welcome back, {user.name ?? user.email}</p>
       </div>
 
-      {/* Portfolio Value */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-        <p className="text-sm text-gray-500 mb-1">Total Portfolio Value</p>
-        <p className="text-3xl font-bold text-gray-900">
-          {summaryLoading ? (
-            <span className="text-gray-400">Loading...</span>
-          ) : (
-            `$${totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-          )}
-        </p>
+      {/* Total Value Card */}
+      <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 mb-6 transition-colors">
+        <p className="text-sm text-[var(--text-muted)] mb-1">Total Portfolio Value</p>
+        {summaryLoading ? (
+          <div className="h-9 w-48 bg-[var(--bg-tertiary)] rounded animate-pulse" />
+        ) : (
+          <p className="text-3xl font-bold text-[var(--text-primary)] tabular-nums">
+            ${totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+        )}
+      </div>
+
+      {/* Breakdown Cards */}
+      <div className="mb-6">
+        <BreakdownCards summary={summary} loading={summaryLoading} />
       </div>
 
       {/* Chart + Actions row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="lg:col-span-2">
-          <PortfolioChart />
+          <PortfolioChart summary={summary} loading={summaryLoading} />
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-6 flex flex-col gap-3">
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">Quick Actions</h2>
+        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 flex flex-col gap-3 transition-colors">
+          <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-2">Quick Actions</h2>
           <a
             href="/upload"
-            className="block text-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
           >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
             Upload Statement
           </a>
           <a
             href="/wallets"
-            className="block text-center px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--border-color)] text-[var(--text-primary)] rounded-lg text-sm font-medium hover:bg-[var(--bg-tertiary)] transition-colors"
           >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
             Add Wallet
           </a>
         </div>

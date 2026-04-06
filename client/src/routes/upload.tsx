@@ -19,33 +19,33 @@ function UploadPage() {
 
   if (authLoading || !user) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-gray-500">Loading...</p>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Upload Statement</h1>
+    <div className="px-6 lg:px-8 py-8 max-w-4xl mx-auto">
+      <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-6">Upload Statement</h1>
 
       <UploadForm />
 
       {/* Upload History */}
-      <div className="mt-8 bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Upload History</h2>
+      <div className="mt-8 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden transition-colors">
+        <div className="px-6 py-4 border-b border-[var(--border-color)]">
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Upload History</h2>
         </div>
         {isLoading ? (
-          <div className="px-6 py-8 text-center text-gray-400">Loading uploads...</div>
+          <div className="px-6 py-8 text-center text-[var(--text-muted)]">Loading uploads...</div>
         ) : !uploads || uploads.length === 0 ? (
-          <div className="px-6 py-8 text-center text-gray-400">
+          <div className="px-6 py-8 text-center text-[var(--text-muted)]">
             No uploads yet. Upload a statement above to get started.
           </div>
         ) : (
           <table className="w-full">
             <thead>
-              <tr className="text-left text-sm text-gray-500 border-b border-gray-100">
+              <tr className="text-left text-xs text-[var(--text-muted)] border-b border-[var(--border-color)]">
                 <th className="px-6 py-3 font-medium">File</th>
                 <th className="px-6 py-3 font-medium">Type</th>
                 <th className="px-6 py-3 font-medium">Status</th>
@@ -55,30 +55,30 @@ function UploadPage() {
             </thead>
             <tbody>
               {uploads.map((u) => (
-                <tr key={u.id} className="border-b border-gray-50 hover:bg-gray-50">
-                  <td className="px-6 py-3 text-sm text-gray-900">{u.filename ?? "—"}</td>
-                  <td className="px-6 py-3 text-sm text-gray-600 uppercase">{u.file_type ?? "—"}</td>
+                <tr key={u.id} className="border-b border-[var(--border-color)]/50 hover:bg-[var(--bg-tertiary)]/50 transition-colors">
+                  <td className="px-6 py-3 text-sm text-[var(--text-primary)]">{u.filename ?? "—"}</td>
+                  <td className="px-6 py-3 text-sm text-[var(--text-secondary)] uppercase">{u.file_type ?? "—"}</td>
                   <td className="px-6 py-3 text-sm">
                     <span
                       className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
                         u.status === "processed"
-                          ? "bg-green-100 text-green-700"
+                          ? "bg-green-500/10 text-green-500"
                           : u.status === "failed"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-yellow-100 text-yellow-700"
+                            ? "bg-red-500/10 text-red-500"
+                            : "bg-yellow-500/10 text-yellow-500"
                       }`}
                     >
                       {u.status}
                     </span>
                   </td>
-                  <td className="px-6 py-3 text-sm text-gray-600">
+                  <td className="px-6 py-3 text-sm text-[var(--text-secondary)]">
                     {new Date(u.uploaded_at).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-3 text-sm">
                     <button
                       onClick={() => deleteMutation.mutate(u.id)}
                       disabled={deleteMutation.isPending}
-                      className="text-red-600 hover:text-red-800 text-xs"
+                      className="text-red-500 hover:text-red-400 text-xs"
                     >
                       Delete
                     </button>

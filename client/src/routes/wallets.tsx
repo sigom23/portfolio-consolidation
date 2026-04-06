@@ -18,15 +18,15 @@ function WalletsPage() {
 
   if (authLoading || !user) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-gray-500">Loading...</p>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Wallet Management</h1>
+    <div className="px-6 lg:px-8 py-8 max-w-4xl mx-auto">
+      <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-6">Wallet Management</h1>
       <WalletList wallets={wallets ?? []} loading={isLoading} />
     </div>
   );

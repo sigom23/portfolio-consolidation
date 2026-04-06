@@ -1,23 +1,41 @@
 import { useState } from "react";
-import type { Holding } from "../types";
+import type { Holding, Upload, Wallet } from "../types";
 import { useCurrency } from "../contexts/CurrencyContext";
 
 interface Props {
   holdings: Holding[];
   loading: boolean;
+  uploads?: Upload[];
+  wallets?: Wallet[];
 }
 
-function SourceBadge({ type }: { type: string }) {
-  const isWallet = type === "wallet";
+function truncateAddress(addr: string): string {
+  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+}
+
+function SourceBadge({ holding, uploads, wallets }: { holding: Holding; uploads: Upload[]; wallets: Wallet[] }) {
+  const isWallet = holding.source_type === "wallet";
+  let detail = "";
+
+  if (isWallet && holding.source_id) {
+    const wallet = wallets.find((w) => String(w.id) === holding.source_id);
+    detail = wallet?.label ?? (wallet ? truncateAddress(wallet.address) : "");
+  } else if (!isWallet && holding.source_id) {
+    const upload = uploads.find((u) => String(u.id) === holding.source_id);
+    detail = upload?.filename ?? "";
+  }
+
   return (
     <span
-      className={`inline-block px-2 py-0.5 rounded text-[10px] font-medium ${
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
         isWallet
           ? "bg-purple-500/10 text-purple-500"
           : "bg-blue-500/10 text-blue-500"
       }`}
+      title={detail}
     >
       {isWallet ? "Wallet" : "Upload"}
+      {detail && <span className="opacity-70 max-w-[80px] truncate">· {detail}</span>}
     </span>
   );
 }
@@ -34,7 +52,7 @@ function FigiDetail({ label, value }: { label: string; value: string | null }) {
 
 const SPAM_THRESHOLD = 1;
 
-export function HoldingsTable({ holdings, loading }: Props) {
+export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }: Props) {
   const { format, baseCurrency } = useCurrency();
   const [hideSpam, setHideSpam] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -127,7 +145,7 @@ export function HoldingsTable({ holdings, loading }: Props) {
                       <td className="px-6 py-3 text-sm text-[var(--text-secondary)] font-mono">{h.ticker ?? "—"}</td>
                       <td className="px-6 py-3 text-sm text-[var(--text-secondary)] capitalize">{h.asset_type ?? "—"}</td>
                       <td className="px-6 py-3 text-sm">
-                        <SourceBadge type={h.source_type} />
+                        <SourceBadge holding={h} uploads={uploads} wallets={wallets} />
                       </td>
                       <td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right tabular-nums">
                         {h.quantity != null ? h.quantity.toLocaleString(undefined, { maximumFractionDigits: 6 }) : "—"}

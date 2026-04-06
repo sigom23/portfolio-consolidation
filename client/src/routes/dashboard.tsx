@@ -1,26 +1,61 @@
 import { createRoute, useNavigate } from "@tanstack/react-router";
 import { Route as rootRoute } from "./__root";
 import { useAuth } from "../hooks/useAuth";
-import { usePortfolioSummary, useHoldings, useRefreshStockPrices } from "../hooks/usePortfolio";
+import { useHoldings, useUploads, useWallets, useRefreshStockPrices } from "../hooks/usePortfolio";
 import { useCurrency } from "../contexts/CurrencyContext";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PortfolioChart } from "../components/PortfolioChart";
 import { BreakdownCards } from "../components/BreakdownCards";
 import { HoldingsTable } from "../components/HoldingsTable";
+import { SourceFilter, type SourceSelection } from "../components/SourceFilter";
+import type { Holding, PortfolioSummary, Upload, Wallet } from "../types";
+
+function computeSummary(holdings: Holding[]): PortfolioSummary {
+  const breakdown = { stocks: 0, crypto: 0, bonds: 0, cash: 0, other: 0 };
+  let totalValue = 0;
+
+  for (const h of holdings) {
+    const val = h.value_usd ?? 0;
+    totalValue += val;
+    const type = (h.asset_type ?? "other").toLowerCase();
+    if (type in breakdown) {
+      breakdown[type as keyof typeof breakdown] += val;
+    } else {
+      breakdown.other += val;
+    }
+  }
+
+  return { totalValue, breakdown };
+}
 
 function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { data: summary, isLoading: summaryLoading } = usePortfolioSummary();
   const { data: holdings, isLoading: holdingsLoading } = useHoldings();
+  const { data: uploads } = useUploads();
+  const { data: wallets } = useWallets();
   const refreshPrices = useRefreshStockPrices();
   const { format, baseCurrency, flag } = useCurrency();
+  const [sourceFilter, setSourceFilter] = useState<SourceSelection>({ type: "all" });
 
   useEffect(() => {
     if (!authLoading && !user) {
       navigate({ to: "/" });
     }
   }, [authLoading, user, navigate]);
+
+  // Filter holdings by selected source
+  const filteredHoldings = useMemo(() => {
+    if (!holdings) return [];
+    if (sourceFilter.type === "all") return holdings;
+    return holdings.filter(
+      (h) => h.source_type === sourceFilter.type && h.source_id === sourceFilter.id
+    );
+  }, [holdings, sourceFilter]);
+
+  // Compute summary from filtered holdings (client-side)
+  const summary = useMemo(() => computeSummary(filteredHoldings), [filteredHoldings]);
+  const summaryLoading = holdingsLoading;
 
   if (authLoading || !user) {
     return (
@@ -30,20 +65,32 @@ function DashboardPage() {
     );
   }
 
-  const totalValue = summary?.totalValue ?? 0;
+  const totalValue = summary.totalValue;
 
   return (
     <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">Dashboard</h1>
-        <p className="text-sm text-[var(--text-muted)] mt-1">Welcome back, {user.name ?? user.email}</p>
+      <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Dashboard</h1>
+          <p className="text-sm text-[var(--text-muted)] mt-1">Welcome back, {user.name ?? user.email}</p>
+        </div>
+        <SourceFilter
+          selected={sourceFilter}
+          onSelect={setSourceFilter}
+          uploads={uploads ?? []}
+          wallets={wallets ?? []}
+        />
       </div>
 
       {/* Total Value Card */}
       <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 mb-6 transition-colors">
         <div className="flex items-center justify-between">
-          <p className="text-sm text-[var(--text-muted)] mb-1">Total Portfolio Value</p>
+          <p className="text-sm text-[var(--text-muted)] mb-1">
+            {sourceFilter.type === "all"
+              ? "Total Portfolio Value"
+              : `Filtered Portfolio Value`}
+          </p>
           <span className="text-sm text-[var(--text-muted)]">{flag} {baseCurrency}</span>
         </div>
         {summaryLoading ? (
@@ -51,6 +98,17 @@ function DashboardPage() {
         ) : (
           <p className="text-3xl font-bold text-[var(--text-primary)] tabular-nums">
             {format(totalValue)}
+          </p>
+        )}
+        {sourceFilter.type !== "all" && (
+          <p className="text-xs text-[var(--text-muted)] mt-1">
+            Showing {filteredHoldings.length} holding(s) from{" "}
+            {sourceFilter.type === "upload"
+              ? (uploads ?? []).find((u) => String(u.id) === sourceFilter.id)?.filename ?? `Upload #${sourceFilter.id}`
+              : (() => {
+                  const w = (wallets ?? []).find((w) => String(w.id) === sourceFilter.id);
+                  return w?.label ?? `${w?.address.slice(0, 6)}...${w?.address.slice(-4)}`;
+                })()}
           </p>
         )}
       </div>
@@ -104,7 +162,12 @@ function DashboardPage() {
       </div>
 
       {/* Holdings Table */}
-      <HoldingsTable holdings={holdings ?? []} loading={holdingsLoading} />
+      <HoldingsTable
+        holdings={filteredHoldings}
+        loading={holdingsLoading}
+        uploads={uploads ?? []}
+        wallets={wallets ?? []}
+      />
     </div>
   );
 }

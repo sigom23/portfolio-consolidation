@@ -13,6 +13,7 @@ export interface Holding {
   quantity: number | null;
   value_usd: number | null;
   source_type: string;
+  source_id: string | null;
   figi: string | null;
   composite_figi: string | null;
   share_class_figi: string | null;

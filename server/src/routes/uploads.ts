@@ -65,15 +65,13 @@ router.post("/", upload.single("file"), async (req: Request, res: Response) => {
         holdings.map((h) => createHoldingFromUpload(userId, uploadRecord.id, h))
       );
 
-      // Enrich holdings with OpenFIGI data
-      const tickers = created.filter((h) => h.ticker).map((h) => h.ticker!);
-      const currencyMap = new Map<string, string>();
-      for (const h of created) {
-        if (h.ticker && h.currency) currencyMap.set(h.ticker.toUpperCase(), h.currency);
-      }
-      if (tickers.length > 0) {
+      // Enrich holdings with OpenFIGI data (prefer ISIN for accurate identification)
+      const lookupItems = created
+        .filter((h) => h.ticker)
+        .map((h) => ({ ticker: h.ticker!, isin: h.isin, currency: h.currency }));
+      if (lookupItems.length > 0) {
         try {
-          const figiData = await lookupTickers(tickers, currencyMap);
+          const figiData = await lookupTickers(lookupItems);
           for (const holding of created) {
             if (holding.ticker) {
               const figi = figiData.get(holding.ticker.toUpperCase());

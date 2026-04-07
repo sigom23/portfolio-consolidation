@@ -87,6 +87,7 @@ router.post("/:id/refresh", async (req: Request, res: Response) => {
       holdings.push({
         name: "Ethereum",
         ticker: "ETH",
+        isin: null,
         asset_type: "crypto",
         quantity: balances.eth,
         value_usd: balances.eth * ethPrice,
@@ -100,6 +101,7 @@ router.post("/:id/refresh", async (req: Request, res: Response) => {
       holdings.push({
         name: token.name,
         ticker: token.symbol,
+        isin: null,
         asset_type: "crypto",
         quantity: token.balance,
         value_usd: token.balance * price,

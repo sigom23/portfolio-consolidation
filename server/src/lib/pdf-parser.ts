@@ -9,6 +9,7 @@ const EXTRACTION_PROMPT = `Extract all financial holdings, positions, and accoun
 Return ONLY a JSON array with no other text. Each item should have these fields:
 - "name": string — the name of the asset or account (e.g. "Checking Account", "Apple Inc.", "Bitcoin")
 - "ticker": string or null — ticker symbol if applicable (e.g. "AAPL", "BTC", null for bank accounts)
+- "isin": string or null — ISIN code if shown in the document (e.g. "US0378331005" for Apple). Extract this exactly as printed.
 - "asset_type": one of "stocks", "crypto", "bonds", "cash", "other"
 - "quantity": number or null — number of shares/units, null for cash accounts
 - "value": number — the market value as stated in the document, in the currency shown for that line item
@@ -19,7 +20,7 @@ IMPORTANT: Use the value exactly as shown in the document. Do NOT convert curren
 For bank accounts (checking, savings, liquidity), use asset_type "cash" with the balance as value.
 
 Example output:
-[{"name": "Checking Account", "ticker": null, "asset_type": "cash", "quantity": null, "value": 5432.10, "currency": "USD"}]`;
+[{"name": "Apple Inc.", "ticker": "AAPL", "isin": "US0378331005", "asset_type": "stocks", "quantity": 10, "value": 1750.00, "currency": "USD"}]`;
 
 export async function parsePdf(fileBuffer: Buffer): Promise<ParsedHolding[]> {
   // Try Anthropic first, fall back to OpenAI
@@ -127,6 +128,7 @@ function parseJsonResponse(raw: string): ParsedHolding[] {
     return {
       name: String(h.name ?? "Unknown"),
       ticker: h.ticker ? String(h.ticker) : null,
+      isin: h.isin ? String(h.isin) : null,
       asset_type: (VALID_ASSET_TYPES.includes(assetType as typeof VALID_ASSET_TYPES[number])
         ? assetType
         : "other") as ParsedHolding["asset_type"],

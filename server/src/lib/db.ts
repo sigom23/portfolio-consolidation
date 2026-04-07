@@ -76,6 +76,7 @@ export async function initDb(): Promise<void> {
     ALTER TABLE holdings ADD COLUMN IF NOT EXISTS market_sector TEXT;
     ALTER TABLE holdings ADD COLUMN IF NOT EXISTS exch_code TEXT;
     ALTER TABLE holdings ADD COLUMN IF NOT EXISTS value_local REAL;
+    ALTER TABLE holdings ADD COLUMN IF NOT EXISTS isin TEXT;
 
     CREATE TABLE IF NOT EXISTS companies (
       symbol TEXT PRIMARY KEY,
@@ -182,9 +183,9 @@ export async function createHoldingFromWallet(userId: string, walletId: number, 
 
 async function createHoldingRecord(userId: string, sourceType: string, sourceId: string, holding: ParsedHolding): Promise<Holding> {
   const { rows } = await getPool().query(
-    `INSERT INTO holdings (user_id, source_type, source_id, name, ticker, asset_type, quantity, value_usd, currency)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-    [userId, sourceType, sourceId, holding.name, holding.ticker, holding.asset_type, holding.quantity, holding.value_usd, holding.currency]
+    `INSERT INTO holdings (user_id, source_type, source_id, name, ticker, isin, asset_type, quantity, value_usd, currency)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+    [userId, sourceType, sourceId, holding.name, holding.ticker, holding.isin, holding.asset_type, holding.quantity, holding.value_usd, holding.currency]
   );
   return rows[0] as Holding;
 }
@@ -259,6 +260,45 @@ export async function getStockHoldingsByUser(userId: string): Promise<Holding[]>
     [userId]
   );
   return rows as Holding[];
+}
+
+// Account management
+export async function deleteUserAccount(userId: string): Promise<void> {
+  // Delete all sessions for this user (covers other devices)
+  await getPool().query("DELETE FROM session WHERE sess->>'userId' = $1", [userId]);
+  // Delete user — cascades to holdings, uploads, wallets via ON DELETE CASCADE
+  await getPool().query("DELETE FROM users WHERE id = $1", [userId]);
+}
+
+export async function deleteAllHoldings(userId: string): Promise<number> {
+  const { rowCount } = await getPool().query("DELETE FROM holdings WHERE user_id = $1", [userId]);
+  return rowCount ?? 0;
+}
+
+export async function exportUserData(userId: string) {
+  const [userResult, holdingsResult, uploadsResult, walletsResult] = await Promise.all([
+    getPool().query("SELECT id, email, name, created_at FROM users WHERE id = $1", [userId]),
+    getPool().query(
+      "SELECT id, name, ticker, isin, asset_type, quantity, value_usd, value_local, currency, exch_code, source_type, last_updated FROM holdings WHERE user_id = $1 ORDER BY value_usd DESC",
+      [userId]
+    ),
+    getPool().query(
+      "SELECT id, filename, file_type, uploaded_at, status FROM uploads WHERE user_id = $1 ORDER BY uploaded_at DESC",
+      [userId]
+    ),
+    getPool().query(
+      "SELECT id, address, chain, label, added_at FROM wallets WHERE user_id = $1 ORDER BY added_at DESC",
+      [userId]
+    ),
+  ]);
+
+  return {
+    exportedAt: new Date().toISOString(),
+    user: userResult.rows[0] ?? null,
+    holdings: holdingsResult.rows,
+    uploads: uploadsResult.rows,
+    wallets: walletsResult.rows,
+  };
 }
 
 // Company profile cache

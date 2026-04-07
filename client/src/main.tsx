@@ -11,12 +11,14 @@ import { Route as indexRoute } from "./routes/index";
 import { Route as dashboardRoute } from "./routes/dashboard";
 import { Route as uploadRoute } from "./routes/upload";
 import { Route as walletsRoute } from "./routes/wallets";
+import { Route as settingsRoute } from "./routes/settings";
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
   dashboardRoute,
   uploadRoute,
   walletsRoute,
+  settingsRoute,
 ]);
 
 const router = createRouter({ routeTree });

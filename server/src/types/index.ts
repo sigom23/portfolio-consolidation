@@ -21,6 +21,7 @@ export interface Holding {
   source_id: string | null;
   name: string;
   ticker: string | null;
+  isin: string | null;
   asset_type: string | null;
   quantity: number | null;
   value_usd: number | null;
@@ -47,6 +48,7 @@ export interface Upload {
 export interface ParsedHolding {
   name: string;
   ticker: string | null;
+  isin: string | null;
   asset_type: "stocks" | "crypto" | "bonds" | "cash" | "other";
   quantity: number | null;
   value_usd: number | null;

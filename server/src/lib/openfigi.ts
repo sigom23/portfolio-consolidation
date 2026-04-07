@@ -25,18 +25,26 @@ interface FigiResponse {
   warning?: string;
 }
 
-export async function lookupTickers(tickers: string[], currencies?: Map<string, string>): Promise<Map<string, FigiResult>> {
-  const apiKey = process.env.OPENFIGI_API_KEY;
-  if (!apiKey || tickers.length === 0) return new Map();
+export interface LookupItem {
+  ticker: string;
+  isin?: string | null;
+  currency?: string | null;
+}
 
-  // Build mapping jobs — one per ticker, with optional currency hint
-  const jobs = tickers.map((ticker) => {
+export async function lookupTickers(items: LookupItem[]): Promise<Map<string, FigiResult>> {
+  const apiKey = process.env.OPENFIGI_API_KEY;
+  if (!apiKey || items.length === 0) return new Map();
+
+  // Build mapping jobs — prefer ISIN (globally unique) over ticker
+  const jobs = items.map((item) => {
+    if (item.isin) {
+      return { idType: "ID_ISIN", idValue: item.isin.toUpperCase() };
+    }
     const job: Record<string, string> = {
       idType: "TICKER",
-      idValue: ticker.toUpperCase(),
+      idValue: item.ticker.toUpperCase(),
     };
-    const currency = currencies?.get(ticker.toUpperCase());
-    if (currency) job.currency = currency.toUpperCase();
+    if (item.currency) job.currency = item.currency.toUpperCase();
     return job;
   });
 
@@ -65,7 +73,8 @@ export async function lookupTickers(tickers: string[], currencies?: Map<string, 
       const data = (await res.json()) as FigiResponse[];
 
       for (let j = 0; j < batch.length; j++) {
-        const ticker = batch[j].idValue;
+        const batchIdx = i + j;
+        const ticker = items[batchIdx].ticker.toUpperCase();
         const response = data[j];
 
         if (response?.data && response.data.length > 0) {

@@ -6,6 +6,7 @@ const VALID_ASSET_TYPES = ["stocks", "crypto", "bonds", "cash", "other"] as cons
 const COLUMN_MAP: Record<string, string[]> = {
   name: ["name", "asset", "account", "description", "security", "holding", "asset_name", "account_name"],
   ticker: ["ticker", "symbol", "code", "asset_code", "ticker_symbol"],
+  isin: ["isin", "isin_code", "isin_number"],
   asset_type: ["asset_type", "type", "category", "asset_class", "class"],
   quantity: ["quantity", "qty", "shares", "units", "amount", "balance"],
   value_usd: ["value_usd", "value", "market_value", "total_value", "balance_usd", "total", "usd_value", "worth"],
@@ -84,6 +85,7 @@ export function parseCsv(fileBuffer: Buffer): ParsedHolding[] {
     results.push({
       name: row.name || "Unknown",
       ticker: row.ticker || null,
+      isin: row.isin || null,
       asset_type: (VALID_ASSET_TYPES.includes(assetType as typeof VALID_ASSET_TYPES[number])
         ? assetType
         : "other") as ParsedHolding["asset_type"],

@@ -155,6 +155,21 @@ export async function fetchGeographyAllocation(): Promise<GeographyAllocation[]>
   }
 }
 
+export async function deleteAccount(): Promise<void> {
+  await api.delete("/api/account");
+  window.location.href = "/";
+}
+
+export function exportUserData(): void {
+  window.location.href = "/api/account/export";
+}
+
+export async function clearAllHoldings(): Promise<{ deleted: number }> {
+  const { data } = await api.delete<ApiResponse<{ deleted: number }>>("/api/account/holdings");
+  if (!data.success) throw new Error(data.error ?? "Failed to clear holdings");
+  return data.data!;
+}
+
 export async function fetchExchangeRates(base: string = "USD"): Promise<ExchangeRateData> {
   const { data } = await api.get<ApiResponse<ExchangeRateData>>(`/api/exchange-rates?base=${base}`);
   return data.data!;

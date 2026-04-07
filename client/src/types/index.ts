@@ -9,6 +9,7 @@ export interface Holding {
   id: number;
   name: string;
   ticker: string | null;
+  isin: string | null;
   asset_type: string | null;
   quantity: number | null;
   value_usd: number | null;

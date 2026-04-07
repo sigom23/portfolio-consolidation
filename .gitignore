@@ -7,3 +7,6 @@ dist/
 *.sqlite
 *.tsbuildinfo
 .DS_Store
+.mcp.json
+.playwright-mcp/
+test-statement.csv

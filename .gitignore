@@ -14,3 +14,6 @@ test-statement.csv
 # Local-only agent context and planning notes
 CLAUDE.md
 docs/
+
+# Playwright MCP debug screenshots dropped at project root
+/*.png

@@ -89,7 +89,7 @@ function AssetsCryptoPage() {
   const loading = holdingsLoading || walletsLoading;
 
   return (
-    <div className="px-6 lg:px-8 py-8 max-w-6xl mx-auto">
+    <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-[var(--text-primary)]">Crypto</h1>

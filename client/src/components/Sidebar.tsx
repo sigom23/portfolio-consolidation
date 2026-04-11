@@ -1,7 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "../hooks/useAuth";
-import { useTheme } from "../hooks/useTheme";
-import { useCurrency } from "../contexts/CurrencyContext";
 import { useState, type ComponentType } from "react";
 
 type NavItem = {
@@ -31,21 +29,17 @@ const TRAILING_ITEMS: NavItem[] = [
 
 export function Sidebar() {
   const { user, logout } = useAuth();
-  const { theme, toggle } = useTheme();
-  const { baseCurrency, setBaseCurrency, currencies } = useCurrency();
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-
-  // My Wealth parent highlights when on /my-wealth OR any /assets/* child.
-  // Same for Cash Flow: parent highlights on /cashflow OR any /cashflow/* child.
-  const myWealthActive =
-    pathname === "/my-wealth" || pathname.startsWith("/assets/");
-  const cashflowActive = pathname.startsWith("/cashflow");
 
   const linkBase =
     "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[var(--sidebar-text)] hover:bg-white/10 hover:text-white transition-colors";
   const linkActive =
     "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-blue-500/20 text-blue-400";
+
+  // Only the leaf route is blue — parents stay in default gray when a child
+  // is active. Hierarchy is communicated by indentation, not color.
+  const linkClass = (to: string) => (pathname === to ? linkActive : linkBase);
 
   return (
     <>
@@ -88,7 +82,7 @@ export function Sidebar() {
           <Link
             to="/my-wealth"
             onClick={() => setMobileOpen(false)}
-            className={myWealthActive ? linkActive : linkBase}
+            className={linkClass("/my-wealth")}
           >
             <MyWealthIcon />
             My Wealth
@@ -99,8 +93,7 @@ export function Sidebar() {
                 key={item.to}
                 to={item.to}
                 onClick={() => setMobileOpen(false)}
-                className={linkBase}
-                activeProps={{ className: linkActive }}
+                className={linkClass(item.to)}
               >
                 <item.icon />
                 {item.label}
@@ -109,14 +102,11 @@ export function Sidebar() {
           </div>
 
           {/* Cash Flow group — parent link + income/expenses children */}
-          <div className="pt-2">
+          <div className="pt-2 space-y-1">
             <Link
               to="/cashflow"
               onClick={() => setMobileOpen(false)}
-              className={pathname === "/cashflow" || cashflowActive ? linkActive : linkBase}
-              // Override: don't let TanStack's activeProps fire on child routes,
-              // we handle parent-active manually above via `cashflowActive`.
-              activeOptions={{ exact: true }}
+              className={linkClass("/cashflow")}
             >
               <CashFlowIcon />
               Cash Flow
@@ -127,8 +117,7 @@ export function Sidebar() {
                   key={item.to}
                   to={item.to}
                   onClick={() => setMobileOpen(false)}
-                  className={linkBase}
-                  activeProps={{ className: linkActive }}
+                  className={linkClass(item.to)}
                 >
                   <item.icon />
                   {item.label}
@@ -143,8 +132,7 @@ export function Sidebar() {
                 key={item.to}
                 to={item.to}
                 onClick={() => setMobileOpen(false)}
-                className={linkBase}
-                activeProps={{ className: linkActive }}
+                className={linkClass(item.to)}
               >
                 <item.icon />
                 {item.label}
@@ -153,36 +141,8 @@ export function Sidebar() {
           </div>
         </nav>
 
-        {/* Bottom section */}
+        {/* Bottom section — user info + logout only. Preferences live in Settings. */}
         <div className="px-3 py-4 border-t border-white/10 space-y-2">
-          {/* Currency selector */}
-          {currencies.length > 0 && (
-            <div className="px-3 py-2">
-              <p className="text-[10px] uppercase tracking-wide text-[var(--sidebar-text)] mb-1.5">Base Currency</p>
-              <select
-                value={baseCurrency}
-                onChange={(e) => setBaseCurrency(e.target.value)}
-                className="w-full px-2 py-1.5 rounded-lg bg-white/10 text-white text-sm border-0 outline-none cursor-pointer"
-              >
-                {currencies.map((c) => (
-                  <option key={c.code} value={c.code} className="bg-[var(--sidebar-bg)] text-white">
-                    {c.flag} {c.code} — {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* Theme toggle */}
-          <button
-            onClick={toggle}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-[var(--sidebar-text)] hover:bg-white/10 hover:text-white transition-colors"
-          >
-            {theme === "dark" ? <SunIcon /> : <MoonIcon />}
-            {theme === "dark" ? "Light Mode" : "Dark Mode"}
-          </button>
-
-          {/* User info */}
           {user && (
             <div className="px-3 py-2">
               <p className="text-sm font-medium text-white truncate">{user.name ?? user.email}</p>
@@ -192,7 +152,6 @@ export function Sidebar() {
             </div>
           )}
 
-          {/* Logout */}
           {user && (
             <button
               onClick={logout}
@@ -218,17 +177,19 @@ function MyWealthIcon() {
 }
 
 function IncomeIcon() {
+  // Heroicons: arrow-down-tray — money coming in / deposit
   return (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.5v15m7.5-7.5h-15" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
     </svg>
   );
 }
 
 function ExpensesIcon() {
+  // Heroicons: arrow-up-tray — money going out / withdraw
   return (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h14" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
     </svg>
   );
 }
@@ -278,22 +239,6 @@ function DataRoomIcon() {
   return (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 00-1.883 2.542l.857 6a2.25 2.25 0 002.227 1.932H19.05a2.25 2.25 0 002.227-1.932l.857-6a2.25 2.25 0 00-1.883-2.542m-16.5 0V6A2.25 2.25 0 016 3.75h3.879a1.5 1.5 0 011.06.44l2.122 2.12a1.5 1.5 0 001.06.44H18A2.25 2.25 0 0120.25 9v.776" />
-    </svg>
-  );
-}
-
-function SunIcon() {
-  return (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
-    </svg>
-  );
-}
-
-function MoonIcon() {
-  return (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
     </svg>
   );
 }

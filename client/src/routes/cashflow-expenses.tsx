@@ -44,7 +44,7 @@ function CashFlowExpensesPage() {
   return (
     <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
+      <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">Expenses</h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">

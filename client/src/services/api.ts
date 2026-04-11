@@ -1,5 +1,11 @@
 import axios from "axios";
-import type { User, PortfolioSummary, Holding, Upload, UploadResult, Wallet, WalletRefreshResult, ApiResponse } from "../types";
+import type {
+  User, PortfolioSummary, Holding, Upload, UploadResult, Wallet, WalletRefreshResult, ApiResponse,
+  IncomeStream, Transaction, NewIncomeStream, CashFlowSummary, NewTransaction,
+  PropertyWithDetails, Property, PropertyMortgage, PropertyCost,
+  NewProperty, NewMortgage, NewPropertyCost,
+  IlliquidAsset, NewIlliquidAsset,
+} from "../types";
 
 const api = axios.create({
   baseURL: "/",
@@ -21,9 +27,13 @@ export async function fetchHoldings(): Promise<Holding[]> {
   return data.data ?? [];
 }
 
-export async function uploadStatement(file: File): Promise<UploadResult> {
+export async function uploadStatement(
+  file: File,
+  kind: "wealth" | "transactions" = "wealth"
+): Promise<UploadResult> {
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("kind", kind);
   const { data } = await api.post<ApiResponse<UploadResult>>("/api/uploads", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
@@ -173,4 +183,136 @@ export async function clearAllHoldings(): Promise<{ deleted: number }> {
 export async function fetchExchangeRates(base: string = "USD"): Promise<ExchangeRateData> {
   const { data } = await api.get<ApiResponse<ExchangeRateData>>(`/api/exchange-rates?base=${base}`);
   return data.data!;
+}
+
+// Income streams
+export async function fetchIncomeStreams(): Promise<IncomeStream[]> {
+  const { data } = await api.get<ApiResponse<IncomeStream[]>>("/api/income/streams");
+  return data.data ?? [];
+}
+
+export async function createIncomeStream(stream: NewIncomeStream): Promise<IncomeStream> {
+  const { data } = await api.post<ApiResponse<{ stream: IncomeStream; eventsCreated: number }>>(
+    "/api/income/streams",
+    stream
+  );
+  if (!data.success) throw new Error(data.error ?? "Failed to create stream");
+  return data.data!.stream;
+}
+
+export async function updateIncomeStream(id: number, updates: Partial<NewIncomeStream>): Promise<IncomeStream> {
+  const { data } = await api.put<ApiResponse<IncomeStream>>(`/api/income/streams/${id}`, updates);
+  if (!data.success) throw new Error(data.error ?? "Failed to update stream");
+  return data.data!;
+}
+
+export async function deleteIncomeStream(id: number): Promise<void> {
+  const { data } = await api.delete<ApiResponse<null>>(`/api/income/streams/${id}`);
+  if (!data.success) throw new Error(data.error ?? "Failed to delete stream");
+}
+
+export async function fetchTransactions(options: { sign?: "income" | "expense"; limit?: number } = {}): Promise<Transaction[]> {
+  const params = new URLSearchParams();
+  if (options.sign) params.set("sign", options.sign);
+  if (options.limit) params.set("limit", String(options.limit));
+  const qs = params.toString();
+  const { data } = await api.get<ApiResponse<Transaction[]>>(`/api/transactions${qs ? `?${qs}` : ""}`);
+  return data.data ?? [];
+}
+
+export async function createManualTransaction(tx: NewTransaction): Promise<Transaction> {
+  const { data } = await api.post<ApiResponse<Transaction>>("/api/transactions", tx);
+  if (!data.success) throw new Error(data.error ?? "Failed to create transaction");
+  return data.data!;
+}
+
+export async function updateTransactionCategory(id: number, category: string): Promise<Transaction> {
+  const { data } = await api.put<ApiResponse<Transaction>>(`/api/transactions/${id}`, { category });
+  if (!data.success) throw new Error(data.error ?? "Failed to update transaction");
+  return data.data!;
+}
+
+export async function deleteTransaction(id: number): Promise<void> {
+  const { data } = await api.delete<ApiResponse<null>>(`/api/transactions/${id}`);
+  if (!data.success) throw new Error(data.error ?? "Failed to delete transaction");
+}
+
+export async function fetchCashFlowSummary(month?: string): Promise<CashFlowSummary> {
+  const qs = month ? `?month=${month}` : "";
+  const { data } = await api.get<ApiResponse<CashFlowSummary>>(`/api/cashflow/summary${qs}`);
+  return data.data!;
+}
+
+// Real Estate
+export async function fetchProperties(): Promise<PropertyWithDetails[]> {
+  const { data } = await api.get<ApiResponse<PropertyWithDetails[]>>("/api/properties");
+  return data.data ?? [];
+}
+
+export async function createProperty(input: NewProperty): Promise<Property> {
+  const { data } = await api.post<ApiResponse<Property>>("/api/properties", input);
+  if (!data.success) throw new Error(data.error ?? "Failed to create property");
+  return data.data!;
+}
+
+export async function updateProperty(id: number, updates: Partial<NewProperty>): Promise<Property> {
+  const { data } = await api.put<ApiResponse<Property>>(`/api/properties/${id}`, updates);
+  if (!data.success) throw new Error(data.error ?? "Failed to update property");
+  return data.data!;
+}
+
+export async function deleteProperty(id: number): Promise<void> {
+  const { data } = await api.delete<ApiResponse<null>>(`/api/properties/${id}`);
+  if (!data.success) throw new Error(data.error ?? "Failed to delete property");
+}
+
+export async function createMortgage(propertyId: number, input: NewMortgage): Promise<PropertyMortgage> {
+  const { data } = await api.post<ApiResponse<PropertyMortgage>>(`/api/properties/${propertyId}/mortgages`, input);
+  if (!data.success) throw new Error(data.error ?? "Failed to create mortgage");
+  return data.data!;
+}
+
+export async function updateMortgage(id: number, updates: Partial<NewMortgage>): Promise<PropertyMortgage> {
+  const { data } = await api.put<ApiResponse<PropertyMortgage>>(`/api/mortgages/${id}`, updates);
+  if (!data.success) throw new Error(data.error ?? "Failed to update mortgage");
+  return data.data!;
+}
+
+export async function deleteMortgage(id: number): Promise<void> {
+  const { data } = await api.delete<ApiResponse<null>>(`/api/mortgages/${id}`);
+  if (!data.success) throw new Error(data.error ?? "Failed to delete mortgage");
+}
+
+export async function createPropertyCost(propertyId: number, input: NewPropertyCost): Promise<PropertyCost> {
+  const { data } = await api.post<ApiResponse<PropertyCost>>(`/api/properties/${propertyId}/costs`, input);
+  if (!data.success) throw new Error(data.error ?? "Failed to create cost");
+  return data.data!;
+}
+
+export async function updatePropertyCost(id: number, updates: Partial<NewPropertyCost>): Promise<PropertyCost> {
+  const { data } = await api.put<ApiResponse<PropertyCost>>(`/api/property-costs/${id}`, updates);
+  if (!data.success) throw new Error(data.error ?? "Failed to update cost");
+  return data.data!;
+}
+
+export async function deletePropertyCost(id: number): Promise<void> {
+  const { data } = await api.delete<ApiResponse<null>>(`/api/property-costs/${id}`);
+  if (!data.success) throw new Error(data.error ?? "Failed to delete cost");
+}
+
+// Illiquid Assets
+export async function fetchIlliquidAssets(): Promise<IlliquidAsset[]> {
+  const { data } = await api.get<ApiResponse<IlliquidAsset[]>>("/api/illiquid");
+  return data.data ?? [];
+}
+
+export async function createIlliquidAsset(input: NewIlliquidAsset): Promise<IlliquidAsset> {
+  const { data } = await api.post<ApiResponse<IlliquidAsset>>("/api/illiquid", input);
+  if (!data.success) throw new Error(data.error ?? "Failed to create illiquid asset");
+  return data.data!;
+}
+
+export async function deleteIlliquidAsset(id: number): Promise<void> {
+  const { data } = await api.delete<ApiResponse<null>>(`/api/illiquid/${id}`);
+  if (!data.success) throw new Error(data.error ?? "Failed to delete illiquid asset");
 }

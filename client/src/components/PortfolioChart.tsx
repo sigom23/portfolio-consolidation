@@ -1,14 +1,15 @@
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import type { PortfolioSummary } from "../types";
 import { useCurrency } from "../contexts/CurrencyContext";
 
-const CATEGORY_CONFIG: Record<string, { color: string; label: string }> = {
-  stocks: { color: "#3b82f6", label: "Stocks" },
-  crypto: { color: "#8b5cf6", label: "Crypto" },
-  bonds: { color: "#14b8a6", label: "Bonds" },
-  cash: { color: "#22c55e", label: "Cash" },
-  other: { color: "#64748b", label: "Other" },
-};
+const CATEGORY_CONFIG: { key: keyof PortfolioSummary["breakdown"]; label: string; color: string }[] = [
+  { key: "stocks", label: "Stocks", color: "#3b82f6" },
+  { key: "real_estate", label: "Real Estate", color: "#06b6d4" },
+  { key: "crypto", label: "Crypto", color: "#8b5cf6" },
+  { key: "bonds", label: "Bonds", color: "#14b8a6" },
+  { key: "cash", label: "Cash", color: "#22c55e" },
+  { key: "other", label: "Other", color: "#64748b" },
+];
 
 interface Props {
   summary: PortfolioSummary | undefined;
@@ -24,6 +25,7 @@ export function PortfolioChart({ summary, loading }: Props) {
     if (converted >= 1_000) return `${symbol}${(converted / 1_000).toFixed(1)}K`;
     return `${symbol}${converted.toFixed(2)}`;
   }
+
   if (loading) {
     return (
       <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full flex items-center justify-center transition-colors">
@@ -32,37 +34,36 @@ export function PortfolioChart({ summary, loading }: Props) {
     );
   }
 
-  const data = Object.entries(summary?.breakdown ?? {})
-    .filter(([, value]) => value > 0)
-    .map(([key, value]) => ({
-      name: CATEGORY_CONFIG[key]?.label ?? key,
-      value,
-      color: CATEGORY_CONFIG[key]?.color ?? "#64748b",
-    }));
-
   const totalValue = summary?.totalValue ?? 0;
-  const isEmpty = data.length === 0;
+  const data = CATEGORY_CONFIG
+    .map((cat) => ({
+      name: cat.label,
+      value: summary?.breakdown[cat.key] ?? 0,
+      color: cat.color,
+    }))
+    .filter((d) => d.value > 0);
 
   return (
-    <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full transition-colors">
-      <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Asset Allocation</h2>
+    <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full transition-colors">
+      <h2 className="text-sm font-medium text-[var(--text-muted)] mb-4">Asset Allocation</h2>
 
-      {isEmpty ? (
+      {data.length === 0 ? (
         <div className="flex items-center justify-center h-48 rounded-lg bg-[var(--bg-tertiary)] border border-dashed border-[var(--border-color)]">
           <p className="text-[var(--text-muted)] text-sm">No assets to display</p>
         </div>
       ) : (
-        <div className="flex flex-col items-center">
-          <div className="relative w-full h-56">
+        <div className="flex items-center gap-6">
+          {/* Donut */}
+          <div className="relative w-40 h-40 flex-shrink-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={data}
                   cx="50%"
                   cy="50%"
-                  innerRadius={65}
-                  outerRadius={95}
-                  paddingAngle={2}
+                  innerRadius={48}
+                  outerRadius={68}
+                  paddingAngle={3}
                   dataKey="value"
                   strokeWidth={0}
                 >
@@ -70,35 +71,41 @@ export function PortfolioChart({ summary, loading }: Props) {
                     <Cell key={i} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip
-                  formatter={(value) => formatShort(Number(value))}
-                  contentStyle={{
-                    backgroundColor: "var(--bg-secondary)",
-                    border: "1px solid var(--border-color)",
-                    borderRadius: "8px",
-                    color: "var(--text-primary)",
-                    fontSize: "13px",
-                  }}
-                />
               </PieChart>
             </ResponsiveContainer>
-            {/* Center label */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="text-center">
-                <p className="text-xs text-[var(--text-muted)]">Total</p>
-                <p className="text-lg font-bold text-[var(--text-primary)]">{formatShort(totalValue)}</p>
+                <p className="text-[10px] text-[var(--text-muted)]">Total</p>
+                <p className="text-sm font-bold text-[var(--text-primary)]">{formatShort(totalValue)}</p>
               </div>
             </div>
           </div>
 
-          {/* Legend */}
-          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-4">
-            {data.map((entry) => (
-              <div key={entry.name} className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
-                {entry.name}
-              </div>
-            ))}
+          {/* Data list */}
+          <div className="flex-1 space-y-3">
+            {data.map((entry) => {
+              const pct = totalValue > 0 ? (entry.value / totalValue) * 100 : 0;
+              return (
+                <div key={entry.name}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: entry.color }} />
+                      <span className="text-xs font-medium text-[var(--text-secondary)]">{entry.name}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-medium text-[var(--text-primary)] tabular-nums">{format(entry.value)}</span>
+                      <span className="text-[10px] text-[var(--text-muted)] tabular-nums w-10 text-right">{pct.toFixed(1)}%</span>
+                    </div>
+                  </div>
+                  <div className="h-1 rounded-full bg-[var(--bg-tertiary)] overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-700"
+                      style={{ width: `${pct}%`, backgroundColor: entry.color }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

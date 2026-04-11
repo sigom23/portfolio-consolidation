@@ -10,3 +10,7 @@ dist/
 .mcp.json
 .playwright-mcp/
 test-statement.csv
+
+# Local-only agent context and planning notes
+CLAUDE.md
+docs/

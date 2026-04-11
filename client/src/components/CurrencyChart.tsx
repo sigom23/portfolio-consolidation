@@ -1,23 +1,35 @@
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { useCurrency } from "../contexts/CurrencyContext";
 import type { Holding } from "../types";
 
 const CURRENCY_COLORS: Record<string, string> = {
-  USD: "#1e3a5f",
-  EUR: "#60a5fa",
-  GBP: "#34d399",
-  JPY: "#5eead4",
-  CHF: "#818cf8",
-  CAD: "#f472b6",
-  AUD: "#fbbf24",
-  HKD: "#a78bfa",
-  CNY: "#fb923c",
-  KRW: "#94a3b8",
+  USD: "#3b82f6",
+  EUR: "#8b5cf6",
+  GBP: "#14b8a6",
+  CHF: "#f59e0b",
+  JPY: "#ef4444",
+  CAD: "#22c55e",
+  AUD: "#06b6d4",
+  HKD: "#ec4899",
+  CNY: "#f97316",
+  KRW: "#64748b",
+};
+
+const CURRENCY_FLAGS: Record<string, string> = {
+  USD: "\ud83c\uddfa\ud83c\uddf8",
+  EUR: "\ud83c\uddea\ud83c\uddfa",
+  GBP: "\ud83c\uddec\ud83c\udde7",
+  CHF: "\ud83c\udde8\ud83c\udded",
+  JPY: "\ud83c\uddef\ud83c\uddf5",
+  CAD: "\ud83c\udde8\ud83c\udde6",
+  AUD: "\ud83c\udde6\ud83c\uddfa",
+  HKD: "\ud83c\udded\ud83c\uddf0",
+  CNY: "\ud83c\udde8\ud83c\uddf3",
+  KRW: "\ud83c\uddf0\ud83c\uddf7",
 };
 
 function getColor(currency: string, index: number): string {
   if (CURRENCY_COLORS[currency]) return CURRENCY_COLORS[currency];
-  const fallbacks = ["#7dd3fc", "#c4b5fd", "#86efac", "#fcd34d", "#f9a8d4", "#67e8f9"];
+  const fallbacks = ["#7dd3fc", "#c4b5fd", "#86efac", "#fcd34d", "#f9a8d4"];
   return fallbacks[index % fallbacks.length];
 }
 
@@ -27,13 +39,12 @@ interface Props {
 }
 
 export function CurrencyChart({ holdings, loading }: Props) {
-  const { convert, symbol } = useCurrency();
+  const { format, rateVsBase, baseCurrency } = useCurrency();
 
-  function formatShort(value: number): string {
-    const converted = convert(value);
-    if (converted >= 1_000_000) return `${symbol}${(converted / 1_000_000).toFixed(2)}M`;
-    if (converted >= 1_000) return `${symbol}${(converted / 1_000).toFixed(1)}K`;
-    return `${symbol}${converted.toFixed(2)}`;
+  function formatRate(rate: number): string {
+    if (rate >= 100) return rate.toFixed(2);
+    if (rate >= 1) return rate.toFixed(4);
+    return rate.toFixed(5);
   }
 
   if (loading) {
@@ -54,79 +65,53 @@ export function CurrencyChart({ holdings, loading }: Props) {
   }
 
   const sorted = [...currencyMap.entries()].sort((a, b) => b[1] - a[1]);
-
-  // Show top currencies, group the rest as "Other"
-  const MAX_SHOWN = 6;
-  const top = sorted.slice(0, MAX_SHOWN);
-  const rest = sorted.slice(MAX_SHOWN);
-  if (rest.length > 0) {
-    const otherTotal = rest.reduce((sum, [, v]) => sum + v, 0);
-    top.push(["Other", otherTotal]);
-  }
-
-  const data = top.map(([name, value], i) => ({
-    name,
-    value,
-    color: getColor(name, i),
-  }));
-
-  const total = data.reduce((sum, d) => sum + d.value, 0);
+  const total = sorted.reduce((sum, [, v]) => sum + v, 0);
 
   return (
-    <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full transition-colors">
-      <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Currency Exposure</h2>
+    <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full transition-colors">
+      <div className="flex items-baseline justify-between mb-4">
+        <h2 className="text-sm font-medium text-[var(--text-muted)]">Currencies & FX Rates</h2>
+        <span className="text-[10px] text-[var(--text-muted)]">vs {baseCurrency}</span>
+      </div>
 
-      {data.length === 0 ? (
+      {sorted.length === 0 ? (
         <div className="flex items-center justify-center h-48 rounded-lg bg-[var(--bg-tertiary)] border border-dashed border-[var(--border-color)]">
           <p className="text-[var(--text-muted)] text-sm">No holdings</p>
         </div>
       ) : (
-        <div className="flex flex-col items-center">
-          <div className="relative w-full h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={data}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={65}
-                  outerRadius={95}
-                  paddingAngle={2}
-                  dataKey="value"
-                  strokeWidth={0}
-                >
-                  {data.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value) => formatShort(Number(value))}
-                  contentStyle={{
-                    backgroundColor: "var(--bg-secondary)",
-                    border: "1px solid var(--border-color)",
-                    borderRadius: "8px",
-                    color: "var(--text-primary)",
-                    fontSize: "13px",
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="text-center">
-                <p className="text-xs text-[var(--text-muted)]">Currency</p>
-                <p className="text-lg font-bold text-[var(--text-primary)]">Exposure</p>
-              </div>
-            </div>
-          </div>
+        <div className="space-y-3">
+          {sorted.map(([ccy, value], i) => {
+            const pct = total > 0 ? (value / total) * 100 : 0;
+            const color = getColor(ccy, i);
+            const flag = CURRENCY_FLAGS[ccy] ?? "";
+            const rate = rateVsBase(ccy);
 
-          <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-4">
-            {data.map((entry) => (
-              <div key={entry.name} className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
-                {entry.name}
+            return (
+              <div key={ccy}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    {flag && <span className="text-sm">{flag}</span>}
+                    <span className="text-xs font-semibold text-[var(--text-primary)]">{ccy}</span>
+                    {ccy !== baseCurrency && (
+                      <span className="text-[10px] font-medium text-[var(--text-muted)] tabular-nums">
+                        {formatRate(rate)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-medium text-[var(--text-primary)] tabular-nums">{format(value)}</span>
+                    <span className="text-[10px] font-medium text-[var(--text-muted)] tabular-nums w-10 text-right">{pct.toFixed(1)}%</span>
+                  </div>
+                </div>
+                <div className="h-2 rounded-full bg-[var(--bg-tertiary)] overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{ width: `${pct}%`, backgroundColor: color }}
+                  />
+                </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       )}
     </div>

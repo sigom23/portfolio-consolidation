@@ -2,6 +2,7 @@ import type { Holding, Upload, Wallet } from "../types";
 import { useCurrency } from "../contexts/CurrencyContext";
 import { HoldingHoverCard } from "./HoldingHoverCard";
 import { useState } from "react";
+import { motion } from "motion/react";
 
 interface Props {
   holdings: Holding[];
@@ -36,7 +37,6 @@ function SourceBadge({ holding, uploads, wallets }: { holding: Holding; uploads:
       title={detail}
     >
       {isWallet ? "Wallet" : "Upload"}
-      {detail && <span className="opacity-70 max-w-[80px] truncate">· {detail}</span>}
     </span>
   );
 }
@@ -56,10 +56,27 @@ function getLogoUrl(ticker: string, exchCode?: string | null): string {
   return `https://images.financialmodelingprep.com/symbol/${symbol}.png`;
 }
 
+function TickerInitial({ ticker }: { ticker: string }) {
+  const colors = [
+    "bg-blue-500/15 text-blue-500",
+    "bg-purple-500/15 text-purple-500",
+    "bg-emerald-500/15 text-emerald-500",
+    "bg-orange-500/15 text-orange-500",
+    "bg-pink-500/15 text-pink-500",
+    "bg-cyan-500/15 text-cyan-500",
+  ];
+  const idx = ticker.charCodeAt(0) % colors.length;
+  return (
+    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${colors[idx]}`}>
+      {ticker.charAt(0)}
+    </div>
+  );
+}
+
 const CURRENCY_SYMBOLS: Record<string, string> = {
-  USD: "$", EUR: "€", GBP: "£", CHF: "Fr", JPY: "¥",
-  CAD: "C$", AUD: "A$", HKD: "HK$", CNY: "¥", KRW: "₩",
-  SEK: "kr", NOK: "kr", DKK: "kr", SGD: "S$", INR: "₹",
+  USD: "$", EUR: "\u20ac", GBP: "\u00a3", CHF: "Fr", JPY: "\u00a5",
+  CAD: "C$", AUD: "A$", HKD: "HK$", CNY: "\u00a5", KRW: "\u20a9",
+  SEK: "kr", NOK: "kr", DKK: "kr", SGD: "S$", INR: "\u20b9",
 };
 
 function formatLocal(value: number, currency: string): string {
@@ -72,17 +89,28 @@ function formatLocal(value: number, currency: string): string {
 
 const SPAM_THRESHOLD = 1;
 
+const rowVariants = {
+  hidden: { opacity: 0 },
+  visible: (i: number) => ({
+    opacity: 1,
+    transition: { delay: 0.4 + i * 0.03, duration: 0.3 },
+  }),
+};
+
 export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }: Props) {
   const { format, baseCurrency } = useCurrency();
   const [hideSpam, setHideSpam] = useState(true);
+  const [logoErrors, setLogoErrors] = useState<Set<string>>(new Set());
 
   const spamCount = holdings.filter((h) => (h.value_usd ?? 0) < SPAM_THRESHOLD && h.source_type === "wallet").length;
   const filtered = hideSpam
     ? holdings.filter((h) => (h.value_usd ?? 0) >= SPAM_THRESHOLD || h.source_type !== "wallet")
     : holdings;
 
+  const totalValue = filtered.reduce((sum, h) => sum + (h.value_usd ?? 0), 0);
+
   return (
-    <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden transition-colors">
+    <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden transition-colors">
       <div className="px-6 py-4 border-b border-[var(--border-color)] flex items-center justify-between">
         <h2 className="text-lg font-semibold text-[var(--text-primary)]">Holdings</h2>
         {spamCount > 0 && (
@@ -111,9 +139,9 @@ export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }:
             <tr className="text-left text-xs text-[var(--text-muted)] border-b border-[var(--border-color)]">
               <th className="px-6 py-3 font-medium">Name</th>
               <th className="px-6 py-3 font-medium">Ticker</th>
-              <th className="px-6 py-3 font-medium">Type</th>
               <th className="px-6 py-3 font-medium">Source</th>
               <th className="px-6 py-3 font-medium text-right">Quantity</th>
+              <th className="px-6 py-3 font-medium text-right">Weight</th>
               <th className="px-6 py-3 font-medium text-right">Value</th>
             </tr>
           </thead>
@@ -135,15 +163,23 @@ export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }:
                 </td>
               </tr>
             ) : (
-              filtered.map((h) => {
+              filtered.map((h, i) => {
+                const weight = totalValue > 0 ? ((h.value_usd ?? 0) / totalValue) * 100 : 0;
+                const logoKey = `${h.ticker}-${h.exch_code}`;
+                const showFallback = !h.ticker || logoErrors.has(logoKey);
+
                 return (
-                  <tr
+                  <motion.tr
                     key={h.id}
+                    custom={i}
+                    variants={rowVariants}
+                    initial="hidden"
+                    animate="visible"
                     className="border-b border-[var(--border-color)]/50 hover:bg-[var(--bg-tertiary)]/50 transition-colors"
                   >
                       <td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)]">
-                        <div className="flex items-center gap-2">
-                          {h.ticker && (
+                        <div className="flex items-center gap-2.5">
+                          {h.ticker && !showFallback ? (
                             <img
                               src={getLogoUrl(h.ticker, h.exch_code)}
                               alt=""
@@ -154,11 +190,13 @@ export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }:
                                 if (img.src !== plainUrl) {
                                   img.src = plainUrl;
                                 } else {
-                                  img.style.display = "none";
+                                  setLogoErrors((prev) => new Set(prev).add(logoKey));
                                 }
                               }}
                             />
-                          )}
+                          ) : h.ticker ? (
+                            <TickerInitial ticker={h.ticker} />
+                          ) : null}
                           {h.ticker ? (
                             <HoldingHoverCard
                               ticker={h.ticker}
@@ -180,12 +218,14 @@ export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }:
                         </div>
                       </td>
                       <td className="px-6 py-3 text-sm text-[var(--text-secondary)] font-mono">{h.ticker ?? "—"}</td>
-                      <td className="px-6 py-3 text-sm text-[var(--text-secondary)] capitalize">{h.asset_type ?? "—"}</td>
                       <td className="px-6 py-3 text-sm">
                         <SourceBadge holding={h} uploads={uploads} wallets={wallets} />
                       </td>
                       <td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right tabular-nums">
                         {h.quantity != null ? h.quantity.toLocaleString(undefined, { maximumFractionDigits: 6 }) : "—"}
+                      </td>
+                      <td className="px-6 py-3 text-sm text-[var(--text-muted)] text-right tabular-nums">
+                        {weight >= 0.1 ? `${weight.toFixed(1)}%` : "<0.1%"}
                       </td>
                       <td className="px-6 py-3 text-sm text-right tabular-nums">
                         {h.value_local != null && h.currency ? (
@@ -205,7 +245,7 @@ export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }:
                           "—"
                         )}
                       </td>
-                  </tr>
+                  </motion.tr>
                 );
               })
             )}

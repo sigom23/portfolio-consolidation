@@ -1,4 +1,4 @@
-import { getCachedCompany, upsertCompany } from "./db.js";
+import { getCachedCompany, upsertCompany, getCachedPrice, upsertCachedPrice } from "./db.js";
 
 const FMP_BASE = "https://financialmodelingprep.com/stable";
 
@@ -46,7 +46,8 @@ const EXCH_SUFFIX: Record<string, string> = {
 
 // Cache profiles for 1 hour
 const profileCache = new Map<string, { data: CompanyProfile; fetchedAt: number }>();
-const PROFILE_CACHE_TTL = 60 * 60 * 1000;
+const PROFILE_CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days — static data (sector, country, logo)
+const PRICE_CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours — EOD price data
 
 async function fetchProfile(symbol: string, apiKey: string): Promise<Record<string, unknown>[] | null> {
   try {
@@ -167,7 +168,7 @@ export async function getHistoricalPrices(ticker: string, exchCode?: string): Pr
 
   const symbol = resolveFmpSymbol(ticker, exchCode);
   const cached = historyCache.get(symbol);
-  if (cached && Date.now() - cached.fetchedAt < PROFILE_CACHE_TTL) {
+  if (cached && Date.now() - cached.fetchedAt < PRICE_CACHE_TTL) {
     return cached.data;
   }
 
@@ -206,40 +207,75 @@ export function resolveFmpSymbol(ticker: string, exchCode?: string | null): stri
   return suffix ? `${key}${suffix}` : key;
 }
 
-export async function getQuotes(holdings: { ticker: string; exchCode?: string | null }[]): Promise<Map<string, number>> {
+export interface QuoteResult {
+  price: number;
+  currency: string;
+}
+
+// Price cache — EOD data, reuses the shared TTL
+const priceCache = new Map<string, { data: QuoteResult; fetchedAt: number }>();
+
+export async function getQuotes(holdings: { ticker: string; exchCode?: string | null }[]): Promise<Map<string, QuoteResult>> {
   const apiKey = process.env.FMP_API_KEY;
   if (!apiKey || holdings.length === 0) return new Map();
 
-  const prices = new Map<string, number>();
+  const prices = new Map<string, QuoteResult>();
 
-  // Build ticker → FMP symbol mapping
-  const tickerToSymbol = new Map<string, string>();
-  const symbolToTicker = new Map<string, string>();
+  // Deduplicate by ticker
+  const seen = new Set<string>();
+  const unique: { ticker: string; exchCode?: string | null }[] = [];
   for (const h of holdings) {
-    const fmpSymbol = resolveFmpSymbol(h.ticker, h.exchCode);
-    tickerToSymbol.set(h.ticker.toUpperCase(), fmpSymbol);
-    symbolToTicker.set(fmpSymbol, h.ticker.toUpperCase());
+    const key = h.ticker.toUpperCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(h);
+    }
   }
 
-  const symbols = [...new Set(tickerToSymbol.values())].join(",");
+  // 3-tier cache: memory → DB → FMP API
+  for (const h of unique) {
+    const ticker = h.ticker.toUpperCase();
+    const symbol = resolveFmpSymbol(h.ticker, h.exchCode);
 
-  try {
-    const res = await fetch(`${FMP_BASE}/quote?symbol=${symbols}&apikey=${apiKey}`);
-    if (!res.ok) {
-      console.warn(`FMP API error: ${res.status}`);
-      return prices;
+    // 1. Memory cache
+    const memCached = priceCache.get(symbol);
+    if (memCached && Date.now() - memCached.fetchedAt < PRICE_CACHE_TTL) {
+      prices.set(ticker, memCached.data);
+      continue;
     }
 
-    const data = (await res.json()) as FmpQuote[];
-    for (const quote of data) {
-      if (quote.symbol && typeof quote.price === "number") {
-        // Map back to original ticker
-        const originalTicker = symbolToTicker.get(quote.symbol) ?? quote.symbol.toUpperCase();
-        prices.set(originalTicker, quote.price);
+    // 2. DB cache
+    try {
+      const dbCached = await getCachedPrice(symbol);
+      if (dbCached && Date.now() - dbCached.fetchedAt.getTime() < PRICE_CACHE_TTL) {
+        const result: QuoteResult = { price: dbCached.price, currency: dbCached.currency };
+        prices.set(ticker, result);
+        priceCache.set(symbol, { data: result, fetchedAt: dbCached.fetchedAt.getTime() });
+        continue;
+      }
+    } catch {
+      // DB read failed, continue to API
+    }
+
+    // 3. FMP API (free tier: /profile works for all exchanges)
+    const candidates = symbol !== ticker ? [symbol, ticker] : [ticker];
+    for (const sym of candidates) {
+      try {
+        const data = await fetchProfile(sym, apiKey);
+        if (data && typeof (data[0] as Record<string, unknown>).price === "number") {
+          const result: QuoteResult = {
+            price: (data[0] as Record<string, unknown>).price as number,
+            currency: ((data[0] as Record<string, unknown>).currency as string) ?? "USD",
+          };
+          prices.set(ticker, result);
+          priceCache.set(symbol, { data: result, fetchedAt: Date.now() });
+          upsertCachedPrice(symbol, result.price, result.currency).catch(() => {});
+          break;
+        }
+      } catch {
+        // network error — skip this symbol
       }
     }
-  } catch (err) {
-    console.warn("FMP quote fetch failed:", err instanceof Error ? err.message : err);
   }
 
   return prices;

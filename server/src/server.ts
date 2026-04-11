@@ -15,6 +15,9 @@ import apiRoutes from "./routes/api.js";
 import uploadRoutes from "./routes/uploads.js";
 import walletRoutes from "./routes/wallets.js";
 import accountRoutes from "./routes/account.js";
+import incomeRoutes from "./routes/income.js";
+import propertiesRoutes from "./routes/properties.js";
+import illiquidRoutes from "./routes/illiquid.js";
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 
@@ -55,6 +58,9 @@ async function start() {
   app.use("/api/uploads", uploadRoutes);
   app.use("/api/wallets", walletRoutes);
   app.use("/api/account", accountRoutes);
+  app.use("/api", incomeRoutes);
+  app.use("/api", propertiesRoutes);
+  app.use("/api", illiquidRoutes);
 
   // Serve frontend in production
   const clientDist = path.resolve(__dirname, "../../client/dist");

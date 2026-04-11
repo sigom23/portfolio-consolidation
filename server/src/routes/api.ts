@@ -4,6 +4,7 @@ import { requireAuth } from "../middleware/auth.js";
 import { getHoldingsByUser, getStockHoldingsByUser, updateHoldingValue } from "../lib/db.js";
 import { getQuotes, getCompanyProfile, getHistoricalPrices } from "../lib/fmp.js";
 import { getExchangeRates, SUPPORTED_CURRENCIES } from "../lib/forex.js";
+import { writeWealthSnapshotSafe } from "../lib/snapshots.js";
 import type { PortfolioSummary } from "../types/index.js";
 
 const router = Router();
@@ -65,15 +66,15 @@ router.post("/holdings/refresh-prices", async (req: Request, res: Response) => {
     let updated = 0;
     for (const holding of stockHoldings) {
       if (holding.ticker && holding.quantity) {
-        const price = prices.get(holding.ticker.toUpperCase());
-        if (price !== undefined) {
-          const valueLocal = holding.quantity * price;
-          let valueUsd = valueLocal;
+        const quote = prices.get(holding.ticker.toUpperCase());
+        if (quote) {
+          const valueLocal = holding.quantity * quote.price;
 
-          // Convert from holding's native currency to USD
-          const ccy = (holding.currency ?? "USD").toUpperCase();
-          if (ccy !== "USD" && rates[ccy]) {
-            valueUsd = valueLocal / rates[ccy];
+          // Convert from the price's actual currency (from FMP) to USD
+          const priceCcy = quote.currency.toUpperCase();
+          let valueUsd = valueLocal;
+          if (priceCcy !== "USD" && rates[priceCcy]) {
+            valueUsd = valueLocal / rates[priceCcy];
           }
 
           await updateHoldingValue(holding.id, valueUsd, valueLocal);
@@ -84,6 +85,7 @@ router.post("/holdings/refresh-prices", async (req: Request, res: Response) => {
 
     // Return updated holdings
     const allHoldings = await getHoldingsByUser(req.session.userId!);
+    await writeWealthSnapshotSafe(req.session.userId!, "price_refresh");
     res.json({ success: true, data: { updated, holdings: allHoldings } });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Price refresh failed";

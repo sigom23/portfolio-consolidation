@@ -15,21 +15,27 @@
   --sidebar-bg: #1e293b;
   --sidebar-text: #cbd5e1;
   --sidebar-active: #3b82f6;
+  --hero-bg: #ffffff;
+  --hero-border: #e2e8f0;
+  --hero-glow: transparent;
 }
 
 .dark {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #334155;
-  --border-color: #334155;
+  --bg-primary: #0a0f1a;
+  --bg-secondary: #111827;
+  --bg-tertiary: #1e293b;
+  --border-color: rgba(255, 255, 255, 0.06);
   --text-primary: #f1f5f9;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
   --accent: #60a5fa;
   --accent-hover: #3b82f6;
-  --sidebar-bg: #0f172a;
+  --sidebar-bg: #060a13;
   --sidebar-text: #94a3b8;
   --sidebar-active: #60a5fa;
+  --hero-bg: rgba(17, 24, 39, 0.7);
+  --hero-border: rgba(96, 165, 250, 0.15);
+  --hero-glow: rgba(59, 130, 246, 0.06);
 }
 
 body {
@@ -37,4 +43,32 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   transition: background-color 0.2s, color 0.2s;
+}
+
+/* Hero card glassmorphism */
+.hero-card {
+  background: var(--hero-bg);
+  border: 1px solid var(--hero-border);
+  box-shadow: 0 0 40px var(--hero-glow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.dark .hero-card {
+  background: linear-gradient(
+    135deg,
+    rgba(17, 24, 39, 0.8) 0%,
+    rgba(30, 41, 59, 0.5) 100%
+  );
+  border: 1px solid rgba(96, 165, 250, 0.12);
+  box-shadow:
+    0 0 50px rgba(59, 130, 246, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* Subtle card elevation in dark mode */
+.dark .card-elevated {
+  background: rgba(17, 24, 39, 0.6);
+  border-color: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }

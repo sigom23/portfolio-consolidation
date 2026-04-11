@@ -11,6 +11,7 @@ import {
 } from "../lib/db.js";
 import { getWalletBalances } from "../lib/etherscan.js";
 import { getEthPrice, getTokenPrices } from "../lib/coingecko.js";
+import { writeWealthSnapshotSafe } from "../lib/snapshots.js";
 import type { ParsedHolding } from "../types/index.js";
 
 const router = Router();
@@ -34,6 +35,7 @@ router.post("/", async (req: Request, res: Response) => {
   }
 
   const wallet = await createWallet(req.session.userId!, address, label ?? null);
+  await writeWealthSnapshotSafe(req.session.userId!, "wallet");
   res.json({ success: true, data: wallet });
 });
 
@@ -51,6 +53,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
     return;
   }
 
+  await writeWealthSnapshotSafe(req.session.userId!, "wallet");
   res.json({ success: true, data: null });
 });
 
@@ -113,6 +116,7 @@ router.post("/:id/refresh", async (req: Request, res: Response) => {
       holdings.map((h) => createHoldingFromWallet(req.session.userId!, id, h))
     );
 
+    await writeWealthSnapshotSafe(req.session.userId!, "wallet");
     res.json({ success: true, data: { wallet, holdings: created } });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Refresh failed";

@@ -9,7 +9,7 @@ function IndexPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      navigate({ to: "/dashboard" });
+      navigate({ to: "/my-wealth" });
     }
   }, [loading, user, navigate]);
 

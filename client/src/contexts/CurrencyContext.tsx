@@ -5,8 +5,10 @@ interface CurrencyContextValue {
   baseCurrency: string;
   setBaseCurrency: (code: string) => void;
   currencies: CurrencyInfo[];
+  rates: Record<string, number>;
   convert: (usdValue: number) => number;
   format: (usdValue: number) => string;
+  rateVsBase: (ccy: string) => number;
   symbol: string;
   flag: string;
   loading: boolean;
@@ -16,8 +18,10 @@ const CurrencyContext = createContext<CurrencyContextValue>({
   baseCurrency: "USD",
   setBaseCurrency: () => {},
   currencies: [],
+  rates: {},
   convert: (v) => v,
   format: (v) => `$${v.toFixed(2)}`,
+  rateVsBase: () => 1,
   symbol: "$",
   flag: "",
   loading: false,
@@ -54,6 +58,16 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
   const convert = (usdValue: number) => usdValue * rate;
 
+  // How much of the base currency equals 1 unit of the given currency
+  const rateVsBase = (ccy: string): number => {
+    const code = ccy.toUpperCase();
+    if (code === baseCurrency) return 1;
+    const ccyPerUsd = code === "USD" ? 1 : (rates[code] ?? 1);
+    const basePerUsd = baseCurrency === "USD" ? 1 : (rates[baseCurrency] ?? 1);
+    // 1 CCY = (1 / ccyPerUsd) USD = (basePerUsd / ccyPerUsd) BASE
+    return basePerUsd / ccyPerUsd;
+  };
+
   const format = (usdValue: number) => {
     const converted = convert(usdValue);
     if (baseCurrency === "JPY") {
@@ -64,7 +78,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
   return (
     <CurrencyContext.Provider
-      value={{ baseCurrency, setBaseCurrency, currencies, convert, format, symbol, flag, loading }}
+      value={{ baseCurrency, setBaseCurrency, currencies, rates, convert, format, rateVsBase, symbol, flag, loading }}
     >
       {children}
     </CurrencyContext.Provider>

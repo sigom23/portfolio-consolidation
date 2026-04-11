@@ -12,11 +12,18 @@ import {
   getHoldingsByUpload,
   getUploadFileData,
   updateHoldingFigi,
+  updateHoldingCurrency,
+  createTransaction,
 } from "../lib/db.js";
 import { parsePdf } from "../lib/pdf-parser.js";
-import { lookupTickers } from "../lib/openfigi.js";
+import { lookupSecurities } from "../lib/openfigi.js";
 import { parseCsv } from "../lib/csv-parser.js";
+import { writeWealthSnapshotSafe } from "../lib/snapshots.js";
 import { getExchangeRates } from "../lib/forex.js";
+import { getCompanyProfile } from "../lib/fmp.js";
+import { parseTransactionCsv } from "../lib/transaction-csv-parser.js";
+import { parseTransactionPdf } from "../lib/transaction-pdf-parser.js";
+import { categorize } from "../lib/categorize.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -47,8 +54,61 @@ router.post("/", upload.single("file"), async (req: Request, res: Response) => {
     const isPdf = mimetype === "application/pdf";
     const fileType = isPdf ? "pdf" : "csv";
 
-    const uploadRecord = await createUpload(userId, originalname, fileType, buffer);
+    const rawKind = String(req.body.kind ?? "wealth").toLowerCase();
+    const kind: "wealth" | "transactions" = rawKind === "transactions" ? "transactions" : "wealth";
 
+    const uploadRecord = await createUpload(userId, originalname, fileType, buffer, kind);
+
+    // Transactions branch ------------------------------------------------
+    if (kind === "transactions") {
+      try {
+        const parsed = isPdf ? await parseTransactionPdf(buffer) : parseTransactionCsv(buffer);
+
+        const rates = await getExchangeRates("USD");
+        let inserted = 0;
+        let duplicates = 0;
+        for (const tx of parsed) {
+          const ccy = tx.currency.toUpperCase();
+          const amountUsd = ccy === "USD" ? tx.amount : rates[ccy] ? tx.amount / rates[ccy] : null;
+          const category = await categorize(tx.description, tx.amount);
+          const result = await createTransaction(userId, {
+            source_type: "upload",
+            source_id: String(uploadRecord.id),
+            date: tx.date,
+            amount: tx.amount,
+            currency: ccy,
+            amount_usd: amountUsd,
+            description: tx.description,
+            merchant: tx.merchant,
+            category,
+          });
+          if (result) inserted++;
+          else duplicates++;
+        }
+
+        await updateUploadStatus(uploadRecord.id, "processed");
+        await writeWealthSnapshotSafe(userId, "upload");
+
+        res.json({
+          success: true,
+          data: {
+            upload: { ...uploadRecord, status: "processed" },
+            kind: "transactions",
+            parsed: parsed.length,
+            inserted,
+            duplicates,
+          },
+        });
+        return;
+      } catch (parseError) {
+        await updateUploadStatus(uploadRecord.id, "failed");
+        const message = parseError instanceof Error ? parseError.message : "Parsing failed";
+        res.status(422).json({ success: false, error: `Failed to parse transactions: ${message}` });
+        return;
+      }
+    }
+
+    // Wealth branch (existing) --------------------------------------------
     try {
       const holdings = isPdf ? await parsePdf(buffer) : parseCsv(buffer);
 
@@ -65,27 +125,31 @@ router.post("/", upload.single("file"), async (req: Request, res: Response) => {
         holdings.map((h) => createHoldingFromUpload(userId, uploadRecord.id, h))
       );
 
-      // Enrich holdings with OpenFIGI data (prefer ISIN for accurate identification)
+      // Enrich listed instruments with OpenFIGI data (prefer ISIN for accurate identification)
       const lookupItems = created
-        .filter((h) => h.ticker)
-        .map((h) => ({ ticker: h.ticker!, isin: h.isin, currency: h.currency }));
+        .filter((h) => h.asset_type !== "crypto" && h.asset_type !== "cash" && (h.isin || h.ticker))
+        .map((h) => ({ isin: h.isin, ticker: h.ticker, currency: h.currency }));
       if (lookupItems.length > 0) {
         try {
-          const figiData = await lookupTickers(lookupItems);
+          const figiData = await lookupSecurities(lookupItems);
           for (const holding of created) {
-            if (holding.ticker) {
-              const figi = figiData.get(holding.ticker.toUpperCase());
-              if (figi) {
-                await updateHoldingFigi(holding.id, figi);
-                Object.assign(holding, {
-                  figi: figi.figi,
-                  composite_figi: figi.compositeFIGI,
-                  share_class_figi: figi.shareClassFIGI,
-                  security_type: figi.securityType,
-                  market_sector: figi.marketSector,
-                  exch_code: figi.exchCode,
-                });
-              }
+            // Match by ISIN first, then by ticker
+            const key = holding.isin?.toUpperCase() ?? holding.ticker?.toUpperCase();
+            if (!key) continue;
+            const figi = figiData.get(key);
+            if (figi) {
+              // Use OpenFIGI's ticker if the holding doesn't have one
+              const tickerUpdate = !holding.ticker && figi.ticker ? figi.ticker : undefined;
+              await updateHoldingFigi(holding.id, { ...figi, ticker: tickerUpdate });
+              Object.assign(holding, {
+                figi: figi.figi,
+                composite_figi: figi.compositeFIGI,
+                share_class_figi: figi.shareClassFIGI,
+                security_type: figi.securityType,
+                market_sector: figi.marketSector,
+                exch_code: figi.exchCode,
+              });
+              if (tickerUpdate) holding.ticker = tickerUpdate;
             }
           }
         } catch (figiErr) {
@@ -93,7 +157,22 @@ router.post("/", upload.single("file"), async (req: Request, res: Response) => {
         }
       }
 
+      // Set each stock's currency to its trading currency from FMP
+      for (const holding of created) {
+        if (!holding.ticker || holding.asset_type === "crypto" || holding.asset_type === "cash") continue;
+        try {
+          const profile = await getCompanyProfile(holding.ticker, holding.exch_code ?? undefined);
+          if (profile?.currency) {
+            await updateHoldingCurrency(holding.id, profile.currency);
+            holding.currency = profile.currency;
+          }
+        } catch {
+          // FMP lookup failed, keep original currency
+        }
+      }
+
       await updateUploadStatus(uploadRecord.id, "processed");
+      await writeWealthSnapshotSafe(userId, "upload");
 
       res.json({
         success: true,
@@ -171,6 +250,7 @@ router.delete("/:id", async (req: Request, res: Response) => {
     return;
   }
 
+  await writeWealthSnapshotSafe(req.session.userId!, "upload");
   res.json({ success: true, data: null });
 });
 

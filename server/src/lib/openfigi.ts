@@ -7,6 +7,7 @@ export interface FigiResult {
   securityType: string | null;
   marketSector: string | null;
   exchCode: string | null;
+  ticker: string | null;
   name: string | null;
 }
 
@@ -17,6 +18,7 @@ interface FigiResponseItem {
   securityType?: string;
   marketSector?: string;
   exchCode?: string;
+  ticker?: string;
   name?: string;
 }
 
@@ -26,27 +28,77 @@ interface FigiResponse {
 }
 
 export interface LookupItem {
-  ticker: string;
+  ticker?: string | null;
   isin?: string | null;
   currency?: string | null;
 }
 
-export async function lookupTickers(items: LookupItem[]): Promise<Map<string, FigiResult>> {
+// ISIN country prefix → preferred OpenFIGI exchange code (primary listing)
+const ISIN_COUNTRY_EXCH: Record<string, string> = {
+  US: "US",
+  CH: "SW",
+  DE: "GR",
+  GB: "LN",
+  FR: "FP",
+  IT: "IM",
+  ES: "SM",
+  NL: "NA",
+  BE: "BB",
+  JP: "JP",
+  HK: "HK",
+  AU: "AU",
+  CA: "CN",
+};
+
+function pickBestListing(listings: FigiResponseItem[], isin?: string): FigiResponseItem {
+  if (!isin || listings.length <= 1) return listings[0];
+
+  const country = isin.slice(0, 2).toUpperCase();
+  const preferredExch = ISIN_COUNTRY_EXCH[country];
+  if (preferredExch) {
+    const match = listings.find((l) => l.exchCode === preferredExch);
+    if (match) return match;
+  }
+
+  return listings[0];
+}
+
+function toFigiResult(item: FigiResponseItem): FigiResult {
+  return {
+    figi: item.figi ?? null,
+    compositeFIGI: item.compositeFIGI ?? null,
+    shareClassFIGI: item.shareClassFIGI ?? null,
+    securityType: item.securityType ?? null,
+    marketSector: item.marketSector ?? null,
+    exchCode: item.exchCode ?? null,
+    ticker: item.ticker ?? null,
+    name: item.name ?? null,
+  };
+}
+
+// Results are keyed by ISIN (when available) or ticker
+export async function lookupSecurities(items: LookupItem[]): Promise<Map<string, FigiResult>> {
   const apiKey = process.env.OPENFIGI_API_KEY;
   if (!apiKey || items.length === 0) return new Map();
 
   // Build mapping jobs — prefer ISIN (globally unique) over ticker
-  const jobs = items.map((item) => {
+  const jobs: Record<string, string>[] = [];
+  const keys: string[] = []; // parallel array of map keys for each job
+
+  for (const item of items) {
     if (item.isin) {
-      return { idType: "ID_ISIN", idValue: item.isin.toUpperCase() };
+      jobs.push({ idType: "ID_ISIN", idValue: item.isin.toUpperCase() });
+      keys.push(item.isin.toUpperCase());
+    } else if (item.ticker) {
+      const job: Record<string, string> = {
+        idType: "TICKER",
+        idValue: item.ticker.toUpperCase(),
+      };
+      if (item.currency) job.currency = item.currency.toUpperCase();
+      jobs.push(job);
+      keys.push(item.ticker.toUpperCase());
     }
-    const job: Record<string, string> = {
-      idType: "TICKER",
-      idValue: item.ticker.toUpperCase(),
-    };
-    if (item.currency) job.currency = item.currency.toUpperCase();
-    return job;
-  });
+  }
 
   // OpenFIGI allows max 100 jobs per request
   const results = new Map<string, FigiResult>();
@@ -73,21 +125,13 @@ export async function lookupTickers(items: LookupItem[]): Promise<Map<string, Fi
       const data = (await res.json()) as FigiResponse[];
 
       for (let j = 0; j < batch.length; j++) {
-        const batchIdx = i + j;
-        const ticker = items[batchIdx].ticker.toUpperCase();
+        const key = keys[i + j];
         const response = data[j];
 
         if (response?.data && response.data.length > 0) {
-          const item = response.data[0];
-          results.set(ticker, {
-            figi: item.figi ?? null,
-            compositeFIGI: item.compositeFIGI ?? null,
-            shareClassFIGI: item.shareClassFIGI ?? null,
-            securityType: item.securityType ?? null,
-            marketSector: item.marketSector ?? null,
-            exchCode: item.exchCode ?? null,
-            name: item.name ?? null,
-          });
+          const isin = batch[j].idType === "ID_ISIN" ? batch[j].idValue : undefined;
+          const best = pickBestListing(response.data, isin);
+          results.set(key, toFigiResult(best));
         }
       }
     } catch (err) {

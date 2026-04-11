@@ -46,7 +46,7 @@ function CashFlowOverviewPage() {
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">Cash Flow</h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">
-            Monthly net cash flow — income minus expenses
+            Income, expenses, and monthly net
           </p>
         </div>
       </div>

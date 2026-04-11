@@ -123,7 +123,7 @@ function AssetsIlliquidPage() {
       >
         <div className="flex items-center justify-between">
           <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1">
-            Total Illiquid Value
+            Illiquid Value
           </p>
           <span className="text-xs text-[var(--text-muted)]">{flag} {baseCurrency}</span>
         </div>

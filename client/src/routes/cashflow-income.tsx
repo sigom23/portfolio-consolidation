@@ -77,7 +77,7 @@ function CashFlowIncomePage() {
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">Income</h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">
-            Recurring income streams and recent income transactions
+            Recurring streams and recent transactions
           </p>
         </div>
       </div>

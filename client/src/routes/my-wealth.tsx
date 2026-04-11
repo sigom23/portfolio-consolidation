@@ -1,13 +1,22 @@
 import { createRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Route as rootRoute } from "./__root";
 import { useAuth } from "../hooks/useAuth";
-import { useHoldings, useProperties } from "../hooks/usePortfolio";
+import { useHoldings, useProperties, useCashFlowSummary } from "../hooks/usePortfolio";
 import { useCurrency } from "../contexts/CurrencyContext";
 import { useEffect, useMemo } from "react";
 import { motion } from "motion/react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { AnimatedNumber } from "../components/AnimatedNumber";
 import type { Holding } from "../types";
+
+function currentMonthKey(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function currentMonthLabel(): string {
+  return new Date().toLocaleDateString(undefined, { month: "long", year: "numeric" });
+}
 
 type CategoryKey = "liquid" | "illiquid" | "real_estate" | "crypto";
 
@@ -32,6 +41,7 @@ function MyWealthPage() {
   const navigate = useNavigate();
   const { data: holdings, isLoading: holdingsLoading } = useHoldings();
   const { data: properties, isLoading: propertiesLoading } = useProperties();
+  const { data: cashFlow, isLoading: cashFlowLoading } = useCashFlowSummary(currentMonthKey());
   const { format, baseCurrency, flag, rates } = useCurrency();
 
   useEffect(() => {
@@ -133,7 +143,7 @@ function MyWealthPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-[var(--text-primary)]">My Wealth</h1>
         <p className="text-sm text-[var(--text-muted)] mt-1">
-          Welcome back, {user.name ?? user.email}
+          A consolidated view of your wealth
         </p>
       </div>
 
@@ -221,6 +231,78 @@ function MyWealthPage() {
           );
         })}
       </div>
+
+      {/* Monthly Cash Flow strip */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.28, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const }}
+        className="mb-4"
+      >
+        <Link
+          to="/cashflow"
+          className="block rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 hover:border-blue-500/40 hover:-translate-y-0.5 transition-all"
+        >
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="min-w-0">
+              <div className="flex items-baseline gap-3 flex-wrap">
+                <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+                  Cash Flow
+                </p>
+                <span className="text-xs text-[var(--text-muted)]">{currentMonthLabel()}</span>
+              </div>
+              {cashFlowLoading ? (
+                <div className="mt-2 h-8 w-40 bg-[var(--bg-tertiary)] rounded animate-pulse" />
+              ) : (
+                <p
+                  className={`mt-1 text-2xl font-semibold tabular-nums tracking-tight ${
+                    (cashFlow?.net ?? 0) >= 0 ? "text-green-500" : "text-red-500"
+                  }`}
+                >
+                  {(cashFlow?.net ?? 0) >= 0 ? "+" : "-"}
+                  {format(Math.abs(cashFlow?.net ?? 0))}
+                </p>
+              )}
+              {!cashFlowLoading && cashFlow && (
+                <div className="mt-1 flex items-center gap-4 text-[11px] text-[var(--text-muted)]">
+                  <span>
+                    Income{" "}
+                    <span className="font-medium text-[var(--text-secondary)] tabular-nums">
+                      +{format(cashFlow.income)}
+                    </span>
+                  </span>
+                  <span>
+                    Expenses{" "}
+                    <span className="font-medium text-[var(--text-secondary)] tabular-nums">
+                      -{format(cashFlow.expenses)}
+                    </span>
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="text-right shrink-0">
+              {!cashFlowLoading && cashFlow && (
+                <>
+                  <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
+                    Savings rate
+                  </p>
+                  <p
+                    className={`text-xl font-semibold tabular-nums ${
+                      cashFlow.savingsRate >= 0.2
+                        ? "text-green-500"
+                        : cashFlow.savingsRate >= 0
+                          ? "text-yellow-500"
+                          : "text-red-500"
+                    }`}
+                  >
+                    {(cashFlow.savingsRate * 100).toFixed(0)}%
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+        </Link>
+      </motion.div>
 
       {/* Composition donut + Top 5 Holdings */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

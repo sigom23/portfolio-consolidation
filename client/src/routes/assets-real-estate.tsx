@@ -132,7 +132,7 @@ function RealEstatePage() {
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">Real Estate</h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">
-            Manage your properties, mortgages, and rental income
+            Properties, mortgages, and rental income
           </p>
         </div>
         <button

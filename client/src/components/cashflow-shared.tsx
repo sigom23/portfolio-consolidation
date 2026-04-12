@@ -12,7 +12,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useCurrency } from "../contexts/CurrencyContext";
-import { useUploadStatement } from "../hooks/usePortfolio";
+import { useUploadStatement, useUpdateTransactionCategory } from "../hooks/usePortfolio";
 import type {
   CashFlowSummary,
   IncomeStream,
@@ -549,6 +549,12 @@ export function TopMerchantsCard({
   );
 }
 
+const ALL_CATEGORIES = [
+  "Housing", "Groceries", "Transport", "Food & Drink", "Shopping",
+  "Entertainment", "Health", "Travel", "Subscriptions", "Bills",
+  "Boat", "Income", "Transfers", "Other",
+];
+
 /** Shared transactions table — used by Income and Expenses. */
 export function TransactionsTable({
   transactions,
@@ -560,6 +566,7 @@ export function TransactionsTable({
   showAmountSign: "income" | "expense";
 }) {
   const { format, rates } = useCurrency();
+  const updateCategory = useUpdateTransactionCategory();
 
   if (loading) {
     return (
@@ -626,21 +633,19 @@ export function TransactionsTable({
                   )}
                 </td>
                 <td className="px-6 py-3 text-sm">
-                  {tx.category ? (
-                    <span
-                      className="inline-block px-2 py-0.5 rounded text-[10px] font-medium"
-                      style={{
-                        backgroundColor: `${
-                          CATEGORY_COLORS[tx.category] ?? "#94a3b8"
-                        }1a`,
-                        color: CATEGORY_COLORS[tx.category] ?? "#94a3b8",
-                      }}
-                    >
-                      {tx.category}
-                    </span>
-                  ) : (
-                    <span className="text-[var(--text-muted)]">—</span>
-                  )}
+                  <select
+                    value={tx.category ?? "Other"}
+                    onChange={(e) => updateCategory.mutate({ id: tx.id, category: e.target.value })}
+                    className="appearance-none cursor-pointer px-2 py-0.5 rounded text-[10px] font-medium border-0 outline-none bg-transparent"
+                    style={{
+                      backgroundColor: `${CATEGORY_COLORS[tx.category ?? "Other"] ?? "#94a3b8"}1a`,
+                      color: CATEGORY_COLORS[tx.category ?? "Other"] ?? "#94a3b8",
+                    }}
+                  >
+                    {ALL_CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
                 </td>
                 <td className="px-6 py-3 text-sm text-right tabular-nums">
                   <div>

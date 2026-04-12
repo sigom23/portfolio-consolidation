@@ -109,7 +109,7 @@ function AssetsCryptoPage() {
   const loading = holdingsLoading || walletsLoading;
 
   return (
-    <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto">
+    <div className="px-6 lg:px-8 py-8 max-w-[1100px] mx-auto">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>

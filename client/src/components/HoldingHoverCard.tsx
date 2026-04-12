@@ -110,7 +110,7 @@ export function HoldingHoverCard({ ticker, exchCode, figiData, children }: Props
 
   const card = visible ? createPortal(
     <div
-      className={`fixed z-[9999] ${cardWidth} rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] shadow-2xl p-4 overflow-y-auto`}
+      className={`fixed z-[9999] ${cardWidth} rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-4 overflow-y-auto`}
       style={{
         top: coords.openAbove ? undefined : coords.top,
         bottom: coords.openAbove ? window.innerHeight - coords.top + 4 : undefined,

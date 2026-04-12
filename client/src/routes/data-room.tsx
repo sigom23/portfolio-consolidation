@@ -151,7 +151,7 @@ function DataRoomPage() {
   const activeQueue = queue.filter((q) => q.status !== "done" || Date.now() - Number(q.id.split("-")[0]) < 30000);
 
   return (
-    <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto">
+    <div className="px-6 lg:px-8 py-8 max-w-[1100px] mx-auto">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)]">Data Room</h1>

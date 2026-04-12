@@ -92,7 +92,7 @@ function CashFlowIncomePage() {
   }
 
   return (
-    <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto">
+    <div className="px-6 lg:px-8 py-8 max-w-[1100px] mx-auto">
       {/* 1. Header */}
       <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>

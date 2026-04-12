@@ -172,7 +172,7 @@ export function MonthSelector({
               onClick={() => onMonthChange(m)}
               className={`relative px-3 py-1.5 rounded-[2px] text-xs font-medium transition-all ${
                 isActive
-                  ? "bg-[var(--color-charcoal)] text-white shadow-sm"
+                  ? "bg-[var(--color-charcoal)] text-white"
                   : hasData
                     ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-color)] hover:border-[var(--color-charcoal)]/50"
                     : "bg-[var(--bg-secondary)] text-[var(--text-muted)] border border-transparent opacity-50 hover:opacity-75"

@@ -46,7 +46,7 @@ export function UploadForm() {
               onClick={() => setKind("wealth")}
               className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 kind === "wealth"
-                  ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
+                  ? "bg-[var(--bg-secondary)] text-[var(--text-primary)]"
                   : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
               }`}
             >
@@ -57,7 +57,7 @@ export function UploadForm() {
               onClick={() => setKind("transactions")}
               className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 kind === "transactions"
-                  ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] shadow-sm"
+                  ? "bg-[var(--bg-secondary)] text-[var(--text-primary)]"
                   : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
               }`}
             >

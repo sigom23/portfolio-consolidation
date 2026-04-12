@@ -136,7 +136,7 @@ function RealEstatePage() {
   }
 
   return (
-    <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto">
+    <div className="px-6 lg:px-8 py-8 max-w-[1100px] mx-auto">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
@@ -414,7 +414,7 @@ function AddPropertyModal({ open, onClose, editProperty }: { open: boolean; onCl
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-black/60"
             onClick={onClose}
           />
           <motion.div
@@ -566,7 +566,7 @@ function PropertyDetailDrawer({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-black/60"
             onClick={onClose}
           />
           <motion.aside
@@ -935,7 +935,7 @@ function AddMortgageModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[60] bg-black/60"
             onClick={onClose}
           />
           <motion.div
@@ -1063,7 +1063,7 @@ function AddCostModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[60] bg-black/60"
             onClick={onClose}
           />
           <motion.div
@@ -1212,7 +1212,7 @@ function AddRentalStreamModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-[60] bg-black/60"
             onClick={onClose}
           />
           <motion.div

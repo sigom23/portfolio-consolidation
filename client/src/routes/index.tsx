@@ -22,23 +22,18 @@ function IndexPage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-8 px-6">
-      <div className="w-16 h-16 bg-[var(--color-charcoal)] rounded-[2px] flex items-center justify-center">
-        <svg className="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-        </svg>
-      </div>
+    <div className="flex flex-col items-center justify-center min-h-screen gap-12 px-6">
       <div className="text-center">
-        <h1 className="text-[38px] font-serif font-light tracking-[-0.03em] text-[var(--text-primary)]">Portfolio Consolidation</h1>
-        <p className="text-lg text-[var(--text-secondary)] max-w-md mt-3">
-          Track all your assets in one place — stocks, crypto, bonds, and more.
+        <h1 className="font-serif text-[38px] font-light tracking-[-0.03em] text-[var(--color-charcoal)]">Wealth</h1>
+        <p className="text-[15.7px] font-light text-[var(--color-mid)] max-w-md mt-4 leading-relaxed">
+          One intelligent view of your financial life.
         </p>
       </div>
       <button
         onClick={login}
-        className="px-8 py-3 bg-[var(--color-charcoal)] text-white rounded-full font-medium hover:bg-[var(--color-dark)] transition-colors text-lg"
+        className="px-8 py-3.5 border border-[var(--color-faint)] text-[var(--color-mid)] rounded-full text-[14px] font-medium hover:border-[var(--color-charcoal)] hover:text-[var(--color-charcoal)] transition-colors"
       >
-        Login to Get Started
+        Get Started
       </button>
     </div>
   );

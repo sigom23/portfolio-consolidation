@@ -138,7 +138,7 @@ function MyWealthPage() {
   }
 
   return (
-    <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto">
+    <div className="px-6 lg:px-8 py-8 max-w-[1100px] mx-auto">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)]">My Wealth</h1>
@@ -195,42 +195,42 @@ function MyWealthPage() {
         )}
       </motion.div>
 
-      {/* Category cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      {/* Category stat grid — strict bordered 2×2 */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.12, duration: 0.4, ease: [0.25, 1, 0.5, 1] as const }}
+        className="border border-[var(--color-whisper)] rounded-[2px] mb-6 grid grid-cols-2"
+      >
         {categories.map((cat, i) => {
           const pct = netWorth > 0 ? (cat.value / netWorth) * 100 : 0;
+          const borderClasses = [
+            i % 2 === 0 ? "border-r border-[var(--color-whisper)]" : "",
+            i < 2 ? "border-b border-[var(--color-whisper)]" : "",
+          ].join(" ");
           return (
-            <motion.div
+            <Link
               key={cat.key}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1 + i * 0.06, duration: 0.4, ease: [0.25, 1, 0.5, 1] as const }}
+              to={cat.to}
+              className={`block p-6 hover:bg-[var(--color-snow)] transition-colors ${borderClasses}`}
             >
-              <Link
-                to={cat.to}
-                className="block rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 hover:border-[var(--color-charcoal)]/40 hover:bg-[var(--color-snow)] transition-all"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
-                  <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)]">
-                    {cat.label}
-                  </p>
-                </div>
-                {loading ? (
-                  <div className="mt-2 h-7 w-28 bg-[var(--bg-tertiary)] rounded animate-pulse" />
-                ) : (
-                  <p className="mt-2 text-[27px] font-serif font-light text-[var(--text-primary)] tabular-nums tracking-tight">
-                    {format(cat.value)}
-                  </p>
-                )}
-                <p className="mt-1 text-xs text-[var(--text-muted)] tabular-nums">
-                  {loading ? "—" : `${pct.toFixed(1)}% of net worth`}
+              <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--color-light)] mb-2">
+                {cat.label}
+              </p>
+              {loading ? (
+                <div className="h-7 w-28 bg-[var(--color-cloud)] rounded-[2px] animate-pulse" />
+              ) : (
+                <p className="text-[27px] font-serif font-light text-[var(--color-charcoal)] tabular-nums tracking-[-0.03em]">
+                  {format(cat.value)}
                 </p>
-              </Link>
-            </motion.div>
+              )}
+              <p className="mt-1 text-[10.4px] text-[var(--color-muted)] tabular-nums">
+                {loading ? "\u2014" : `${pct.toFixed(1)}% of net worth`}
+              </p>
+            </Link>
           );
         })}
-      </div>
+      </motion.div>
 
       {/* Monthly Cash Flow strip */}
       <motion.div

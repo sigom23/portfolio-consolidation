@@ -242,6 +242,12 @@ export async function updateTransactionCategory(id: number, category: string): P
   return data.data!;
 }
 
+export async function reclassifyTransactions(): Promise<{ total: number; updated: number }> {
+  const { data } = await api.post<ApiResponse<{ total: number; updated: number }>>("/api/transactions/reclassify");
+  if (!data.success) throw new Error(data.error ?? "Reclassification failed");
+  return data.data!;
+}
+
 export async function deleteTransaction(id: number): Promise<void> {
   const { data } = await api.delete<ApiResponse<null>>(`/api/transactions/${id}`);
   if (!data.success) throw new Error(data.error ?? "Failed to delete transaction");

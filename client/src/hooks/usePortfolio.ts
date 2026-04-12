@@ -4,7 +4,7 @@ import {
   fetchWallets, addWallet, deleteWallet, refreshWallet, refreshStockPrices,
   fetchSectorAllocation, fetchGeographyAllocation,
   fetchIncomeStreams, createIncomeStream, updateIncomeStream, deleteIncomeStream,
-  fetchTransactions, createManualTransaction, updateTransactionCategory, deleteTransaction,
+  fetchTransactions, createManualTransaction, updateTransactionCategory, deleteTransaction, reclassifyTransactions,
   fetchCashFlowSummary,
   fetchProperties, createProperty, updateProperty, deleteProperty,
   createMortgage, updateMortgage, deleteMortgage,
@@ -200,6 +200,14 @@ export function useDeleteTransaction() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => deleteTransaction(id),
+    onSuccess: () => invalidateCashflow(queryClient),
+  });
+}
+
+export function useReclassifyTransactions() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => reclassifyTransactions(),
     onSuccess: () => invalidateCashflow(queryClient),
   });
 }

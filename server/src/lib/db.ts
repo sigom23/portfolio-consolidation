@@ -173,9 +173,9 @@ export async function initDb(): Promise<void> {
       created_at TIMESTAMP DEFAULT NOW()
     );
 
-    -- Migration: add user_id column if missing, drop old unique index, add new one
+    -- Migration: add user_id column if missing, drop old unique constraint, add new indexes
     ALTER TABLE merchant_categories ADD COLUMN IF NOT EXISTS user_id TEXT;
-    DROP INDEX IF EXISTS merchant_categories_merchant_key_key;
+    ALTER TABLE merchant_categories DROP CONSTRAINT IF EXISTS merchant_categories_merchant_key_key;
     CREATE UNIQUE INDEX IF NOT EXISTS idx_merchant_categories_user_key
       ON merchant_categories (user_id, merchant_key) WHERE user_id IS NOT NULL;
     CREATE UNIQUE INDEX IF NOT EXISTS idx_merchant_categories_global_key

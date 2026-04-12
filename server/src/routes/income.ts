@@ -248,6 +248,29 @@ router.delete("/transactions/:id", async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/transactions/reclassify — re-run categorization on all transactions using current user mappings
+router.post("/transactions/reclassify", async (req: Request, res: Response) => {
+  try {
+    const userId = req.session.userId!;
+    const all = await getTransactionsByUser(userId, { limit: 10000 });
+    let updated = 0;
+
+    for (const tx of all) {
+      const desc = tx.description ?? "";
+      if (!desc) continue;
+      const newCategory = await categorize(desc, tx.amount, userId);
+      if (newCategory !== tx.category) {
+        await updateTransactionCategory(tx.id, userId, newCategory);
+        updated++;
+      }
+    }
+
+    res.json({ success: true, data: { total: all.length, updated } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err instanceof Error ? err.message : "Reclassification failed" });
+  }
+});
+
 // GET /api/cashflow/summary?month=YYYY-MM
 router.get("/cashflow/summary", async (req: Request, res: Response) => {
   try {

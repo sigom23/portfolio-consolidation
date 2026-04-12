@@ -5,9 +5,10 @@ import {
   useIncomeStreams,
   useTransactions,
   useDeleteIncomeStream,
+  useUploadStatement,
 } from "../hooks/usePortfolio";
 import { useCurrency } from "../contexts/CurrencyContext";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { AnimatedNumber } from "../components/AnimatedNumber";
 import { AddStreamModal } from "../components/AddStreamModal";
@@ -32,6 +33,11 @@ function CashFlowIncomePage() {
   const deleteStream = useDeleteIncomeStream();
   const { format, rates } = useCurrency();
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingStream, setEditingStream] = useState<IncomeStream | null>(null);
+
+  // Salary upload state
+  const uploadMutation = useUploadStatement();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -61,6 +67,27 @@ function CashFlowIncomePage() {
       );
     });
   }, [streams, rates]);
+
+  function openEdit(stream: IncomeStream) {
+    setEditingStream(stream);
+    setModalOpen(true);
+  }
+
+  function closeModal() {
+    setModalOpen(false);
+    setEditingStream(null);
+  }
+
+  function handleSalaryUpload(file: File) {
+    uploadMutation.mutate(
+      { file, kind: "salary" },
+      {
+        onSuccess: () => {
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        },
+      }
+    );
+  }
 
   if (authLoading || !user) {
     return (
@@ -121,7 +148,7 @@ function CashFlowIncomePage() {
             Income Streams
           </h2>
           <button
-            onClick={() => setModalOpen(true)}
+            onClick={() => { setEditingStream(null); setModalOpen(true); }}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
           >
             <svg
@@ -155,7 +182,7 @@ function CashFlowIncomePage() {
               No income streams yet.
             </p>
             <button
-              onClick={() => setModalOpen(true)}
+              onClick={() => { setEditingStream(null); setModalOpen(true); }}
               className="text-sm font-medium text-blue-500 hover:text-blue-400 transition-colors"
             >
               Add your first stream →
@@ -168,6 +195,7 @@ function CashFlowIncomePage() {
                 key={stream.id}
                 stream={stream}
                 index={i}
+                onEdit={() => openEdit(stream)}
                 onDelete={() => {
                   if (
                     confirm(
@@ -183,6 +211,46 @@ function CashFlowIncomePage() {
         )}
       </div>
 
+      {/* Salary upload */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15, duration: 0.35 }}
+        className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 mb-6"
+      >
+        <h2 className="text-sm font-medium text-[var(--text-muted)] uppercase tracking-wider mb-3">
+          Upload Salary Statement
+        </h2>
+        <p className="text-xs text-[var(--text-muted)] mb-3">
+          Upload a salary slip or income statement (PDF or image). Net pay will be extracted and recorded as an income transaction.
+        </p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.png,.jpg,.jpeg,.webp"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleSalaryUpload(f);
+            }}
+            className="text-sm text-[var(--text-secondary)] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-blue-500/10 file:text-blue-500 hover:file:bg-blue-500/20"
+          />
+          {uploadMutation.isPending && (
+            <span className="text-xs text-[var(--text-muted)]">Parsing...</span>
+          )}
+        </div>
+        {uploadMutation.isError && (
+          <p className="text-xs text-red-500 mt-2">{uploadMutation.error.message}</p>
+        )}
+        {uploadMutation.isSuccess && uploadMutation.data?.kind === "salary" && (
+          <p className="text-xs text-green-500 mt-2">
+            {(uploadMutation.data as any).updated
+              ? "Salary stream updated with new amount"
+              : "Salary stream created from statement"}
+          </p>
+        )}
+      </motion.div>
+
       {/* Recent income */}
       <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden">
         <div className="px-6 py-4 border-b border-[var(--border-color)]">
@@ -197,7 +265,7 @@ function CashFlowIncomePage() {
         />
       </div>
 
-      <AddStreamModal open={modalOpen} onClose={() => setModalOpen(false)} />
+      <AddStreamModal open={modalOpen} onClose={closeModal} stream={editingStream} />
     </div>
   );
 }
@@ -205,10 +273,12 @@ function CashFlowIncomePage() {
 function StreamCard({
   stream,
   index,
+  onEdit,
   onDelete,
 }: {
   stream: IncomeStream;
   index: number;
+  onEdit: () => void;
   onDelete: () => void;
 }) {
   const { format, rates } = useCurrency();
@@ -231,9 +301,10 @@ function StreamCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 + index * 0.05, duration: 0.35 }}
       whileHover={{ y: -2 }}
-      className={`card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 transition-colors ${
+      className={`card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 transition-colors cursor-pointer ${
         !stream.is_active ? "opacity-60" : ""
       }`}
+      onClick={onEdit}
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
@@ -242,25 +313,46 @@ function StreamCard({
             {TYPE_LABELS[stream.type]}
           </span>
         </div>
-        <button
-          onClick={onDelete}
-          className="text-[var(--text-muted)] hover:text-red-500 transition-colors"
-          title="Delete stream"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        <div className="flex items-center gap-1">
+          <button
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            className="text-[var(--text-muted)] hover:text-blue-500 transition-colors"
+            title="Edit stream"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-            />
-          </svg>
-        </button>
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+              />
+            </svg>
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            className="text-[var(--text-muted)] hover:text-red-500 transition-colors"
+            title="Delete stream"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+              />
+            </svg>
+          </button>
+        </div>
       </div>
       <h3 className="text-base font-semibold text-[var(--text-primary)] mb-1">
         {stream.name}

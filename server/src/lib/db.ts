@@ -344,7 +344,7 @@ export async function createUpload(
   filename: string,
   fileType: string,
   fileData?: Buffer,
-  uploadKind: "wealth" | "transactions" | "pe_statement" = "wealth"
+  uploadKind: "wealth" | "transactions" | "pe_statement" | "salary" = "wealth"
 ): Promise<Upload> {
   const { rows } = await getPool().query(
     "INSERT INTO uploads (user_id, filename, file_type, file_data, status, upload_kind) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, user_id, filename, file_type, uploaded_at, status, upload_kind",
@@ -380,6 +380,7 @@ export async function updateUploadStatus(id: number, status: string): Promise<vo
 
 export async function deleteUpload(id: number, userId: string): Promise<boolean> {
   await getPool().query("DELETE FROM holdings WHERE source_type = 'upload' AND source_id = $1", [String(id)]);
+  await getPool().query("DELETE FROM transactions WHERE source_type = 'upload' AND source_id = $1 AND user_id = $2", [String(id), userId]);
   const { rowCount } = await getPool().query("DELETE FROM uploads WHERE id = $1 AND user_id = $2", [id, userId]);
   return (rowCount ?? 0) > 0;
 }

@@ -29,7 +29,7 @@ export async function fetchHoldings(): Promise<Holding[]> {
 
 export async function uploadStatement(
   file: File,
-  kind: "wealth" | "transactions" = "wealth"
+  kind: "wealth" | "transactions" | "salary" = "wealth"
 ): Promise<UploadResult> {
   const formData = new FormData();
   formData.append("file", file);

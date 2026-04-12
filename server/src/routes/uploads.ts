@@ -14,6 +14,11 @@ import {
   updateHoldingFigi,
   updateHoldingCurrency,
   createTransaction,
+  getIncomeStreamsByUser,
+  createIncomeStream,
+  updateIncomeStream,
+  generateStreamTransactions,
+  deleteTransactionsByStream,
 } from "../lib/db.js";
 import { parsePdf } from "../lib/pdf-parser.js";
 import { lookupSecurities } from "../lib/openfigi.js";
@@ -23,6 +28,7 @@ import { getExchangeRates } from "../lib/forex.js";
 import { getCompanyProfile } from "../lib/fmp.js";
 import { parseTransactionCsv } from "../lib/transaction-csv-parser.js";
 import { parseTransactionPdf } from "../lib/transaction-pdf-parser.js";
+import { parseSalaryPdf } from "../lib/salary-pdf-parser.js";
 import { categorize } from "../lib/categorize.js";
 
 const router = Router();
@@ -32,11 +38,14 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (_req, file, cb) => {
-    const allowed = ["application/pdf", "text/csv", "application/vnd.ms-excel"];
+    const allowed = [
+      "application/pdf", "text/csv", "application/vnd.ms-excel",
+      "image/png", "image/jpeg", "image/webp", "image/gif",
+    ];
     if (allowed.includes(file.mimetype) || file.originalname.endsWith(".csv")) {
       cb(null, true);
     } else {
-      cb(new Error("Only PDF and CSV files are allowed"));
+      cb(new Error("Only PDF, CSV, and image files are allowed"));
     }
   },
 });
@@ -52,17 +61,23 @@ router.post("/", upload.single("file"), async (req: Request, res: Response) => {
     const userId = req.session.userId!;
     const { originalname, mimetype, buffer } = req.file;
     const isPdf = mimetype === "application/pdf";
-    const fileType = isPdf ? "pdf" : "csv";
+    const isImage = mimetype.startsWith("image/");
+    const fileType = isPdf ? "pdf" : isImage ? "image" : "csv";
 
     const rawKind = String(req.body.kind ?? "wealth").toLowerCase();
-    const kind: "wealth" | "transactions" = rawKind === "transactions" ? "transactions" : "wealth";
+    const kind: "wealth" | "transactions" | "salary" =
+      rawKind === "transactions" ? "transactions" : rawKind === "salary" ? "salary" : "wealth";
 
     const uploadRecord = await createUpload(userId, originalname, fileType, buffer, kind);
 
     // Transactions branch ------------------------------------------------
     if (kind === "transactions") {
       try {
-        const parsed = isPdf ? await parseTransactionPdf(buffer) : parseTransactionCsv(buffer);
+        const parsed = isPdf
+          ? await parseTransactionPdf(buffer)
+          : isImage
+            ? await parseTransactionPdf(buffer, mimetype as Parameters<typeof parseTransactionPdf>[1])
+            : parseTransactionCsv(buffer);
 
         const rates = await getExchangeRates("USD");
         let inserted = 0;
@@ -104,6 +119,80 @@ router.post("/", upload.single("file"), async (req: Request, res: Response) => {
         await updateUploadStatus(uploadRecord.id, "failed");
         const message = parseError instanceof Error ? parseError.message : "Parsing failed";
         res.status(422).json({ success: false, error: `Failed to parse transactions: ${message}` });
+        return;
+      }
+    }
+
+    // Salary branch -------------------------------------------------------
+    if (kind === "salary") {
+      if (!isPdf && !isImage) {
+        await updateUploadStatus(uploadRecord.id, "failed");
+        res.status(400).json({ success: false, error: "Salary statements must be PDF or image files" });
+        return;
+      }
+      try {
+        const parsed = await parseSalaryPdf(buffer, mimetype as Parameters<typeof parseSalaryPdf>[1]);
+        if (parsed.length === 0) {
+          await updateUploadStatus(uploadRecord.id, "failed");
+          res.status(422).json({ success: false, error: "Could not extract salary information from this document" });
+          return;
+        }
+
+        // Use the first parsed entry (primary salary line)
+        const salary = parsed[0];
+        const ccy = salary.currency.toUpperCase();
+        const employer = salary.merchant ?? salary.description;
+
+        // Check if an income stream for this employer already exists
+        const existingStreams = await getIncomeStreamsByUser(userId);
+        const match = existingStreams.find(
+          (s) => s.type === "salary" && s.name.toLowerCase() === employer.toLowerCase()
+        );
+
+        let stream;
+        if (match) {
+          // Update amount if it changed
+          stream = await updateIncomeStream(match.id, userId, {
+            amount: salary.amount,
+            currency: ccy,
+          });
+          // Regenerate transactions with new amount
+          await deleteTransactionsByStream(userId, match.id);
+          await generateStreamTransactions(userId, stream!);
+        } else {
+          // Create new income stream from parsed salary
+          stream = await createIncomeStream(userId, {
+            name: employer,
+            type: "salary",
+            amount: salary.amount,
+            currency: ccy,
+            frequency: "monthly",
+            day_of_month: new Date(salary.date).getDate() || 25,
+            start_date: salary.date,
+            end_date: null,
+            is_active: true,
+            notes: `Created from uploaded salary statement: ${originalname}`,
+            property_id: null,
+          });
+          await generateStreamTransactions(userId, stream);
+        }
+
+        await updateUploadStatus(uploadRecord.id, "processed");
+
+        res.json({
+          success: true,
+          data: {
+            upload: { ...uploadRecord, status: "processed" },
+            kind: "salary",
+            stream,
+            updated: !!match,
+          },
+        });
+        return;
+      } catch (parseError) {
+        await updateUploadStatus(uploadRecord.id, "failed");
+        const message = parseError instanceof Error ? parseError.message : "Parsing failed";
+        res.status(422).json({ success: false, error: `Failed to parse salary statement: ${message}` });
         return;
       }
     }

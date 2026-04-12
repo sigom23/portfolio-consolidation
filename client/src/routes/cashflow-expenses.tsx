@@ -1,9 +1,9 @@
 import { createRoute, useNavigate } from "@tanstack/react-router";
 import { Route as rootRoute } from "./__root";
 import { useAuth } from "../hooks/useAuth";
-import { useCashFlowSummary, useTransactions } from "../hooks/usePortfolio";
+import { useCashFlowSummary, useTransactions, useUploadStatement } from "../hooks/usePortfolio";
 import { useCurrency } from "../contexts/CurrencyContext";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { AnimatedNumber } from "../components/AnimatedNumber";
 import {
@@ -22,6 +22,19 @@ function CashFlowExpensesPage() {
     limit: 200,
   });
   const { format } = useCurrency();
+  const uploadMutation = useUploadStatement();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleUpload(file: File) {
+    uploadMutation.mutate(
+      { file, kind: "transactions" },
+      {
+        onSuccess: () => {
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        },
+      }
+    );
+  }
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -95,6 +108,45 @@ function CashFlowExpensesPage() {
       <div className="mb-6">
         <CategoryBreakdownCard summary={summary} loading={summaryLoading} />
       </div>
+
+      {/* Upload statement */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15, duration: 0.35 }}
+        className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 mb-6"
+      >
+        <h2 className="text-sm font-medium text-[var(--text-muted)] uppercase tracking-wider mb-3">
+          Upload Statement
+        </h2>
+        <p className="text-xs text-[var(--text-muted)] mb-3">
+          Upload a credit card or bank statement (PDF, CSV, or image). Transactions will be extracted and categorized automatically.
+        </p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.csv,.png,.jpg,.jpeg,.webp"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleUpload(f);
+            }}
+            className="text-sm text-[var(--text-secondary)] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-blue-500/10 file:text-blue-500 hover:file:bg-blue-500/20"
+          />
+          {uploadMutation.isPending && (
+            <span className="text-xs text-[var(--text-muted)]">Parsing...</span>
+          )}
+        </div>
+        {uploadMutation.isError && (
+          <p className="text-xs text-red-500 mt-2">{uploadMutation.error.message}</p>
+        )}
+        {uploadMutation.isSuccess && uploadMutation.data?.kind === "transactions" && (
+          <p className="text-xs text-green-500 mt-2">
+            Parsed {uploadMutation.data.parsed ?? 0} transaction(s), inserted {uploadMutation.data.inserted ?? 0}
+            {uploadMutation.data.duplicates ? `, skipped ${uploadMutation.data.duplicates} duplicate(s)` : ""}
+          </p>
+        )}
+      </motion.div>
 
       {/* Expense transactions table */}
       <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden">

@@ -37,7 +37,7 @@ export function useUploads() {
 export function useUploadStatement() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ file, kind = "wealth" }: { file: File; kind?: "wealth" | "transactions" }) =>
+    mutationFn: ({ file, kind = "wealth" }: { file: File; kind?: "wealth" | "transactions" | "salary" }) =>
       uploadStatement(file, kind),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["uploads"] });
@@ -45,6 +45,7 @@ export function useUploadStatement() {
       queryClient.invalidateQueries({ queryKey: ["portfolio", "summary"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["cashflow-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["income-streams"] });
     },
   });
 }

@@ -1,36 +1,34 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { ParsedTransaction } from "../types/index.js";
 
-const TRANSACTION_PROMPT = `Extract ALL individual transactions from this bank or credit card statement.
+const SALARY_PROMPT = `Extract the salary/income information from this pay slip or salary statement.
 
-Return ONLY a JSON array with no other text. One entry per transaction line item.
+Return ONLY a JSON array with no other text. Typically one entry per pay period on the document.
 
-For each transaction, extract:
-- "date": the TRANSACTION date (when the purchase actually happened), NOT the booking/posting date. Format as YYYY-MM-DD. If only one date is shown, use it.
-- "description": the full merchant/description text as printed
-- "merchant": the cleaned merchant name if identifiable (e.g. "Starbucks" from "STARBUCKS 12345 ZURICH"), otherwise null
-- "amount": the signed amount — POSITIVE for money coming IN (income, credits, refunds), NEGATIVE for money going OUT (expenses, debits, purchases)
-- "currency": 3-letter currency code (e.g. "CHF", "EUR", "USD"). Use the per-line currency if shown, otherwise the statement currency.
+For each pay period found, extract:
+- "date": the payment date or pay period end date. Format as YYYY-MM-DD. If only a month/year is shown (e.g. "March 2026"), use the last day of that month.
+- "description": a short description combining the employer name and pay period, e.g. "Salary - Acme GmbH - March 2026"
+- "merchant": the employer name if identifiable, otherwise null
+- "amount": the NET pay amount (what was actually deposited). Must be POSITIVE. If only gross is shown and no net, use gross.
+- "currency": 3-letter currency code (e.g. "CHF", "EUR", "USD"). Infer from the document.
 
 Rules:
-- Extract every transaction. Do NOT summarize or aggregate.
-- If the statement shows separate debit and credit columns, a debit = negative amount, credit = positive amount.
-- Card payments shown as "PAYMENT RECEIVED" or similar are positive (they reduce your debt).
-- Foreign-currency purchases: use the ORIGINAL transaction currency if shown, not the converted home-currency value.
-- Skip section headers, totals, subtotals, balances.
-- Skip rows without a real date or amount.
+- Extract only the net pay (take-home amount), not individual deduction lines.
+- If the document contains multiple pay periods (e.g. an annual summary), extract one entry per period.
+- If you see both gross and net, always prefer net.
+- Skip any non-salary items like expense reimbursements unless they are part of the net pay.
+- The amount must always be positive — this represents income.
 
 Example output:
 [
-  {"date": "2026-03-15", "description": "STARBUCKS 12345 ZURICH", "merchant": "Starbucks", "amount": -8.50, "currency": "CHF"},
-  {"date": "2026-03-16", "description": "SALARY PAYMENT ACME GMBH", "merchant": "Acme Gmbh", "amount": 5000.00, "currency": "CHF"}
+  {"date": "2026-03-25", "description": "Salary - Acme GmbH - March 2026", "merchant": "Acme GmbH", "amount": 7500.00, "currency": "CHF"}
 ]`;
 
 type SupportedMediaType = "application/pdf" | "image/png" | "image/jpeg" | "image/webp" | "image/gif";
 
-export async function parseTransactionPdf(fileBuffer: Buffer, mediaType: SupportedMediaType = "application/pdf"): Promise<ParsedTransaction[]> {
+export async function parseSalaryPdf(fileBuffer: Buffer, mediaType: SupportedMediaType = "application/pdf"): Promise<ParsedTransaction[]> {
   if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error("ANTHROPIC_API_KEY not set — cannot parse PDF transactions");
+    throw new Error("ANTHROPIC_API_KEY not set — cannot parse salary statement");
   }
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -39,7 +37,7 @@ export async function parseTransactionPdf(fileBuffer: Buffer, mediaType: Support
   const isPdf = mediaType === "application/pdf";
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 8192,
+    max_tokens: 4096,
     messages: [
       {
         role: "user",
@@ -47,7 +45,7 @@ export async function parseTransactionPdf(fileBuffer: Buffer, mediaType: Support
           isPdf
             ? { type: "document" as const, source: { type: "base64" as const, media_type: mediaType, data: base64 } }
             : { type: "image" as const, source: { type: "base64" as const, media_type: mediaType, data: base64 } },
-          { type: "text", text: TRANSACTION_PROMPT },
+          { type: "text", text: SALARY_PROMPT },
         ],
       },
     ],
@@ -74,11 +72,12 @@ function parseJsonResponse(raw: string): ParsedTransaction[] {
     const t = item as Record<string, unknown>;
     const date = typeof t.date === "string" ? t.date.trim() : "";
     const description = typeof t.description === "string" ? t.description.trim() : "";
-    const amount = typeof t.amount === "number" ? t.amount : 0;
+    let amount = typeof t.amount === "number" ? t.amount : 0;
     if (!date || !description || amount === 0) continue;
-
-    // Validate/normalize date
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+
+    // Ensure positive — salary is income
+    amount = Math.abs(amount);
 
     const merchant = typeof t.merchant === "string" && t.merchant.trim() !== "" ? t.merchant.trim() : null;
     const currency = typeof t.currency === "string" && t.currency.trim() !== ""

@@ -46,13 +46,13 @@ export interface Upload {
   file_type: string | null;
   uploaded_at: string;
   status: string;
-  upload_kind: "wealth" | "transactions" | "pe_statement" | null;
+  upload_kind: "wealth" | "transactions" | "pe_statement" | "salary" | null;
 }
 
 export interface UploadResult {
   upload: Upload;
   holdings?: Holding[];
-  kind?: "wealth" | "transactions";
+  kind?: "wealth" | "transactions" | "salary";
   parsed?: number;
   inserted?: number;
   duplicates?: number;

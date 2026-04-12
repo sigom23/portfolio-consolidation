@@ -163,14 +163,23 @@ export async function initDb(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_transactions_stream ON transactions(source_type, source_id);
     CREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_dedup ON transactions(user_id, dedup_hash) WHERE dedup_hash IS NOT NULL;
 
-    -- Learned merchant -> category mappings (cache)
+    -- Learned merchant -> category mappings (per-user cache)
     CREATE TABLE IF NOT EXISTS merchant_categories (
       id SERIAL PRIMARY KEY,
-      merchant_key TEXT NOT NULL UNIQUE,
+      merchant_key TEXT NOT NULL,
       category TEXT NOT NULL,
       source TEXT NOT NULL DEFAULT 'rule',  -- 'rule' | 'ai' | 'user'
+      user_id TEXT,
       created_at TIMESTAMP DEFAULT NOW()
     );
+
+    -- Migration: add user_id column if missing, drop old unique index, add new one
+    ALTER TABLE merchant_categories ADD COLUMN IF NOT EXISTS user_id TEXT;
+    DROP INDEX IF EXISTS merchant_categories_merchant_key_key;
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_merchant_categories_user_key
+      ON merchant_categories (user_id, merchant_key) WHERE user_id IS NOT NULL;
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_merchant_categories_global_key
+      ON merchant_categories (merchant_key) WHERE user_id IS NULL;
 
     ALTER TABLE uploads ADD COLUMN IF NOT EXISTS upload_kind TEXT;
 
@@ -748,10 +757,19 @@ export async function deleteTransaction(id: number, userId: string): Promise<boo
   return (rowCount ?? 0) > 0;
 }
 
-// merchant category cache
-export async function getMerchantCategory(merchantKey: string): Promise<string | null> {
+// merchant category cache — per-user overrides take priority over global rules
+export async function getMerchantCategory(merchantKey: string, userId?: string): Promise<string | null> {
+  // Check user-specific override first
+  if (userId) {
+    const { rows } = await getPool().query(
+      "SELECT category FROM merchant_categories WHERE merchant_key = $1 AND user_id = $2",
+      [merchantKey, userId]
+    );
+    if (rows.length > 0) return (rows[0] as { category: string }).category;
+  }
+  // Fall back to global (rule/ai) cache
   const { rows } = await getPool().query(
-    "SELECT category FROM merchant_categories WHERE merchant_key = $1",
+    "SELECT category FROM merchant_categories WHERE merchant_key = $1 AND user_id IS NULL",
     [merchantKey]
   );
   return (rows[0] as { category: string } | undefined)?.category ?? null;
@@ -760,14 +778,26 @@ export async function getMerchantCategory(merchantKey: string): Promise<string |
 export async function upsertMerchantCategory(
   merchantKey: string,
   category: string,
-  source: "rule" | "ai" | "user" = "rule"
+  source: "rule" | "ai" | "user" = "rule",
+  userId?: string
 ): Promise<void> {
-  await getPool().query(
-    `INSERT INTO merchant_categories (merchant_key, category, source)
-     VALUES ($1, $2, $3)
-     ON CONFLICT(merchant_key) DO UPDATE SET category = EXCLUDED.category, source = EXCLUDED.source`,
-    [merchantKey, category, source]
-  );
+  if (userId) {
+    await getPool().query(
+      `INSERT INTO merchant_categories (merchant_key, category, source, user_id)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (user_id, merchant_key) WHERE user_id IS NOT NULL
+       DO UPDATE SET category = EXCLUDED.category, source = EXCLUDED.source`,
+      [merchantKey, category, source, userId]
+    );
+  } else {
+    await getPool().query(
+      `INSERT INTO merchant_categories (merchant_key, category, source)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (merchant_key) WHERE user_id IS NULL
+       DO UPDATE SET category = EXCLUDED.category, source = EXCLUDED.source`,
+      [merchantKey, category, source]
+    );
+  }
 }
 
 export async function deleteTransactionsByStream(userId: string, streamId: number): Promise<void> {

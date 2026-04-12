@@ -92,17 +92,19 @@ export function normalizeMerchantKey(description: string): string {
 
 /**
  * Categorize a transaction by its description.
- *  1. Look up learned cache by merchant key.
- *  2. Match against RULES and cache the result.
- *  3. Fall back to "Other".
+ *  1. Check user-specific overrides (learned from manual reclassifications).
+ *  2. Look up global cache by merchant key.
+ *  3. Match against RULES and cache the result.
+ *  4. AI fallback.
+ *  5. Fall back to "Other".
  */
-export async function categorize(description: string, amount: number): Promise<ExpenseCategory> {
+export async function categorize(description: string, amount: number, userId?: string): Promise<ExpenseCategory> {
   // Income shortcut: positive amounts without a matched rule default to Income
   const key = normalizeMerchantKey(description);
   if (!key) return amount > 0 ? "Income" : "Other";
 
-  // 1. Learned cache
-  const cached = await getMerchantCategory(key);
+  // 1. User-specific override (highest priority) + global cache
+  const cached = await getMerchantCategory(key, userId);
   if (cached) return cached as ExpenseCategory;
 
   // 2. Rule matching

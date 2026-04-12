@@ -12,8 +12,9 @@ import {
   createTransaction,
   updateTransactionCategory,
   deleteTransaction,
+  upsertMerchantCategory,
 } from "../lib/db.js";
-import { categorize } from "../lib/categorize.js";
+import { categorize, normalizeMerchantKey } from "../lib/categorize.js";
 import { getExchangeRates } from "../lib/forex.js";
 import type { IncomeStream, IncomeStreamType, IncomeFrequency } from "../types/index.js";
 
@@ -169,7 +170,7 @@ router.post("/transactions", async (req: Request, res: Response) => {
     const category =
       typeof body.category === "string" && body.category.trim()
         ? body.category.trim()
-        : await categorize(description, body.amount);
+        : await categorize(description, body.amount, userId);
 
     const rates = await getExchangeRates("USD");
     const amountUsd =
@@ -215,6 +216,13 @@ router.put("/transactions/:id", async (req: Request, res: Response) => {
       res.status(404).json({ success: false, error: "transaction not found" });
       return;
     }
+
+    // Learn from user correction — save merchant→category for future uploads
+    const merchantKey = normalizeMerchantKey(tx.description ?? "");
+    if (merchantKey) {
+      await upsertMerchantCategory(merchantKey, category, "user", req.session.userId!).catch(() => {});
+    }
+
     res.json({ success: true, data: tx });
   } catch (err) {
     res.status(500).json({ success: false, error: err instanceof Error ? err.message : "Failed to update transaction" });

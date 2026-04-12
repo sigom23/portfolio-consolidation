@@ -102,7 +102,7 @@ router.post("/", upload.single("file"), async (req: Request, res: Response) => {
         for (const tx of parsed) {
           const ccy = tx.currency.toUpperCase();
           const amountUsd = ccy === "USD" ? tx.amount : rates[ccy] ? tx.amount / rates[ccy] : null;
-          const category = await categorize(tx.description, tx.amount);
+          const category = await categorize(tx.description, tx.amount, userId);
           const result = await createTransaction(userId, {
             source_type: "upload",
             source_id: String(uploadRecord.id),

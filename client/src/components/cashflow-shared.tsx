@@ -424,19 +424,34 @@ export function MonthlyTrendCard({
 export function CategoryBreakdownCard({
   summary,
   loading,
+  selectedCategory,
+  onCategoryClick,
 }: {
   summary: CashFlowSummary | undefined;
   loading: boolean;
+  selectedCategory?: string | null;
+  onCategoryClick?: (category: string | null) => void;
 }) {
   const { format } = useCurrency();
   const categories = summary?.categories ?? [];
   const total = summary?.expenses ?? 0;
+  const clickable = !!onCategoryClick;
 
   return (
     <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6">
-      <h3 className="text-sm font-medium text-[var(--text-muted)] mb-4">
-        Expenses by Category
-      </h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-medium text-[var(--text-muted)]">
+          Expenses by Category
+        </h3>
+        {selectedCategory && onCategoryClick && (
+          <button
+            onClick={() => onCategoryClick(null)}
+            className="text-[10px] text-blue-500 hover:text-blue-400 transition-colors"
+          >
+            Clear filter
+          </button>
+        )}
+      </div>
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -455,8 +470,14 @@ export function CategoryBreakdownCard({
           {categories.slice(0, 8).map((cat, i) => {
             const pct = total > 0 ? (cat.value / total) * 100 : 0;
             const color = getCategoryColor(cat.name, i);
+            const isSelected = selectedCategory === cat.name;
+            const isDimmed = selectedCategory && !isSelected;
             return (
-              <div key={cat.name}>
+              <div
+                key={cat.name}
+                onClick={() => clickable && onCategoryClick!(isSelected ? null : cat.name)}
+                className={`transition-opacity ${clickable ? "cursor-pointer" : ""} ${isDimmed ? "opacity-30" : ""}`}
+              >
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2 min-w-0">
                     <div
@@ -494,22 +515,37 @@ export function CategoryBreakdownCard({
   );
 }
 
-/** Top merchants list — Overview only. Kept in shared since it's conceptually peer to CategoryBreakdownCard. */
+/** Top merchants list — Overview and Expenses. */
 export function TopMerchantsCard({
   summary,
   loading,
+  selectedMerchant,
+  onMerchantClick,
 }: {
   summary: CashFlowSummary | undefined;
   loading: boolean;
+  selectedMerchant?: string | null;
+  onMerchantClick?: (merchant: string | null) => void;
 }) {
   const { format } = useCurrency();
   const merchants = summary?.topMerchants ?? [];
+  const clickable = !!onMerchantClick;
 
   return (
     <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6">
-      <h3 className="text-sm font-medium text-[var(--text-muted)] mb-4">
-        Top Merchants
-      </h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-medium text-[var(--text-muted)]">
+          Top Merchants
+        </h3>
+        {selectedMerchant && onMerchantClick && (
+          <button
+            onClick={() => onMerchantClick(null)}
+            className="text-[10px] text-blue-500 hover:text-blue-400 transition-colors"
+          >
+            Clear filter
+          </button>
+        )}
+      </div>
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -525,24 +561,29 @@ export function TopMerchantsCard({
         </p>
       ) : (
         <ul className="space-y-2">
-          {merchants.slice(0, 8).map((m, i) => (
-            <li
-              key={m.name}
-              className="flex items-center justify-between py-1.5 border-b border-[var(--border-color)]/50 last:border-0"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <span className="text-xs font-medium text-[var(--text-muted)] tabular-nums w-4">
-                  {i + 1}
+          {merchants.slice(0, 8).map((m, i) => {
+            const isSelected = selectedMerchant === m.name;
+            const isDimmed = selectedMerchant && !isSelected;
+            return (
+              <li
+                key={m.name}
+                onClick={() => clickable && onMerchantClick!(isSelected ? null : m.name)}
+                className={`flex items-center justify-between py-1.5 border-b border-[var(--border-color)]/50 last:border-0 transition-opacity ${clickable ? "cursor-pointer" : ""} ${isDimmed ? "opacity-30" : ""}`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-xs font-medium text-[var(--text-muted)] tabular-nums w-4">
+                    {i + 1}
+                  </span>
+                  <span className="text-sm font-medium text-[var(--text-primary)] truncate">
+                    {m.name}
+                  </span>
+                </div>
+                <span className="text-sm font-semibold text-[var(--text-primary)] tabular-nums flex-shrink-0">
+                  {format(m.value)}
                 </span>
-                <span className="text-sm font-medium text-[var(--text-primary)] truncate">
-                  {m.name}
-                </span>
-              </div>
-              <span className="text-sm font-semibold text-[var(--text-primary)] tabular-nums flex-shrink-0">
-                {format(m.value)}
-              </span>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

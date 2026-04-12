@@ -26,6 +26,8 @@ function CashFlowExpensesPage() {
   });
   const { format } = useCurrency();
   const reclassify = useReclassifyTransactions();
+  const [filterCategory, setFilterCategory] = useState<string | null>(null);
+  const [filterMerchant, setFilterMerchant] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -44,8 +46,11 @@ function CashFlowExpensesPage() {
   }, [transactions]);
 
   const filteredTx = useMemo(() => {
-    return (transactions ?? []).filter((t) => t.date.startsWith(month));
-  }, [transactions, month]);
+    let txs = (transactions ?? []).filter((t) => t.date.startsWith(month));
+    if (filterCategory) txs = txs.filter((t) => t.category === filterCategory);
+    if (filterMerchant) txs = txs.filter((t) => (t.merchant ?? t.description ?? "").includes(filterMerchant));
+    return txs;
+  }, [transactions, month, filterCategory, filterMerchant]);
 
   if (authLoading || !user) {
     return (
@@ -112,16 +117,39 @@ function CashFlowExpensesPage() {
 
       {/* 5. Analytics Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <CategoryBreakdownCard summary={summary} loading={summaryLoading} />
-        <TopMerchantsCard summary={summary} loading={summaryLoading} />
+        <CategoryBreakdownCard
+          summary={summary}
+          loading={summaryLoading}
+          selectedCategory={filterCategory}
+          onCategoryClick={(cat) => { setFilterCategory(cat); setFilterMerchant(null); }}
+        />
+        <TopMerchantsCard
+          summary={summary}
+          loading={summaryLoading}
+          selectedMerchant={filterMerchant}
+          onMerchantClick={(m) => { setFilterMerchant(m); setFilterCategory(null); }}
+        />
       </div>
 
       {/* 6. Transactions Table */}
       <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden">
-        <div className="px-6 py-4 border-b border-[var(--border-color)]">
+        <div className="px-6 py-4 border-b border-[var(--border-color)] flex items-center justify-between">
           <h2 className="text-lg font-semibold text-[var(--text-primary)]">
             Transactions
+            {(filterCategory || filterMerchant) && (
+              <span className="ml-2 text-xs font-normal text-[var(--text-muted)]">
+                filtered by {filterCategory ? `"${filterCategory}"` : `"${filterMerchant}"`}
+              </span>
+            )}
           </h2>
+          {(filterCategory || filterMerchant) && (
+            <button
+              onClick={() => { setFilterCategory(null); setFilterMerchant(null); }}
+              className="text-xs text-blue-500 hover:text-blue-400 transition-colors"
+            >
+              Show all
+            </button>
+          )}
         </div>
         <TransactionsTable
           transactions={filteredTx}

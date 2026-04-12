@@ -33,11 +33,11 @@ export function UploadForm() {
 
   return (
     <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 transition-colors">
-      <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Upload Statement</h2>
+      <h2 className="text-[18px] font-normal text-[var(--text-primary)] mb-4">Upload Statement</h2>
       <div className="space-y-4">
         {/* Kind selector */}
         <div>
-          <label className="block text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-2">
+          <label className="block text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)] mb-2">
             Statement type
           </label>
           <div className="inline-flex rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-tertiary)] p-1">

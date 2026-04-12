@@ -65,7 +65,7 @@ function CashFlowExpensesPage() {
       {/* 1. Header */}
       <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Expenses</h1>
+          <h1 className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)]">Expenses</h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">
             Monthly spending by category and source
           </p>
@@ -96,7 +96,7 @@ function CashFlowExpensesPage() {
         className="rounded-[2px] border border-[var(--color-whisper)] bg-white p-6 mb-6"
       >
         <div className="flex items-center justify-between mb-1">
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+          <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)]">
             Monthly Expenses
           </p>
           <span className="text-xs text-[var(--text-muted)]">
@@ -107,7 +107,7 @@ function CashFlowExpensesPage() {
         {summaryLoading ? (
           <div className="h-10 w-56 bg-[var(--bg-tertiary)] rounded animate-pulse" />
         ) : (
-          <p className="text-4xl font-bold text-red-500 tabular-nums tracking-tight">
+          <p className="text-[38px] font-serif font-light tracking-[-0.03em] text-red-500 tabular-nums tracking-tight">
             -<AnimatedNumber value={summary?.expenses ?? 0} format={format} />
           </p>
         )}
@@ -134,7 +134,7 @@ function CashFlowExpensesPage() {
       {/* 6. Transactions Table */}
       <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden">
         <div className="px-6 py-4 border-b border-[var(--border-color)] flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+          <h2 className="text-[18px] font-normal text-[var(--text-primary)]">
             Transactions
             {(filterCategory || filterMerchant) && (
               <span className="ml-2 text-xs font-normal text-[var(--text-muted)]">

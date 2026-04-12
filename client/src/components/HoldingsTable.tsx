@@ -112,7 +112,7 @@ export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }:
   return (
     <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden transition-colors">
       <div className="px-6 py-4 border-b border-[var(--border-color)] flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-[var(--text-primary)]">Holdings</h2>
+        <h2 className="text-[18px] font-normal text-[var(--text-primary)]">Holdings</h2>
         {spamCount > 0 && (
           <button
             onClick={() => setHideSpam(!hideSpam)}

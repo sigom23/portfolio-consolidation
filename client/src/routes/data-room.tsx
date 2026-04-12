@@ -154,7 +154,7 @@ function DataRoomPage() {
     <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">Data Room</h1>
+        <h1 className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)]">Data Room</h1>
         <p className="text-sm text-[var(--text-muted)] mt-1">
           Manage your data sources — drop any document and it will be classified automatically
         </p>

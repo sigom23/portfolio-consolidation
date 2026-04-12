@@ -144,7 +144,7 @@ export function HoldingHoverCard({ ticker, exchCode, figiData, children }: Props
 
             {/* Price */}
             <div className="flex items-baseline gap-2">
-              <span className="text-lg font-bold text-[var(--text-primary)] tabular-nums">
+              <span className="text-[18px] font-medium text-[var(--text-primary)] tabular-nums">
                 {formatNativePrice(profile.price, profile.currency)}
               </span>
               <span className={`text-xs font-medium ${profile.change >= 0 ? "text-green-500" : "text-red-500"}`}>

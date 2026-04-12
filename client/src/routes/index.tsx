@@ -29,7 +29,7 @@ function IndexPage() {
         </svg>
       </div>
       <div className="text-center">
-        <h1 className="text-4xl font-bold text-[var(--text-primary)]">Portfolio Consolidation</h1>
+        <h1 className="text-[38px] font-serif font-light tracking-[-0.03em] text-[var(--text-primary)]">Portfolio Consolidation</h1>
         <p className="text-lg text-[var(--text-secondary)] max-w-md mt-3">
           Track all your assets in one place — stocks, crypto, bonds, and more.
         </p>

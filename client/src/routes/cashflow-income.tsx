@@ -96,7 +96,7 @@ function CashFlowIncomePage() {
       {/* 1. Header */}
       <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Income</h1>
+          <h1 className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)]">Income</h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">
             Recurring streams and monthly activity
           </p>
@@ -126,7 +126,7 @@ function CashFlowIncomePage() {
         className="rounded-[2px] border border-[var(--color-whisper)] bg-white p-6 mb-6"
       >
         <div className="flex items-center justify-between mb-1">
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+          <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)]">
             Monthly Income
           </p>
           <span className="text-xs text-[var(--text-muted)]">
@@ -136,7 +136,7 @@ function CashFlowIncomePage() {
         {summaryLoading ? (
           <div className="h-10 w-56 bg-[var(--bg-tertiary)] rounded animate-pulse" />
         ) : (
-          <p className="text-4xl font-bold text-green-500 tabular-nums tracking-tight">
+          <p className="text-[38px] font-serif font-light tracking-[-0.03em] text-green-500 tabular-nums tracking-tight">
             +<AnimatedNumber value={summary?.income ?? 0} format={format} />
           </p>
         )}
@@ -198,7 +198,7 @@ function CashFlowIncomePage() {
       {/* 6. Transactions Table */}
       <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden">
         <div className="px-6 py-4 border-b border-[var(--border-color)]">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+          <h2 className="text-[18px] font-normal text-[var(--text-primary)]">
             Transactions
           </h2>
         </div>
@@ -280,7 +280,7 @@ function StreamCard({
       <h3 className="text-base font-semibold text-[var(--text-primary)] mb-1">
         {stream.name}
       </h3>
-      <p className="text-2xl font-bold text-[var(--text-primary)] tabular-nums tracking-tight">
+      <p className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)] tabular-nums tracking-tight">
         {formatLocal(stream.amount, stream.currency)}
       </p>
       <p className="text-[11px] text-[var(--text-muted)] mt-1">{cadenceLabel}</p>

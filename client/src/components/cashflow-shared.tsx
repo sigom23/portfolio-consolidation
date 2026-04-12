@@ -158,7 +158,7 @@ export function MonthSelector({
   const months = lastNMonths(12);
   return (
     <div className="mb-5">
-      <label className="block text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-2">
+      <label className="block text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)] mb-2">
         Month
       </label>
       <div className="flex gap-1.5 flex-wrap">

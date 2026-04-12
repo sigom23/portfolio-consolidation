@@ -140,7 +140,7 @@ function RealEstatePage() {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Real Estate</h1>
+          <h1 className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)]">Real Estate</h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">
             Properties, mortgages, and rental income
           </p>
@@ -164,7 +164,7 @@ function RealEstatePage() {
         className="rounded-[2px] border border-[var(--color-whisper)] bg-white p-6 mb-6"
       >
         <div className="flex items-center justify-between mb-1">
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+          <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)]">
             Total Value
           </p>
           <span className="text-xs text-[var(--text-muted)]">
@@ -174,7 +174,7 @@ function RealEstatePage() {
         {isLoading ? (
           <div className="h-10 w-56 bg-[var(--bg-tertiary)] rounded animate-pulse" />
         ) : (
-          <p className="text-4xl font-bold text-[var(--text-primary)] tabular-nums tracking-tight">
+          <p className="text-[38px] font-serif font-light tracking-[-0.03em] text-[var(--text-primary)] tabular-nums tracking-tight">
             <AnimatedNumber value={totals.value} format={format} />
           </p>
         )}
@@ -281,7 +281,7 @@ function PropertyCard({
       </div>
 
       <div className="mb-4">
-        <p className="text-2xl font-bold text-[var(--text-primary)] tabular-nums tracking-tight">
+        <p className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)] tabular-nums tracking-tight">
           {formatLocal(property.current_value, property.currency)}
         </p>
         {appreciation != null && (
@@ -426,7 +426,7 @@ function AddPropertyModal({ open, onClose, editProperty }: { open: boolean; onCl
           >
             <div className="rounded-[2px] border border-[var(--color-whisper)] bg-white w-full max-w-md p-6 pointer-events-auto max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-semibold text-[var(--text-primary)]">{isEditing ? "Edit Property" : "Add Property"}</h2>
+                <h2 className="text-[18px] font-normal text-[var(--text-primary)]">{isEditing ? "Edit Property" : "Add Property"}</h2>
                 <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -581,7 +581,7 @@ function PropertyDetailDrawer({
               <div className="flex items-center gap-3">
                 <span className="text-2xl">{meta.icon}</span>
                 <div>
-                  <h2 className="text-lg font-semibold text-[var(--text-primary)]">{property.name}</h2>
+                  <h2 className="text-[18px] font-normal text-[var(--text-primary)]">{property.name}</h2>
                   {property.address && <p className="text-[11px] text-[var(--text-muted)]">{property.address}</p>}
                 </div>
               </div>
@@ -769,7 +769,7 @@ function SummaryBox({ label, value, color }: { label: string; value: string; col
   return (
     <div className="p-3 rounded-[2px] bg-[var(--bg-tertiary)]/50 border border-[var(--border-color)]">
       <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] mb-0.5">{label}</p>
-      <p className={`text-lg font-bold tabular-nums ${colorClass}`}>{value}</p>
+      <p className={`text-[18px] font-medium tabular-nums ${colorClass}`}>{value}</p>
     </div>
   );
 }
@@ -946,7 +946,7 @@ function AddMortgageModal({
           >
             <div className="rounded-[2px] border border-[var(--color-whisper)] bg-white w-full max-w-md p-6 pointer-events-auto">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-semibold text-[var(--text-primary)]">{isEditing ? "Edit Mortgage" : "Add Mortgage"}</h2>
+                <h2 className="text-[18px] font-normal text-[var(--text-primary)]">{isEditing ? "Edit Mortgage" : "Add Mortgage"}</h2>
                 <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1074,7 +1074,7 @@ function AddCostModal({
           >
             <div className="rounded-[2px] border border-[var(--color-whisper)] bg-white w-full max-w-md p-6 pointer-events-auto">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-semibold text-[var(--text-primary)]">{isEditing ? "Edit Recurring Cost" : "Add Recurring Cost"}</h2>
+                <h2 className="text-[18px] font-normal text-[var(--text-primary)]">{isEditing ? "Edit Recurring Cost" : "Add Recurring Cost"}</h2>
                 <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1223,7 +1223,7 @@ function AddRentalStreamModal({
           >
             <div className="rounded-[2px] border border-[var(--color-whisper)] bg-white w-full max-w-md p-6 pointer-events-auto">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-semibold text-[var(--text-primary)]">{isEditing ? "Edit Rental Income" : "Add Rental Income"}</h2>
+                <h2 className="text-[18px] font-normal text-[var(--text-primary)]">{isEditing ? "Edit Rental Income" : "Add Rental Income"}</h2>
                 <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

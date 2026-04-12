@@ -50,7 +50,7 @@ export function BreakdownCards({ summary, loading }: Props) {
                   <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: cat.color }} />
                   <span className="text-xs font-medium text-[var(--text-secondary)]">{cat.label}</span>
                 </div>
-                <p className="text-lg font-bold text-[var(--text-primary)]">
+                <p className="text-[18px] font-medium text-[var(--text-primary)]">
                   {format(value)}
                 </p>
                 <p className="text-xs text-[var(--text-muted)] mt-0.5">{pct.toFixed(1)}%</p>

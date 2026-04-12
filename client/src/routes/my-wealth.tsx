@@ -141,7 +141,7 @@ function MyWealthPage() {
     <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">My Wealth</h1>
+        <h1 className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)]">My Wealth</h1>
         <p className="text-sm text-[var(--text-muted)] mt-1">
           A consolidated view of your wealth
         </p>
@@ -155,7 +155,7 @@ function MyWealthPage() {
         className="rounded-[2px] border border-[var(--color-whisper)] bg-white p-8 mb-6 transition-all"
       >
         <div className="flex items-center justify-between">
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1">
+          <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)] mb-1">
             Net Worth
           </p>
           <span className="text-xs text-[var(--text-muted)]">{flag} {baseCurrency}</span>
@@ -163,7 +163,7 @@ function MyWealthPage() {
         {loading ? (
           <div className="h-12 w-64 bg-[var(--bg-tertiary)] rounded animate-pulse" />
         ) : (
-          <p className="text-5xl font-bold text-[var(--text-primary)] tabular-nums tracking-tight">
+          <p className="text-[64px] font-serif font-light tracking-[-0.04em] text-[var(--text-primary)] tabular-nums tracking-tight">
             <AnimatedNumber value={netWorth} format={format} />
           </p>
         )}
@@ -212,14 +212,14 @@ function MyWealthPage() {
               >
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
-                  <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+                  <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)]">
                     {cat.label}
                   </p>
                 </div>
                 {loading ? (
                   <div className="mt-2 h-7 w-28 bg-[var(--bg-tertiary)] rounded animate-pulse" />
                 ) : (
-                  <p className="mt-2 text-2xl font-semibold text-[var(--text-primary)] tabular-nums tracking-tight">
+                  <p className="mt-2 text-[27px] font-serif font-light text-[var(--text-primary)] tabular-nums tracking-tight">
                     {format(cat.value)}
                   </p>
                 )}
@@ -246,7 +246,7 @@ function MyWealthPage() {
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="min-w-0">
               <div className="flex items-baseline gap-3 flex-wrap">
-                <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+                <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)]">
                   Cash Flow
                 </p>
                 <span className="text-xs text-[var(--text-muted)]">{currentMonthLabel()}</span>
@@ -255,7 +255,7 @@ function MyWealthPage() {
                 <div className="mt-2 h-8 w-40 bg-[var(--bg-tertiary)] rounded animate-pulse" />
               ) : (
                 <p
-                  className={`mt-1 text-2xl font-semibold tabular-nums tracking-tight ${
+                  className={`mt-1 text-[27px] font-serif font-light tabular-nums tracking-tight ${
                     (cashFlow?.net ?? 0) >= 0 ? "text-green-500" : "text-red-500"
                   }`}
                 >
@@ -287,7 +287,7 @@ function MyWealthPage() {
                     Savings rate
                   </p>
                   <p
-                    className={`text-xl font-semibold tabular-nums ${
+                    className={`text-[18px] font-serif font-normal tabular-nums ${
                       cashFlow.savingsRate >= 0.2
                         ? "text-green-500"
                         : cashFlow.savingsRate >= 0

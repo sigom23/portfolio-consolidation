@@ -76,13 +76,13 @@ function SettingsPage() {
   return (
     <div className="px-6 lg:px-8 py-8 max-w-3xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">Settings</h1>
+        <h1 className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)]">Settings</h1>
         <p className="text-sm text-[var(--text-muted)] mt-1">Manage your account and data</p>
       </div>
 
       {/* Account info */}
       <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 mb-6 transition-colors">
-        <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-3">Account</h2>
+        <h2 className="text-[18px] font-normal text-[var(--text-primary)] mb-3">Account</h2>
         <div className="space-y-1 text-sm">
           <p className="text-[var(--text-secondary)]">
             <span className="text-[var(--text-muted)]">Name:</span> {user.name ?? "—"}
@@ -95,7 +95,7 @@ function SettingsPage() {
 
       {/* Preferences */}
       <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 mb-6 transition-colors">
-        <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Preferences</h2>
+        <h2 className="text-[18px] font-normal text-[var(--text-primary)] mb-4">Preferences</h2>
 
         {/* Base currency */}
         <div className="flex items-start justify-between gap-4 py-3 border-b border-[var(--border-color)]/50">
@@ -138,7 +138,7 @@ function SettingsPage() {
 
       {/* Privacy & Data */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-[var(--text-primary)]">Privacy & Data</h2>
+        <h2 className="text-[18px] font-normal text-[var(--text-primary)]">Privacy & Data</h2>
 
         {/* Export */}
         <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 transition-colors">

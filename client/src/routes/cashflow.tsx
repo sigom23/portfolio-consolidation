@@ -61,7 +61,7 @@ function CashFlowOverviewPage() {
       {/* 1. Header */}
       <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Cash Flow</h1>
+          <h1 className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)]">Cash Flow</h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">
             Income, expenses, and monthly net
           </p>
@@ -79,7 +79,7 @@ function CashFlowOverviewPage() {
         className="rounded-[2px] border border-[var(--color-whisper)] bg-white p-6 mb-6"
       >
         <div className="flex items-center justify-between mb-1">
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+          <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)]">
             Net Cash Flow
           </p>
           <span className="text-xs text-[var(--text-muted)]">
@@ -90,7 +90,7 @@ function CashFlowOverviewPage() {
         {isLoading ? (
           <div className="h-10 w-56 bg-[var(--bg-tertiary)] rounded animate-pulse" />
         ) : (
-          <p className={`text-4xl font-bold tabular-nums tracking-tight ${netColor}`}>
+          <p className={`text-[38px] font-serif font-light tracking-[-0.03em] tabular-nums tracking-tight ${netColor}`}>
             {net >= 0 ? "+" : ""}
             <AnimatedNumber value={Math.abs(net)} format={(v) => format(v)} />
           </p>
@@ -119,10 +119,10 @@ function CashFlowOverviewPage() {
           transition={{ duration: 0.4, delay: 0.1 }}
           className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5"
         >
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1">
+          <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)] mb-1">
             Income
           </p>
-          <p className="text-2xl font-bold text-green-500 tabular-nums tracking-tight">
+          <p className="text-[27px] font-serif font-normal tracking-[-0.03em] text-green-500 tabular-nums tracking-tight">
             +{format(income)}
           </p>
         </motion.div>
@@ -132,10 +132,10 @@ function CashFlowOverviewPage() {
           transition={{ duration: 0.4, delay: 0.15 }}
           className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5"
         >
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1">
+          <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)] mb-1">
             Expenses
           </p>
-          <p className="text-2xl font-bold text-red-500 tabular-nums tracking-tight">
+          <p className="text-[27px] font-serif font-normal tracking-[-0.03em] text-red-500 tabular-nums tracking-tight">
             -{format(expenses)}
           </p>
         </motion.div>

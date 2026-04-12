@@ -110,7 +110,7 @@ function AssetsLiquidPage() {
       {/* Header with actions */}
       <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Liquid Assets</h1>
+          <h1 className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)]">Liquid Assets</h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">
             Cash, savings, brokerage, stocks, ETFs, and bonds
           </p>
@@ -155,7 +155,7 @@ function AssetsLiquidPage() {
         className="rounded-[2px] border border-[var(--color-whisper)] bg-white p-6 mb-6 transition-all"
       >
         <div className="flex items-center justify-between">
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1">
+          <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)] mb-1">
             {sourceFilter.type === "all" ? "Liquid Value" : "Filtered Portfolio Value"}
           </p>
           <span className="text-xs text-[var(--text-muted)]">{flag} {baseCurrency}</span>
@@ -163,7 +163,7 @@ function AssetsLiquidPage() {
         {summaryLoading ? (
           <div className="h-10 w-56 bg-[var(--bg-tertiary)] rounded animate-pulse" />
         ) : (
-          <p className="text-4xl font-bold text-[var(--text-primary)] tabular-nums tracking-tight">
+          <p className="text-[38px] font-serif font-light tracking-[-0.03em] text-[var(--text-primary)] tabular-nums tracking-tight">
             <AnimatedNumber value={totalValue} format={format} />
           </p>
         )}

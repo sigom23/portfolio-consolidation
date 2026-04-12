@@ -106,7 +106,7 @@ function AssetsIlliquidPage() {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Illiquid Assets</h1>
+          <h1 className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)]">Illiquid Assets</h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">
             Private equity, pension, unvested equity, and startup participation
           </p>
@@ -130,7 +130,7 @@ function AssetsIlliquidPage() {
         className="rounded-[2px] border border-[var(--color-whisper)] bg-white p-6 mb-6"
       >
         <div className="flex items-center justify-between">
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1">
+          <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)] mb-1">
             Illiquid Value
           </p>
           <span className="text-xs text-[var(--text-muted)]">{flag} {baseCurrency}</span>
@@ -138,7 +138,7 @@ function AssetsIlliquidPage() {
         {assetsLoading ? (
           <div className="h-10 w-56 bg-[var(--bg-tertiary)] rounded animate-pulse" />
         ) : (
-          <p className="text-4xl font-bold text-[var(--text-primary)] tabular-nums tracking-tight">
+          <p className="text-[38px] font-serif font-light tracking-[-0.03em] text-[var(--text-primary)] tabular-nums tracking-tight">
             <AnimatedNumber value={totalUsd} format={format} />
           </p>
         )}
@@ -613,7 +613,7 @@ function KpiCard({ label, value, accent }: { label: string; value: string; accen
   return (
     <div className="p-4 rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)]">
       <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1.5">{label}</p>
-      <p className={`text-lg font-bold tabular-nums tracking-tight ${accent ? "text-green-500" : "text-[var(--text-primary)]"}`}>
+      <p className={`text-[18px] font-medium tabular-nums tracking-tight ${accent ? "text-green-500" : "text-[var(--text-primary)]"}`}>
         {value}
       </p>
     </div>

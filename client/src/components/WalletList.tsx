@@ -37,7 +37,7 @@ export function WalletList({ wallets, loading, showAddForm = true }: Props) {
       {/* Add Wallet Form */}
       {showAddForm && (
         <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 transition-colors">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Add Wallet</h2>
+          <h2 className="text-[18px] font-normal text-[var(--text-primary)] mb-4">Add Wallet</h2>
           <div className="flex flex-col sm:flex-row gap-3">
             <input
               type="text"
@@ -70,7 +70,7 @@ export function WalletList({ wallets, loading, showAddForm = true }: Props) {
       {/* Wallet List */}
       <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden transition-colors">
         <div className="px-6 py-4 border-b border-[var(--border-color)]">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Your Wallets</h2>
+          <h2 className="text-[18px] font-normal text-[var(--text-primary)]">Your Wallets</h2>
         </div>
         {loading ? (
           <div className="px-6 py-8 text-center text-[var(--text-muted)]">Loading wallets...</div>

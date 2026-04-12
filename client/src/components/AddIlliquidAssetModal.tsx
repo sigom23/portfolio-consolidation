@@ -248,7 +248,7 @@ export function AddIlliquidAssetModal({ open, subtype, onClose, editAsset, prefi
           >
             <div className="rounded-[2px] border border-[var(--color-whisper)] bg-white w-full max-w-md p-6 pointer-events-auto max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+                <h2 className="text-[18px] font-normal text-[var(--text-primary)]">
                   {isEditing ? EDIT_TITLES[subtype] : TITLES[subtype]}
                 </h2>
                 <button

@@ -30,6 +30,7 @@ import { parseTransactionCsv } from "../lib/transaction-csv-parser.js";
 import { parseTransactionPdf } from "../lib/transaction-pdf-parser.js";
 import { parseSalaryPdf } from "../lib/salary-pdf-parser.js";
 import { categorize } from "../lib/categorize.js";
+import { classifyDocument } from "../lib/document-classifier.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -48,6 +49,22 @@ const upload = multer({
       cb(new Error("Only PDF, CSV, and image files are allowed"));
     }
   },
+});
+
+// POST /api/uploads/detect — classify a document without processing it
+router.post("/detect", upload.single("file"), async (req: Request, res: Response) => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ success: false, error: "No file provided" });
+      return;
+    }
+    const { mimetype, buffer } = req.file;
+    const result = await classifyDocument(buffer, mimetype);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Classification failed";
+    res.status(500).json({ success: false, error: message });
+  }
 });
 
 // POST /api/uploads — upload and parse a statement

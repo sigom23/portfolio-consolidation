@@ -41,6 +41,16 @@ export async function uploadStatement(
   return data.data!;
 }
 
+export async function detectDocumentType(file: File): Promise<{ detected_kind: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const { data } = await api.post<ApiResponse<{ detected_kind: string }>>("/api/uploads/detect", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  if (!data.success) throw new Error(data.error ?? "Detection failed");
+  return data.data!;
+}
+
 export async function fetchUploads(): Promise<Upload[]> {
   const { data } = await api.get<ApiResponse<Upload[]>>("/api/uploads");
   return data.data ?? [];

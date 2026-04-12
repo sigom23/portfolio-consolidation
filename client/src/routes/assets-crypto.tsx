@@ -6,6 +6,7 @@ import { useCurrency } from "../contexts/CurrencyContext";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { AnimatedNumber } from "../components/AnimatedNumber";
+import { WalletList } from "../components/WalletList";
 import type { Holding, Wallet } from "../types";
 
 function truncateAddress(addr: string): string {
@@ -149,9 +150,7 @@ function AssetsCryptoPage() {
         </div>
       ) : groups.length === 0 ? (
         <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-8 text-center text-[var(--text-muted)]">
-          No crypto holdings yet. Add a wallet address in the{" "}
-          <a href="/data-room" className="text-blue-500 hover:text-blue-400">Data Room</a> to
-          start tracking tokens.
+          No crypto holdings yet. Add a wallet address below to start tracking tokens.
         </div>
       ) : (
         <div className="space-y-6">
@@ -229,6 +228,14 @@ function AssetsCryptoPage() {
           ))}
         </div>
       )}
+
+      {/* Wallet Management */}
+      <div className="mt-8">
+        <h2 className="text-sm font-medium text-[var(--text-muted)] uppercase tracking-wider mb-3">
+          Manage Wallets
+        </h2>
+        <WalletList wallets={wallets ?? []} loading={walletsLoading} />
+      </div>
     </div>
   );
 }

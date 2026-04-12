@@ -1,5 +1,6 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
+import multer from "multer";
 import { requireAuth } from "../middleware/auth.js";
 import {
   getIlliquidAssetsByUser,
@@ -9,10 +10,12 @@ import {
   deleteIlliquidAsset,
   syncIlliquidHolding,
   deleteIlliquidHolding,
+  createUpload,
   type NewIlliquidAsset,
 } from "../lib/db.js";
 import { getExchangeRates } from "../lib/forex.js";
 import { writeWealthSnapshotSafe } from "../lib/snapshots.js";
+import { parsePEStatement } from "../lib/pe-statement-parser.js";
 import {
   illiquidAssetNativeValue,
   type IlliquidAsset,
@@ -21,6 +24,15 @@ import {
 
 const router = Router();
 router.use(requireAuth);
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype === "application/pdf") cb(null, true);
+    else cb(new Error("Only PDF files are accepted"));
+  },
+});
 
 const VALID_SUBTYPES: IlliquidSubtype[] = [
   "private_equity",
@@ -288,6 +300,60 @@ router.delete("/illiquid/:id", async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       error: err instanceof Error ? err.message : "Failed to delete illiquid asset",
+    });
+  }
+});
+
+// POST /api/illiquid/:id/upload — parse a PE fund statement PDF and return extracted data
+// Does NOT auto-save — returns extracted values for client-side confirmation via PUT.
+// Stores the PDF in the uploads table tagged with the fund for Data Room visibility.
+router.post("/illiquid/:id/upload", upload.single("file"), async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(String(req.params.id), 10);
+    if (isNaN(id)) {
+      res.status(400).json({ success: false, error: "invalid id" });
+      return;
+    }
+
+    const existing = await getIlliquidAssetById(id, req.session.userId!);
+    if (!existing) {
+      res.status(404).json({ success: false, error: "not found" });
+      return;
+    }
+    if (existing.subtype !== "private_equity") {
+      res.status(400).json({ success: false, error: "upload is only supported for private equity funds" });
+      return;
+    }
+
+    if (!req.file) {
+      res.status(400).json({ success: false, error: "No file provided" });
+      return;
+    }
+
+    // Store the PDF in uploads table, tagged with the fund
+    const uploadRecord = await createUpload(
+      req.session.userId!,
+      req.file.originalname,
+      "pdf",
+      req.file.buffer,
+      "pe_statement"
+    );
+
+    // Parse with AI
+    const extracted = await parsePEStatement(req.file.buffer);
+
+    res.json({
+      success: true,
+      data: {
+        upload_id: uploadRecord.id,
+        fund_id: id,
+        extracted,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to parse PE statement",
     });
   }
 });

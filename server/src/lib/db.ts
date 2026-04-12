@@ -344,7 +344,7 @@ export async function createUpload(
   filename: string,
   fileType: string,
   fileData?: Buffer,
-  uploadKind: "wealth" | "transactions" = "wealth"
+  uploadKind: "wealth" | "transactions" | "pe_statement" = "wealth"
 ): Promise<Upload> {
   const { rows } = await getPool().query(
     "INSERT INTO uploads (user_id, filename, file_type, file_data, status, upload_kind) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, user_id, filename, file_type, uploaded_at, status, upload_kind",

@@ -46,7 +46,7 @@ export interface Upload {
   file_type: string | null;
   uploaded_at: string;
   status: string;
-  upload_kind: "wealth" | "transactions" | null;
+  upload_kind: "wealth" | "transactions" | "pe_statement" | null;
 }
 
 export interface UploadResult {

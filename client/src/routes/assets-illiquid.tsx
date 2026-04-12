@@ -1,9 +1,9 @@
 import { createRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { Route as rootRoute } from "./__root";
 import { useAuth } from "../hooks/useAuth";
-import { useIlliquidAssets, useDeleteIlliquidAsset } from "../hooks/usePortfolio";
+import { useIlliquidAssets, useDeleteIlliquidAsset, useUploadPEStatement } from "../hooks/usePortfolio";
 import { useCurrency } from "../contexts/CurrencyContext";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { AnimatedNumber } from "../components/AnimatedNumber";
 import { AddIlliquidAssetModal } from "../components/AddIlliquidAssetModal";
@@ -294,7 +294,7 @@ function PETab({
             fund={fund}
             expanded={expandedId === fund.id}
             onToggle={() => setExpandedId(expandedId === fund.id ? null : fund.id)}
-            onEdit={() => onEdit(fund)}
+            onEdit={(overrides) => onEdit(overrides ? { ...fund, ...overrides } : fund)}
           />
         ))}
 
@@ -324,10 +324,12 @@ function PEFundRow({
   fund: IlliquidAsset;
   expanded: boolean;
   onToggle: () => void;
-  onEdit: () => void;
+  onEdit: (overrides?: Partial<IlliquidAsset>) => void;
 }) {
   const { format } = useCurrency();
   const deleteMutation = useDeleteIlliquidAsset();
+  const uploadMutation = useUploadPEStatement();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const nav = fund.current_value ?? 0;
   const committed = fund.committed_capital ?? 0;
@@ -343,6 +345,29 @@ function PEFundRow({
   function handleDelete() {
     if (!confirm(`Delete "${fund.name}"? This cannot be undone.`)) return;
     deleteMutation.mutate(fund.id);
+  }
+
+  async function handleFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = ""; // reset so same file can be re-selected
+    try {
+      const result = await uploadMutation.mutateAsync({ fundId: fund.id, file });
+      const ex = result.extracted;
+      // Open edit modal prefilled with extracted values
+      onEdit({
+        current_value: ex.nav ?? fund.current_value,
+        committed_capital: ex.committed_capital ?? fund.committed_capital,
+        called_capital: ex.called_capital ?? fund.called_capital,
+        distributed_capital: ex.distributed_capital ?? fund.distributed_capital,
+        currency: ex.currency ?? fund.currency,
+        gp_name: ex.gp_name ?? fund.gp_name,
+        vintage_year: ex.vintage_year ?? fund.vintage_year,
+        strategy: ex.strategy ?? fund.strategy,
+      });
+    } catch {
+      // error shown via mutation state
+    }
   }
 
   const fmtNative = (v: number) => v.toLocaleString(undefined, { maximumFractionDigits: 0 });
@@ -471,12 +496,29 @@ function PEFundRow({
                 Edit
               </button>
               <button
+                onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                disabled={uploadMutation.isPending}
+                className="px-3 py-1.5 rounded-lg border border-[var(--border-color)] text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
+              >
+                {uploadMutation.isPending ? "Parsing..." : "Upload Statement"}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf"
+                className="hidden"
+                onChange={handleFileSelected}
+              />
+              <button
                 onClick={(e) => { e.stopPropagation(); handleDelete(); }}
                 disabled={deleteMutation.isPending}
                 className="px-3 py-1.5 rounded-lg border border-red-500/30 text-xs font-medium text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50"
               >
                 {deleteMutation.isPending ? "Deleting..." : "Delete"}
               </button>
+              {uploadMutation.isError && (
+                <span className="text-xs text-red-500">{uploadMutation.error.message}</span>
+              )}
             </div>
           </div>
         </motion.div>

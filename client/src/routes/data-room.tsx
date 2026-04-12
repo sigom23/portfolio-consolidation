@@ -67,7 +67,13 @@ function DataRoomPage() {
                 {uploads.map((u) => (
                   <tr key={u.id} className="border-b border-[var(--border-color)]/50 hover:bg-[var(--bg-tertiary)]/50 transition-colors">
                     <td className="px-6 py-3 text-sm text-[var(--text-primary)]">{u.filename ?? "—"}</td>
-                    <td className="px-6 py-3 text-sm text-[var(--text-secondary)] uppercase">{u.file_type ?? "—"}</td>
+                    <td className="px-6 py-3 text-sm text-[var(--text-secondary)]">
+                      {u.upload_kind === "pe_statement" ? (
+                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-medium bg-violet-500/10 text-violet-400 uppercase tracking-wide">Fund Statement</span>
+                      ) : (
+                        <span className="uppercase">{u.file_type ?? "—"}</span>
+                      )}
+                    </td>
                     <td className="px-6 py-3 text-sm">
                       <span
                         className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${

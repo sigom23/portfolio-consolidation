@@ -318,6 +318,33 @@ export async function updateIlliquidAsset(id: number, updates: Partial<NewIlliqu
   return data.data!;
 }
 
+export interface PEStatementResult {
+  upload_id: number;
+  fund_id: number;
+  extracted: {
+    fund_name: string | null;
+    gp_name: string | null;
+    currency: string;
+    committed_capital: number | null;
+    called_capital: number | null;
+    distributed_capital: number | null;
+    nav: number | null;
+    vintage_year: number | null;
+    strategy: string | null;
+    statement_date: string | null;
+  };
+}
+
+export async function uploadPEStatement(fundId: number, file: File): Promise<PEStatementResult> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const { data } = await api.post<ApiResponse<PEStatementResult>>(`/api/illiquid/${fundId}/upload`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  if (!data.success) throw new Error(data.error ?? "Failed to parse PE statement");
+  return data.data!;
+}
+
 export async function deleteIlliquidAsset(id: number): Promise<void> {
   const { data } = await api.delete<ApiResponse<null>>(`/api/illiquid/${id}`);
   if (!data.success) throw new Error(data.error ?? "Failed to delete illiquid asset");

@@ -9,7 +9,7 @@ import {
   fetchProperties, createProperty, updateProperty, deleteProperty,
   createMortgage, updateMortgage, deleteMortgage,
   createPropertyCost, updatePropertyCost, deletePropertyCost,
-  fetchIlliquidAssets, createIlliquidAsset, updateIlliquidAsset, deleteIlliquidAsset,
+  fetchIlliquidAssets, createIlliquidAsset, updateIlliquidAsset, deleteIlliquidAsset, uploadPEStatement,
 } from "../services/api";
 import type { NewIncomeStream, NewTransaction, NewProperty, NewMortgage, NewPropertyCost, NewIlliquidAsset } from "../types";
 
@@ -322,6 +322,18 @@ export function useUpdateIlliquidAsset() {
     mutationFn: ({ id, updates }: { id: number; updates: Partial<NewIlliquidAsset> }) =>
       updateIlliquidAsset(id, updates),
     onSuccess: () => invalidateIlliquid(queryClient),
+  });
+}
+
+export function useUploadPEStatement() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ fundId, file }: { fundId: number; file: File }) =>
+      uploadPEStatement(fundId, file),
+    onSuccess: () => {
+      invalidateIlliquid(queryClient);
+      queryClient.invalidateQueries({ queryKey: ["uploads"] });
+    },
   });
 }
 

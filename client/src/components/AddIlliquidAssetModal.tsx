@@ -30,6 +30,7 @@ interface Props {
   subtype: IlliquidSubtype | null;
   onClose: () => void;
   editAsset?: IlliquidAsset | null;
+  prefill?: Partial<IlliquidAsset> | null;
 }
 
 const TITLES: Record<IlliquidSubtype, string> = {
@@ -53,7 +54,7 @@ const SUBMIT_LABELS: Record<IlliquidSubtype, string> = {
   startup: "Add Investment",
 };
 
-export function AddIlliquidAssetModal({ open, subtype, onClose, editAsset }: Props) {
+export function AddIlliquidAssetModal({ open, subtype, onClose, editAsset, prefill }: Props) {
   const create = useCreateIlliquidAsset();
   const update = useUpdateIlliquidAsset();
   const isEditing = !!editAsset;
@@ -117,33 +118,35 @@ export function AddIlliquidAssetModal({ open, subtype, onClose, editAsset }: Pro
       setAmountInvested(editAsset.amount_invested != null ? String(editAsset.amount_invested) : "");
       setInvestmentDate(editAsset.investment_date ?? "");
     } else {
-      setName("");
-      setCurrency("CHF");
-      setNotes("");
-      setCurrentValue("");
-      setCommittedCapital("");
-      setCalledCapital("");
-      setDistributedCapital("");
-      setVintageYear("");
-      setStrategy("");
-      setGpName("");
-      setGeography("");
-      setFundStatus("");
-      setEmployer("");
-      setUnits("");
-      setVestingYears("4");
-      setGrantStartDate(() => {
+      // Use prefill values if available (from PDF upload), otherwise defaults
+      const p = prefill;
+      setName(p?.name ?? "");
+      setCurrency(p?.currency ?? "CHF");
+      setNotes(p?.notes ?? "");
+      setCurrentValue(p?.current_value != null ? String(p.current_value) : "");
+      setCommittedCapital(p?.committed_capital != null ? String(p.committed_capital) : "");
+      setCalledCapital(p?.called_capital != null ? String(p.called_capital) : "");
+      setDistributedCapital(p?.distributed_capital != null ? String(p.distributed_capital) : "");
+      setVintageYear(p?.vintage_year != null ? String(p.vintage_year) : "");
+      setStrategy(p?.strategy ?? "");
+      setGpName(p?.gp_name ?? "");
+      setGeography(p?.geography ?? "");
+      setFundStatus(p?.fund_status ?? "");
+      setEmployer(p?.employer ?? "");
+      setUnits(p?.units != null ? String(p.units) : "");
+      setVestingYears(p?.vesting_years != null ? String(p.vesting_years) : "4");
+      setGrantStartDate(p?.grant_start_date ?? (() => {
         const d = new Date();
         return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
-      });
-      setEndValue("");
-      setAmountInvested("");
-      setInvestmentDate("");
+      })());
+      setEndValue(p?.end_value != null ? String(p.end_value) : "");
+      setAmountInvested(p?.amount_invested != null ? String(p.amount_invested) : "");
+      setInvestmentDate(p?.investment_date ?? "");
     }
     create.reset();
     update.reset();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, subtype, editAsset]);
+  }, [open, subtype, editAsset, prefill]);
 
   if (!subtype) return null;
 

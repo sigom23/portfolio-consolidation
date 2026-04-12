@@ -335,6 +335,16 @@ export interface PEStatementResult {
   };
 }
 
+export async function parsePEStatementNew(file: File): Promise<PEStatementResult> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const { data } = await api.post<ApiResponse<PEStatementResult>>("/api/illiquid/parse-statement", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  if (!data.success) throw new Error(data.error ?? "Failed to parse PE statement");
+  return data.data!;
+}
+
 export async function uploadPEStatement(fundId: number, file: File): Promise<PEStatementResult> {
   const formData = new FormData();
   formData.append("file", file);

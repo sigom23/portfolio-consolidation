@@ -304,6 +304,42 @@ router.delete("/illiquid/:id", async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/illiquid/parse-statement — parse a PE fund statement PDF for creating a new fund
+// Does NOT create anything — returns extracted values for client-side confirmation via POST.
+router.post("/illiquid/parse-statement", upload.single("file"), async (req: Request, res: Response) => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ success: false, error: "No file provided" });
+      return;
+    }
+
+    // Store the PDF in uploads table
+    const uploadRecord = await createUpload(
+      req.session.userId!,
+      req.file.originalname,
+      "pdf",
+      req.file.buffer,
+      "pe_statement"
+    );
+
+    // Parse with AI
+    const extracted = await parsePEStatement(req.file.buffer);
+
+    res.json({
+      success: true,
+      data: {
+        upload_id: uploadRecord.id,
+        extracted,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to parse PE statement",
+    });
+  }
+});
+
 // POST /api/illiquid/:id/upload — parse a PE fund statement PDF and return extracted data
 // Does NOT auto-save — returns extracted values for client-side confirmation via PUT.
 // Stores the PDF in the uploads table tagged with the fund for Data Room visibility.

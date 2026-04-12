@@ -549,10 +549,15 @@ export function TopMerchantsCard({
   );
 }
 
-const ALL_CATEGORIES = [
+const EXPENSE_CATEGORIES = [
   "Housing", "Groceries", "Transport", "Food & Drink", "Shopping",
   "Entertainment", "Health", "Travel", "Subscriptions", "Bills",
-  "Boat", "Income", "Transfers", "Other",
+  "Boat", "Transfers", "Other",
+];
+
+const INCOME_CATEGORIES = [
+  "Salary", "Income", "Dividend", "Freelance", "Rental", "Interest",
+  "Transfers", "Other",
 ];
 
 /** Shared transactions table — used by Income and Expenses. */
@@ -642,7 +647,7 @@ export function TransactionsTable({
                       color: CATEGORY_COLORS[tx.category ?? "Other"] ?? "#94a3b8",
                     }}
                   >
-                    {ALL_CATEGORIES.map((cat) => (
+                    {(showAmountSign === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map((cat) => (
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>

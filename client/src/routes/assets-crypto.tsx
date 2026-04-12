@@ -6,7 +6,7 @@ import { useCurrency } from "../contexts/CurrencyContext";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { AnimatedNumber } from "../components/AnimatedNumber";
-import { WalletList } from "../components/WalletList";
+import { useAddWallet, useDeleteWallet, useRefreshWallet } from "../hooks/usePortfolio";
 import type { Holding, Wallet } from "../types";
 
 function truncateAddress(addr: string): string {
@@ -29,6 +29,12 @@ function AssetsCryptoPage() {
   const { data: wallets, isLoading: walletsLoading } = useWallets();
   const { format, baseCurrency, flag } = useCurrency();
   const [hideSpam, setHideSpam] = useState(true);
+  const [showAddWallet, setShowAddWallet] = useState(false);
+  const [walletAddress, setWalletAddress] = useState("");
+  const [walletLabel, setWalletLabel] = useState("");
+  const addWallet = useAddWallet();
+  const deleteWallet = useDeleteWallet();
+  const refreshWallet = useRefreshWallet();
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -112,7 +118,64 @@ function AssetsCryptoPage() {
             Tokens held across your tracked wallets
           </p>
         </div>
+        <button
+          onClick={() => setShowAddWallet(!showAddWallet)}
+          className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Add Wallet
+        </button>
       </div>
+
+      {/* Inline add wallet form */}
+      {showAddWallet && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          className="mb-6 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5"
+        >
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input
+              type="text"
+              placeholder="0x..."
+              value={walletAddress}
+              onChange={(e) => setWalletAddress(e.target.value)}
+              className="flex-1 px-3 py-2 border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-lg text-sm focus:outline-none focus:border-blue-500 placeholder:text-[var(--text-muted)]"
+            />
+            <input
+              type="text"
+              placeholder="Label (optional)"
+              value={walletLabel}
+              onChange={(e) => setWalletLabel(e.target.value)}
+              className="sm:w-48 px-3 py-2 border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-lg text-sm focus:outline-none focus:border-blue-500 placeholder:text-[var(--text-muted)]"
+            />
+            <button
+              onClick={() => {
+                if (!walletAddress.trim()) return;
+                addWallet.mutate(
+                  { address: walletAddress.trim(), label: walletLabel.trim() || undefined },
+                  { onSuccess: () => { setWalletAddress(""); setWalletLabel(""); setShowAddWallet(false); } }
+                );
+              }}
+              disabled={!walletAddress.trim() || addWallet.isPending}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              {addWallet.isPending ? "Adding..." : "Add"}
+            </button>
+            <button
+              onClick={() => setShowAddWallet(false)}
+              className="px-3 py-2 border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg text-sm hover:bg-[var(--bg-tertiary)] transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+          {addWallet.isError && (
+            <p className="mt-2 text-xs text-red-500">{addWallet.error.message}</p>
+          )}
+        </motion.div>
+      )}
 
       {/* Total value hero */}
       <motion.div
@@ -150,7 +213,7 @@ function AssetsCryptoPage() {
         </div>
       ) : groups.length === 0 ? (
         <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-8 text-center text-[var(--text-muted)]">
-          No crypto holdings yet. Add a wallet address below to start tracking tokens.
+          No crypto holdings yet. Click "Add Wallet" above to start tracking tokens.
         </div>
       ) : (
         <div className="space-y-6">
@@ -194,9 +257,30 @@ function AssetsCryptoPage() {
                     </p>
                   )}
                 </div>
-                <p className="text-sm font-semibold text-[var(--text-primary)] tabular-nums">
-                  {format(group.totalUsd)}
-                </p>
+                <div className="flex items-center gap-3">
+                  <p className="text-sm font-semibold text-[var(--text-primary)] tabular-nums">
+                    {format(group.totalUsd)}
+                  </p>
+                  {group.wallet && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => refreshWallet.mutate(group.wallet!.id)}
+                        disabled={refreshWallet.isPending}
+                        className="px-2 py-1 text-[10px] bg-green-500/10 text-green-500 rounded hover:bg-green-500/20 disabled:opacity-50 transition-colors"
+                        title="Refresh"
+                      >
+                        {refreshWallet.isPending ? "..." : "Refresh"}
+                      </button>
+                      <button
+                        onClick={() => { if (confirm(`Delete wallet ${truncateAddress(group.wallet!.address)}?`)) deleteWallet.mutate(group.wallet!.id); }}
+                        className="px-2 py-1 text-[10px] text-red-500 hover:text-red-400 transition-colors"
+                        title="Delete"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="divide-y divide-[var(--border-color)]/50">
@@ -229,13 +313,6 @@ function AssetsCryptoPage() {
         </div>
       )}
 
-      {/* Wallet Management */}
-      <div className="mt-8">
-        <h2 className="text-sm font-medium text-[var(--text-muted)] uppercase tracking-wider mb-3">
-          Manage Wallets
-        </h2>
-        <WalletList wallets={wallets ?? []} loading={walletsLoading} />
-      </div>
     </div>
   );
 }

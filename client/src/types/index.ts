@@ -115,6 +115,12 @@ export interface IlliquidAsset {
 
   committed_capital: number | null;
   called_capital: number | null;
+  distributed_capital: number | null;
+  vintage_year: number | null;
+  strategy: string | null;
+  gp_name: string | null;
+  geography: string | null;
+  fund_status: string | null;
 
   employer: string | null;
   units: number | null;

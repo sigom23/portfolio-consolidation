@@ -246,6 +246,12 @@ export async function initDb(): Promise<void> {
       -- Private Equity
       committed_capital REAL,
       called_capital REAL,
+      distributed_capital REAL,
+      vintage_year INTEGER,
+      strategy TEXT,       -- 'buyout' | 'growth' | 'venture' | 'secondaries' | 'co_investment' | 'other'
+      gp_name TEXT,
+      geography TEXT,
+      fund_status TEXT,    -- 'investing' | 'harvesting' | 'largely_realized'
 
       -- Unvested Equity
       employer TEXT,
@@ -266,6 +272,14 @@ export async function initDb(): Promise<void> {
 
     -- Idempotent: in case the table was created earlier with the old USD default
     ALTER TABLE illiquid_assets ALTER COLUMN currency SET DEFAULT 'CHF';
+
+    -- PE enrichment columns (idempotent)
+    ALTER TABLE illiquid_assets ADD COLUMN IF NOT EXISTS distributed_capital REAL;
+    ALTER TABLE illiquid_assets ADD COLUMN IF NOT EXISTS vintage_year INTEGER;
+    ALTER TABLE illiquid_assets ADD COLUMN IF NOT EXISTS strategy TEXT;
+    ALTER TABLE illiquid_assets ADD COLUMN IF NOT EXISTS gp_name TEXT;
+    ALTER TABLE illiquid_assets ADD COLUMN IF NOT EXISTS geography TEXT;
+    ALTER TABLE illiquid_assets ADD COLUMN IF NOT EXISTS fund_status TEXT;
 
     -- ============================================================
     -- Wealth Snapshots
@@ -1158,10 +1172,11 @@ export async function createIlliquidAsset(
   const { rows } = await getPool().query(
     `INSERT INTO illiquid_assets (
        user_id, subtype, name, current_value, currency, notes,
-       committed_capital, called_capital,
+       committed_capital, called_capital, distributed_capital,
+       vintage_year, strategy, gp_name, geography, fund_status,
        employer, units, vesting_years, grant_start_date, end_value,
        amount_invested, investment_date
-     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
      RETURNING *`,
     [
       userId,
@@ -1172,6 +1187,12 @@ export async function createIlliquidAsset(
       asset.notes,
       asset.committed_capital,
       asset.called_capital,
+      asset.distributed_capital,
+      asset.vintage_year,
+      asset.strategy,
+      asset.gp_name,
+      asset.geography,
+      asset.fund_status,
       asset.employer,
       asset.units,
       asset.vesting_years,
@@ -1182,6 +1203,22 @@ export async function createIlliquidAsset(
     ]
   );
   return rows[0] as IlliquidAsset;
+}
+
+export async function updateIlliquidAsset(
+  id: number,
+  userId: string,
+  updates: Partial<Omit<IlliquidAsset, "id" | "user_id" | "created_at">>
+): Promise<IlliquidAsset | undefined> {
+  const fields = Object.keys(updates);
+  if (fields.length === 0) return undefined;
+  const setClause = fields.map((k, i) => `${k} = $${i + 3}`).join(", ");
+  const values = fields.map((k) => (updates as Record<string, unknown>)[k]);
+  const { rows } = await getPool().query(
+    `UPDATE illiquid_assets SET ${setClause}, updated_at = NOW() WHERE id = $1 AND user_id = $2 RETURNING *`,
+    [id, userId, ...values]
+  );
+  return rows[0] as IlliquidAsset | undefined;
 }
 
 export async function deleteIlliquidAsset(id: number, userId: string): Promise<boolean> {

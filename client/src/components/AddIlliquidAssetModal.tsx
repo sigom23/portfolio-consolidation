@@ -1,16 +1,35 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { useCreateIlliquidAsset } from "../hooks/usePortfolio";
-import type { IlliquidSubtype, NewIlliquidAsset } from "../types";
+import { useCreateIlliquidAsset, useUpdateIlliquidAsset } from "../hooks/usePortfolio";
+import type { IlliquidAsset, IlliquidSubtype, NewIlliquidAsset } from "../types";
 
 const CURRENCIES = ["CHF", "EUR", "USD", "GBP", "JPY", "CAD", "AUD"];
 
 const PENSION_SUGGESTIONS = ["UBS Pillar 2", "UBS Pillar 3a", "Pillar 2 (BVG)", "Pillar 3a"];
 
+const PE_STRATEGIES = [
+  { value: "buyout", label: "Buyout" },
+  { value: "growth", label: "Growth" },
+  { value: "venture", label: "Venture" },
+  { value: "secondaries", label: "Secondaries" },
+  { value: "co_investment", label: "Co-investment" },
+  { value: "other", label: "Other" },
+];
+
+const PE_STATUSES = [
+  { value: "investing", label: "Investing" },
+  { value: "harvesting", label: "Harvesting" },
+  { value: "largely_realized", label: "Largely Realized" },
+];
+
+const fieldInput = "w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors";
+const fieldInputNum = `${fieldInput} tabular-nums`;
+
 interface Props {
   open: boolean;
   subtype: IlliquidSubtype | null;
   onClose: () => void;
+  editAsset?: IlliquidAsset | null;
 }
 
 const TITLES: Record<IlliquidSubtype, string> = {
@@ -20,6 +39,13 @@ const TITLES: Record<IlliquidSubtype, string> = {
   startup: "Add Startup Investment",
 };
 
+const EDIT_TITLES: Record<IlliquidSubtype, string> = {
+  private_equity: "Edit Private Equity Fund",
+  pension: "Edit Pension Account",
+  unvested_equity: "Edit Unvested Equity Grant",
+  startup: "Edit Startup Investment",
+};
+
 const SUBMIT_LABELS: Record<IlliquidSubtype, string> = {
   private_equity: "Add Fund",
   pension: "Add Account",
@@ -27,8 +53,10 @@ const SUBMIT_LABELS: Record<IlliquidSubtype, string> = {
   startup: "Add Investment",
 };
 
-export function AddIlliquidAssetModal({ open, subtype, onClose }: Props) {
+export function AddIlliquidAssetModal({ open, subtype, onClose, editAsset }: Props) {
   const create = useCreateIlliquidAsset();
+  const update = useUpdateIlliquidAsset();
+  const isEditing = !!editAsset;
 
   // Common
   const [name, setName] = useState("");
@@ -41,6 +69,12 @@ export function AddIlliquidAssetModal({ open, subtype, onClose }: Props) {
   // PE extras
   const [committedCapital, setCommittedCapital] = useState("");
   const [calledCapital, setCalledCapital] = useState("");
+  const [distributedCapital, setDistributedCapital] = useState("");
+  const [vintageYear, setVintageYear] = useState("");
+  const [strategy, setStrategy] = useState("");
+  const [gpName, setGpName] = useState("");
+  const [geography, setGeography] = useState("");
+  const [fundStatus, setFundStatus] = useState("");
 
   // Unvested equity extras
   const [employer, setEmployer] = useState("");
@@ -56,29 +90,60 @@ export function AddIlliquidAssetModal({ open, subtype, onClose }: Props) {
   const [amountInvested, setAmountInvested] = useState("");
   const [investmentDate, setInvestmentDate] = useState("");
 
-  // Reset the form every time the modal opens with a (possibly new) subtype.
-  // Prevents PE fields leaking into a subsequent Pension add, etc.
+  // Reset/prefill form when modal opens
   useEffect(() => {
     if (!open) return;
-    setName("");
-    setCurrency("CHF");
-    setNotes("");
-    setCurrentValue("");
-    setCommittedCapital("");
-    setCalledCapital("");
-    setEmployer("");
-    setUnits("");
-    setVestingYears("4");
-    setGrantStartDate(() => {
-      const d = new Date();
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
-    });
-    setEndValue("");
-    setAmountInvested("");
-    setInvestmentDate("");
+    if (editAsset) {
+      setName(editAsset.name);
+      setCurrency(editAsset.currency);
+      setNotes(editAsset.notes ?? "");
+      setCurrentValue(editAsset.current_value != null ? String(editAsset.current_value) : "");
+      setCommittedCapital(editAsset.committed_capital != null ? String(editAsset.committed_capital) : "");
+      setCalledCapital(editAsset.called_capital != null ? String(editAsset.called_capital) : "");
+      setDistributedCapital(editAsset.distributed_capital != null ? String(editAsset.distributed_capital) : "");
+      setVintageYear(editAsset.vintage_year != null ? String(editAsset.vintage_year) : "");
+      setStrategy(editAsset.strategy ?? "");
+      setGpName(editAsset.gp_name ?? "");
+      setGeography(editAsset.geography ?? "");
+      setFundStatus(editAsset.fund_status ?? "");
+      setEmployer(editAsset.employer ?? "");
+      setUnits(editAsset.units != null ? String(editAsset.units) : "");
+      setVestingYears(editAsset.vesting_years != null ? String(editAsset.vesting_years) : "4");
+      setGrantStartDate(editAsset.grant_start_date ?? (() => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+      })());
+      setEndValue(editAsset.end_value != null ? String(editAsset.end_value) : "");
+      setAmountInvested(editAsset.amount_invested != null ? String(editAsset.amount_invested) : "");
+      setInvestmentDate(editAsset.investment_date ?? "");
+    } else {
+      setName("");
+      setCurrency("CHF");
+      setNotes("");
+      setCurrentValue("");
+      setCommittedCapital("");
+      setCalledCapital("");
+      setDistributedCapital("");
+      setVintageYear("");
+      setStrategy("");
+      setGpName("");
+      setGeography("");
+      setFundStatus("");
+      setEmployer("");
+      setUnits("");
+      setVestingYears("4");
+      setGrantStartDate(() => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+      });
+      setEndValue("");
+      setAmountInvested("");
+      setInvestmentDate("");
+    }
     create.reset();
+    update.reset();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, subtype]);
+  }, [open, subtype, editAsset]);
 
   if (!subtype) return null;
 
@@ -95,6 +160,12 @@ export function AddIlliquidAssetModal({ open, subtype, onClose }: Props) {
       current_value: null,
       committed_capital: null,
       called_capital: null,
+      distributed_capital: null,
+      vintage_year: null,
+      strategy: null,
+      gp_name: null,
+      geography: null,
+      fund_status: null,
       employer: null,
       units: null,
       vesting_years: null,
@@ -110,6 +181,12 @@ export function AddIlliquidAssetModal({ open, subtype, onClose }: Props) {
       input.current_value = cv;
       input.committed_capital = committedCapital ? parseFloat(committedCapital) : null;
       input.called_capital = calledCapital ? parseFloat(calledCapital) : null;
+      input.distributed_capital = distributedCapital ? parseFloat(distributedCapital) : null;
+      input.vintage_year = vintageYear ? parseInt(vintageYear, 10) : null;
+      input.strategy = strategy || null;
+      input.gp_name = gpName.trim() || null;
+      input.geography = geography.trim() || null;
+      input.fund_status = fundStatus || null;
     } else if (subtype === "pension") {
       const cv = parseFloat(currentValue);
       if (isNaN(cv) || cv < 0) return;
@@ -134,7 +211,11 @@ export function AddIlliquidAssetModal({ open, subtype, onClose }: Props) {
     }
 
     try {
-      await create.mutateAsync(input);
+      if (isEditing && editAsset) {
+        await update.mutateAsync({ id: editAsset.id, updates: input });
+      } else {
+        await create.mutateAsync(input);
+      }
       onClose();
     } catch {
       // error surfaced below
@@ -165,7 +246,7 @@ export function AddIlliquidAssetModal({ open, subtype, onClose }: Props) {
             <div className="hero-card rounded-2xl w-full max-w-md p-6 pointer-events-auto max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-lg font-semibold text-[var(--text-primary)]">
-                  {TITLES[subtype]}
+                  {isEditing ? EDIT_TITLES[subtype] : TITLES[subtype]}
                 </h2>
                 <button
                   onClick={onClose}
@@ -218,6 +299,12 @@ export function AddIlliquidAssetModal({ open, subtype, onClose }: Props) {
                 {/* Subtype-specific fields */}
                 {subtype === "private_equity" && (
                   <>
+                    {/* GP / Manager */}
+                    <div>
+                      <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">GP / Manager</label>
+                      <input type="text" value={gpName} onChange={(e) => setGpName(e.target.value)} placeholder="e.g. Sequoia Capital" className={fieldInput} />
+                    </div>
+
                     <ValueCurrencyRow
                       label="NAV (current value)"
                       value={currentValue}
@@ -226,33 +313,49 @@ export function AddIlliquidAssetModal({ open, subtype, onClose }: Props) {
                       onCurrencyChange={setCurrency}
                       required
                     />
-                    <div className="grid grid-cols-2 gap-3">
+
+                    {/* Capital fields */}
+                    <div className="grid grid-cols-3 gap-3">
                       <div>
-                        <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">
-                          Committed
-                        </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={committedCapital}
-                          onChange={(e) => setCommittedCapital(e.target.value)}
-                          placeholder="0"
-                          className="w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] tabular-nums outline-none focus:border-blue-500 transition-colors"
-                        />
+                        <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Committed</label>
+                        <input type="number" step="0.01" value={committedCapital} onChange={(e) => setCommittedCapital(e.target.value)} placeholder="0" className={fieldInputNum} />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">
-                          Called
-                        </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={calledCapital}
-                          onChange={(e) => setCalledCapital(e.target.value)}
-                          placeholder="0"
-                          className="w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] tabular-nums outline-none focus:border-blue-500 transition-colors"
-                        />
+                        <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Called</label>
+                        <input type="number" step="0.01" value={calledCapital} onChange={(e) => setCalledCapital(e.target.value)} placeholder="0" className={fieldInputNum} />
                       </div>
+                      <div>
+                        <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Distributed</label>
+                        <input type="number" step="0.01" value={distributedCapital} onChange={(e) => setDistributedCapital(e.target.value)} placeholder="0" className={fieldInputNum} />
+                      </div>
+                    </div>
+
+                    {/* Context row */}
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Vintage</label>
+                        <input type="number" min="1990" max="2099" value={vintageYear} onChange={(e) => setVintageYear(e.target.value)} placeholder={String(new Date().getFullYear())} className={fieldInputNum} />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Strategy</label>
+                        <select value={strategy} onChange={(e) => setStrategy(e.target.value)} className={fieldInput}>
+                          <option value="">—</option>
+                          {PE_STRATEGIES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Status</label>
+                        <select value={fundStatus} onChange={(e) => setFundStatus(e.target.value)} className={fieldInput}>
+                          <option value="">—</option>
+                          {PE_STATUSES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Geography */}
+                    <div>
+                      <label className="block text-xs font-medium text-[var(--text-muted)] mb-1.5">Geography (optional)</label>
+                      <input type="text" value={geography} onChange={(e) => setGeography(e.target.value)} placeholder="e.g. Global, US, Europe" className={fieldInput} />
                     </div>
                   </>
                 )}
@@ -384,8 +487,8 @@ export function AddIlliquidAssetModal({ open, subtype, onClose }: Props) {
                   />
                 </div>
 
-                {create.isError && (
-                  <p className="text-xs text-red-500">{create.error.message}</p>
+                {(create.isError || update.isError) && (
+                  <p className="text-xs text-red-500">{(create.error ?? update.error)?.message}</p>
                 )}
 
                 <div className="flex gap-2 pt-2">
@@ -398,10 +501,12 @@ export function AddIlliquidAssetModal({ open, subtype, onClose }: Props) {
                   </button>
                   <button
                     type="submit"
-                    disabled={create.isPending}
+                    disabled={create.isPending || update.isPending}
                     className="flex-1 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
                   >
-                    {create.isPending ? "Adding..." : SUBMIT_LABELS[subtype]}
+                    {(create.isPending || update.isPending)
+                      ? (isEditing ? "Saving..." : "Adding...")
+                      : (isEditing ? "Save Changes" : SUBMIT_LABELS[subtype])}
                   </button>
                 </div>
               </form>

@@ -4,10 +4,13 @@ import { useAuth } from "../hooks/useAuth";
 import {
   useProperties,
   useCreateProperty,
+  useUpdateProperty,
   useDeleteProperty,
   useCreateMortgage,
+  useUpdateMortgage,
   useDeleteMortgage,
   useCreatePropertyCost,
+  useUpdatePropertyCost,
   useDeletePropertyCost,
 } from "../hooks/usePortfolio";
 import { useCurrency } from "../contexts/CurrencyContext";
@@ -17,6 +20,8 @@ import { AnimatedNumber } from "../components/AnimatedNumber";
 import type {
   PropertyType,
   PropertyWithDetails,
+  PropertyMortgage,
+  PropertyCost,
   PropertyCostCategory,
   IncomeFrequency,
   NewProperty,
@@ -351,8 +356,10 @@ function Row({ label, value, positive }: { label: string; value: string; positiv
 // Add property modal
 // -------------------------------------------------------------------------------------
 
-function AddPropertyModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+function AddPropertyModal({ open, onClose, editProperty }: { open: boolean; onClose: () => void; editProperty?: PropertyWithDetails | null }) {
   const create = useCreateProperty();
+  const updateProp = useUpdateProperty();
+  const isEditing = !!editProperty;
   const [name, setName] = useState("");
   const [type, setType] = useState<PropertyType>("apartment");
   const [address, setAddress] = useState("");
@@ -361,15 +368,27 @@ function AddPropertyModal({ open, onClose }: { open: boolean; onClose: () => voi
   const [purchaseDate, setPurchaseDate] = useState("");
   const [currency, setCurrency] = useState("CHF");
 
-  function reset() {
-    setName("");
-    setType("apartment");
-    setAddress("");
-    setCurrentValue("");
-    setPurchasePrice("");
-    setPurchaseDate("");
-    setCurrency("CHF");
-  }
+  useEffect(() => {
+    if (!open) return;
+    if (editProperty) {
+      setName(editProperty.name);
+      setType(editProperty.property_type);
+      setAddress(editProperty.address ?? "");
+      setCurrentValue(String(editProperty.current_value));
+      setPurchasePrice(editProperty.purchase_price != null ? String(editProperty.purchase_price) : "");
+      setPurchaseDate(editProperty.purchase_date ?? "");
+      setCurrency(editProperty.currency);
+    } else {
+      setName("");
+      setType("apartment");
+      setAddress("");
+      setCurrentValue("");
+      setPurchasePrice("");
+      setPurchaseDate("");
+      setCurrency("CHF");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editProperty]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -386,8 +405,11 @@ function AddPropertyModal({ open, onClose }: { open: boolean; onClose: () => voi
     };
 
     try {
-      await create.mutateAsync(input);
-      reset();
+      if (isEditing && editProperty) {
+        await updateProp.mutateAsync({ id: editProperty.id, updates: input });
+      } else {
+        await create.mutateAsync(input);
+      }
       onClose();
     } catch {
       // error shown below
@@ -414,7 +436,7 @@ function AddPropertyModal({ open, onClose }: { open: boolean; onClose: () => voi
           >
             <div className="hero-card rounded-2xl w-full max-w-md p-6 pointer-events-auto max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-semibold text-[var(--text-primary)]">Add Property</h2>
+                <h2 className="text-lg font-semibold text-[var(--text-primary)]">{isEditing ? "Edit Property" : "Add Property"}</h2>
                 <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -488,13 +510,15 @@ function AddPropertyModal({ open, onClose }: { open: boolean; onClose: () => voi
                     />
                   </Field>
                 </div>
-                {create.isError && <p className="text-xs text-red-500">{create.error.message}</p>}
+                {(create.isError || updateProp.isError) && <p className="text-xs text-red-500">{(create.error ?? updateProp.error)?.message}</p>}
                 <div className="flex gap-2 pt-2">
                   <button type="button" onClick={onClose} className={cancelBtn}>
                     Cancel
                   </button>
-                  <button type="submit" disabled={create.isPending} className={submitBtn}>
-                    {create.isPending ? "Adding..." : "Add Property"}
+                  <button type="submit" disabled={create.isPending || updateProp.isPending} className={submitBtn}>
+                    {(create.isPending || updateProp.isPending)
+                      ? (isEditing ? "Saving..." : "Adding...")
+                      : (isEditing ? "Save Changes" : "Add Property")}
                   </button>
                 </div>
               </form>
@@ -522,6 +546,9 @@ function PropertyDetailDrawer({
   const deleteProp = useDeleteProperty();
   const [addMortgageOpen, setAddMortgageOpen] = useState(false);
   const [addCostOpen, setAddCostOpen] = useState(false);
+  const [editPropertyOpen, setEditPropertyOpen] = useState(false);
+  const [editingMortgage, setEditingMortgage] = useState<PropertyMortgage | null>(null);
+  const [editingCost, setEditingCost] = useState<PropertyCost | null>(null);
 
   if (!property) return null;
 
@@ -565,11 +592,22 @@ function PropertyDetailDrawer({
                   {property.address && <p className="text-[11px] text-[var(--text-muted)]">{property.address}</p>}
                 </div>
               </div>
-              <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setEditPropertyOpen(true)}
+                  className="text-[var(--text-muted)] hover:text-blue-500 transition-colors"
+                  title="Edit property"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
+                  </svg>
+                </button>
+                <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <div className="p-6 space-y-6">
@@ -593,7 +631,7 @@ function PropertyDetailDrawer({
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-[var(--text-primary)]">Mortgages</h3>
                   <button
-                    onClick={() => setAddMortgageOpen(true)}
+                    onClick={() => { setEditingMortgage(null); setAddMortgageOpen(true); }}
                     className="text-xs text-blue-500 hover:text-blue-400 font-medium"
                   >
                     + Add
@@ -604,7 +642,7 @@ function PropertyDetailDrawer({
                 ) : (
                   <div className="space-y-2">
                     {property.mortgages.map((m) => (
-                      <MortgageRow key={m.id} propertyCurrency={property.currency} mortgage={m} />
+                      <MortgageRow key={m.id} propertyCurrency={property.currency} mortgage={m} onEdit={() => { setEditingMortgage(m); setAddMortgageOpen(true); }} />
                     ))}
                   </div>
                 )}
@@ -615,7 +653,7 @@ function PropertyDetailDrawer({
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-[var(--text-primary)]">Recurring Costs</h3>
                   <button
-                    onClick={() => setAddCostOpen(true)}
+                    onClick={() => { setEditingCost(null); setAddCostOpen(true); }}
                     className="text-xs text-blue-500 hover:text-blue-400 font-medium"
                   >
                     + Add
@@ -626,7 +664,7 @@ function PropertyDetailDrawer({
                 ) : (
                   <div className="space-y-2">
                     {property.costs.map((c) => (
-                      <CostRow key={c.id} cost={c} />
+                      <CostRow key={c.id} cost={c} onEdit={() => { setEditingCost(c); setAddCostOpen(true); }} />
                     ))}
                   </div>
                 )}
@@ -674,17 +712,24 @@ function PropertyDetailDrawer({
             </div>
           </motion.aside>
 
+          <AddPropertyModal
+            open={editPropertyOpen}
+            onClose={() => setEditPropertyOpen(false)}
+            editProperty={property}
+          />
           <AddMortgageModal
             propertyId={property.id}
             propertyCurrency={property.currency}
             open={addMortgageOpen}
-            onClose={() => setAddMortgageOpen(false)}
+            onClose={() => { setAddMortgageOpen(false); setEditingMortgage(null); }}
+            editMortgage={editingMortgage}
           />
           <AddCostModal
             propertyId={property.id}
             propertyCurrency={property.currency}
             open={addCostOpen}
-            onClose={() => setAddCostOpen(false)}
+            onClose={() => { setAddCostOpen(false); setEditingCost(null); }}
+            editCost={editingCost}
           />
         </>
       )}
@@ -702,7 +747,7 @@ function SummaryBox({ label, value, color }: { label: string; value: string; col
   );
 }
 
-function MortgageRow({ mortgage, propertyCurrency }: { mortgage: import("../types").PropertyMortgage; propertyCurrency: string }) {
+function MortgageRow({ mortgage, propertyCurrency, onEdit }: { mortgage: PropertyMortgage; propertyCurrency: string; onEdit: () => void }) {
   const deleteM = useDeleteMortgage();
   const monthlyInterest = (mortgage.current_balance * mortgage.interest_rate) / 12 / 100;
 
@@ -721,22 +766,33 @@ function MortgageRow({ mortgage, propertyCurrency }: { mortgage: import("../type
           {formatLocal(mortgage.current_balance, propertyCurrency)} @ {mortgage.interest_rate.toFixed(2)}% = {formatLocalDecimals(monthlyInterest, propertyCurrency)}/mo interest
         </p>
       </div>
-      <button
-        onClick={() => {
-          if (confirm(`Delete mortgage "${mortgage.lender ?? "this mortgage"}"?`)) deleteM.mutate(mortgage.id);
-        }}
-        className="text-[var(--text-muted)] hover:text-red-500 transition-colors ml-2 flex-shrink-0"
-        title="Delete mortgage"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.74 9l-.346 9m-4.788 0L9.26 9M18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79" />
-        </svg>
-      </button>
+      <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+        <button
+          onClick={onEdit}
+          className="text-[var(--text-muted)] hover:text-blue-500 transition-colors"
+          title="Edit mortgage"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
+          </svg>
+        </button>
+        <button
+          onClick={() => {
+            if (confirm(`Delete mortgage "${mortgage.lender ?? "this mortgage"}"?`)) deleteM.mutate(mortgage.id);
+          }}
+          className="text-[var(--text-muted)] hover:text-red-500 transition-colors"
+          title="Delete mortgage"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.74 9l-.346 9m-4.788 0L9.26 9M18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79" />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 }
 
-function CostRow({ cost }: { cost: import("../types").PropertyCost }) {
+function CostRow({ cost, onEdit }: { cost: PropertyCost; onEdit: () => void }) {
   const deleteC = useDeletePropertyCost();
   return (
     <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-[var(--bg-tertiary)]/50 border border-[var(--border-color)]">
@@ -751,17 +807,28 @@ function CostRow({ cost }: { cost: import("../types").PropertyCost }) {
           {formatLocalDecimals(cost.amount, cost.currency)} / {cost.frequency}
         </p>
       </div>
-      <button
-        onClick={() => {
-          if (confirm(`Delete cost "${cost.label}"?`)) deleteC.mutate(cost.id);
-        }}
-        className="text-[var(--text-muted)] hover:text-red-500 transition-colors ml-2 flex-shrink-0"
-        title="Delete cost"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.74 9l-.346 9m-4.788 0L9.26 9M18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79" />
-        </svg>
-      </button>
+      <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+        <button
+          onClick={onEdit}
+          className="text-[var(--text-muted)] hover:text-blue-500 transition-colors"
+          title="Edit cost"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
+          </svg>
+        </button>
+        <button
+          onClick={() => {
+            if (confirm(`Delete cost "${cost.label}"?`)) deleteC.mutate(cost.id);
+          }}
+          className="text-[var(--text-muted)] hover:text-red-500 transition-colors"
+          title="Delete cost"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14.74 9l-.346 9m-4.788 0L9.26 9M18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79" />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 }
@@ -775,18 +842,40 @@ function AddMortgageModal({
   propertyCurrency,
   open,
   onClose,
+  editMortgage,
 }: {
   propertyId: number;
   propertyCurrency: string;
   open: boolean;
   onClose: () => void;
+  editMortgage?: PropertyMortgage | null;
 }) {
   const create = useCreateMortgage();
+  const updateM = useUpdateMortgage();
+  const isEditing = !!editMortgage;
   const [lender, setLender] = useState("");
   const [originalAmount, setOriginalAmount] = useState("");
   const [currentBalance, setCurrentBalance] = useState("");
   const [interestRate, setInterestRate] = useState("");
   const [startDate, setStartDate] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    if (editMortgage) {
+      setLender(editMortgage.lender ?? "");
+      setOriginalAmount(String(editMortgage.original_amount));
+      setCurrentBalance(String(editMortgage.current_balance));
+      setInterestRate(String(editMortgage.interest_rate));
+      setStartDate(editMortgage.start_date ?? "");
+    } else {
+      setLender("");
+      setOriginalAmount("");
+      setCurrentBalance("");
+      setInterestRate("");
+      setStartDate("");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editMortgage]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -797,15 +886,14 @@ function AddMortgageModal({
       current_balance: parseFloat(currentBalance),
       interest_rate: parseFloat(interestRate),
       start_date: startDate || null,
-      is_active: true,
+      is_active: editMortgage?.is_active ?? true,
     };
     try {
-      await create.mutateAsync({ propertyId, input });
-      setLender("");
-      setOriginalAmount("");
-      setCurrentBalance("");
-      setInterestRate("");
-      setStartDate("");
+      if (isEditing && editMortgage) {
+        await updateM.mutateAsync({ id: editMortgage.id, updates: input });
+      } else {
+        await create.mutateAsync({ propertyId, input });
+      }
       onClose();
     } catch {
       // ignore
@@ -831,7 +919,7 @@ function AddMortgageModal({
           >
             <div className="hero-card rounded-2xl w-full max-w-md p-6 pointer-events-auto">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-semibold text-[var(--text-primary)]">Add Mortgage</h2>
+                <h2 className="text-lg font-semibold text-[var(--text-primary)]">{isEditing ? "Edit Mortgage" : "Add Mortgage"}</h2>
                 <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -858,11 +946,13 @@ function AddMortgageModal({
                     <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClass} />
                   </Field>
                 </div>
-                {create.isError && <p className="text-xs text-red-500">{create.error.message}</p>}
+                {(create.isError || updateM.isError) && <p className="text-xs text-red-500">{(create.error ?? updateM.error)?.message}</p>}
                 <div className="flex gap-2 pt-2">
                   <button type="button" onClick={onClose} className={cancelBtn}>Cancel</button>
-                  <button type="submit" disabled={create.isPending} className={submitBtn}>
-                    {create.isPending ? "Adding..." : "Add Mortgage"}
+                  <button type="submit" disabled={create.isPending || updateM.isPending} className={submitBtn}>
+                    {(create.isPending || updateM.isPending)
+                      ? (isEditing ? "Saving..." : "Adding...")
+                      : (isEditing ? "Save Changes" : "Add Mortgage")}
                   </button>
                 </div>
               </form>
@@ -883,17 +973,37 @@ function AddCostModal({
   propertyCurrency,
   open,
   onClose,
+  editCost,
 }: {
   propertyId: number;
   propertyCurrency: string;
   open: boolean;
   onClose: () => void;
+  editCost?: PropertyCost | null;
 }) {
   const create = useCreatePropertyCost();
+  const updateC = useUpdatePropertyCost();
+  const isEditing = !!editCost;
   const [label, setLabel] = useState("");
   const [category, setCategory] = useState<PropertyCostCategory>("maintenance");
   const [amount, setAmount] = useState("");
   const [frequency, setFrequency] = useState<IncomeFrequency>("monthly");
+
+  useEffect(() => {
+    if (!open) return;
+    if (editCost) {
+      setLabel(editCost.label);
+      setCategory(editCost.category as PropertyCostCategory);
+      setAmount(String(editCost.amount));
+      setFrequency(editCost.frequency as IncomeFrequency);
+    } else {
+      setLabel("");
+      setCategory("maintenance");
+      setAmount("");
+      setFrequency("monthly");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editCost]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -904,14 +1014,14 @@ function AddCostModal({
       amount: parseFloat(amount),
       currency: propertyCurrency,
       frequency,
-      is_active: true,
+      is_active: editCost?.is_active ?? true,
     };
     try {
-      await create.mutateAsync({ propertyId, input });
-      setLabel("");
-      setCategory("maintenance");
-      setAmount("");
-      setFrequency("monthly");
+      if (isEditing && editCost) {
+        await updateC.mutateAsync({ id: editCost.id, updates: input });
+      } else {
+        await create.mutateAsync({ propertyId, input });
+      }
       onClose();
     } catch {
       // ignore
@@ -937,7 +1047,7 @@ function AddCostModal({
           >
             <div className="hero-card rounded-2xl w-full max-w-md p-6 pointer-events-auto">
               <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-semibold text-[var(--text-primary)]">Add Recurring Cost</h2>
+                <h2 className="text-lg font-semibold text-[var(--text-primary)]">{isEditing ? "Edit Recurring Cost" : "Add Recurring Cost"}</h2>
                 <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -963,11 +1073,13 @@ function AddCostModal({
                     </select>
                   </Field>
                 </div>
-                {create.isError && <p className="text-xs text-red-500">{create.error.message}</p>}
+                {(create.isError || updateC.isError) && <p className="text-xs text-red-500">{(create.error ?? updateC.error)?.message}</p>}
                 <div className="flex gap-2 pt-2">
                   <button type="button" onClick={onClose} className={cancelBtn}>Cancel</button>
-                  <button type="submit" disabled={create.isPending} className={submitBtn}>
-                    {create.isPending ? "Adding..." : "Add Cost"}
+                  <button type="submit" disabled={create.isPending || updateC.isPending} className={submitBtn}>
+                    {(create.isPending || updateC.isPending)
+                      ? (isEditing ? "Saving..." : "Adding...")
+                      : (isEditing ? "Save Changes" : "Add Cost")}
                   </button>
                 </div>
               </form>

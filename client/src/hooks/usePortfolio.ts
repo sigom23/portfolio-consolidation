@@ -9,7 +9,7 @@ import {
   fetchProperties, createProperty, updateProperty, deleteProperty,
   createMortgage, updateMortgage, deleteMortgage,
   createPropertyCost, updatePropertyCost, deletePropertyCost,
-  fetchIlliquidAssets, createIlliquidAsset, deleteIlliquidAsset,
+  fetchIlliquidAssets, createIlliquidAsset, updateIlliquidAsset, deleteIlliquidAsset,
 } from "../services/api";
 import type { NewIncomeStream, NewTransaction, NewProperty, NewMortgage, NewPropertyCost, NewIlliquidAsset } from "../types";
 
@@ -312,6 +312,15 @@ export function useCreateIlliquidAsset() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: NewIlliquidAsset) => createIlliquidAsset(input),
+    onSuccess: () => invalidateIlliquid(queryClient),
+  });
+}
+
+export function useUpdateIlliquidAsset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, updates }: { id: number; updates: Partial<NewIlliquidAsset> }) =>
+      updateIlliquidAsset(id, updates),
     onSuccess: () => invalidateIlliquid(queryClient),
   });
 }

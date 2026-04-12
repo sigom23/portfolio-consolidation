@@ -312,6 +312,12 @@ export async function createIlliquidAsset(input: NewIlliquidAsset): Promise<Illi
   return data.data!;
 }
 
+export async function updateIlliquidAsset(id: number, updates: Partial<NewIlliquidAsset>): Promise<IlliquidAsset> {
+  const { data } = await api.put<ApiResponse<IlliquidAsset>>(`/api/illiquid/${id}`, updates);
+  if (!data.success) throw new Error(data.error ?? "Failed to update illiquid asset");
+  return data.data!;
+}
+
 export async function deleteIlliquidAsset(id: number): Promise<void> {
   const { data } = await api.delete<ApiResponse<null>>(`/api/illiquid/${id}`);
   if (!data.success) throw new Error(data.error ?? "Failed to delete illiquid asset");

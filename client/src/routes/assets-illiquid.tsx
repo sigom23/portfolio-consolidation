@@ -387,7 +387,10 @@ function PEFundRow({
       >
         {/* Col 1: Fund identity */}
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{fund.name}</p>
+          <p className="text-sm font-semibold text-[var(--text-primary)] truncate flex items-center gap-2">
+            {fund.name}
+            <StaleHint updatedAt={fund.updated_at} />
+          </p>
           {contextBits.length > 0 && (
             <p className="text-[11px] text-[var(--text-muted)] mt-0.5">{contextBits.join(" · ")}</p>
           )}
@@ -651,7 +654,10 @@ function AssetRow({ asset, onEdit }: { asset: IlliquidAsset; onEdit: () => void 
   return (
     <div className="group px-6 py-4 flex items-start justify-between gap-4 hover:bg-[var(--bg-tertiary)]/40 transition-colors">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-[var(--text-primary)]">{asset.name}</p>
+        <p className="text-sm font-medium text-[var(--text-primary)] flex items-center gap-2">
+          {asset.name}
+          <StaleHint updatedAt={asset.updated_at} />
+        </p>
         <SubtypeMeta asset={asset} />
         {asset.notes && (
           <p className="mt-1 text-xs text-[var(--text-muted)] italic truncate">{asset.notes}</p>
@@ -711,6 +717,18 @@ function SubtypeMeta({ asset }: { asset: IlliquidAsset }) {
       return bits.length ? <MetaLine>{bits.join(" · ")}</MetaLine> : null;
     }
   }
+}
+
+const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
+
+function StaleHint({ updatedAt }: { updatedAt: string }) {
+  const age = Date.now() - new Date(updatedAt).getTime();
+  if (age < NINETY_DAYS_MS) return null;
+  return (
+    <span className="text-[9px] px-1.5 py-0.5 rounded bg-[var(--bg-tertiary)] text-[var(--text-muted)] uppercase tracking-wide font-medium" title="Value not updated in over 90 days">
+      Review
+    </span>
+  );
 }
 
 function MetaLine({ children }: { children: React.ReactNode }) {

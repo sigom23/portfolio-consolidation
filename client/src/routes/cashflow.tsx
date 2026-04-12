@@ -90,7 +90,7 @@ function CashFlowOverviewPage() {
         {isLoading ? (
           <div className="h-10 w-56 bg-[var(--bg-tertiary)] rounded animate-pulse" />
         ) : (
-          <p className={`text-[38px] font-serif font-light tracking-[-0.03em] tabular-nums tracking-tight ${netColor}`}>
+          <p className={`text-[38px] font-serif font-normal tracking-[-0.03em] tabular-nums tracking-tight ${netColor}`}>
             {net >= 0 ? "+" : ""}
             <AnimatedNumber value={Math.abs(net)} format={(v) => format(v)} />
           </p>

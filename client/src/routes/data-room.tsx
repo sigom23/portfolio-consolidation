@@ -267,15 +267,9 @@ function DataRoomPage() {
                     {item.file.name}
                   </span>
 
-                  {/* Detected kind badge */}
+                  {/* Detected kind label */}
                   {item.detectedKind && (
-                    <span
-                      className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide"
-                      style={{
-                        backgroundColor: `${KIND_COLORS[item.detectedKind] ?? "#94a3b8"}1a`,
-                        color: KIND_COLORS[item.detectedKind] ?? "#94a3b8",
-                      }}
-                    >
+                    <span className="inline-block px-2 py-0.5 border border-[var(--color-whisper)] rounded-[2px] text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--color-mid)]">
                       {KIND_LABELS[item.detectedKind] ?? item.detectedKind}
                     </span>
                   )}
@@ -352,21 +346,15 @@ function DataRoomPage() {
                     <tr key={u.id} className="border-b border-[var(--border-color)]/50 hover:bg-[var(--bg-tertiary)]/50 transition-colors">
                       <td className="px-6 py-3 text-sm text-[var(--text-primary)] max-w-xs truncate">{u.filename ?? "—"}</td>
                       <td className="px-6 py-3 text-sm">
-                        <span
-                          className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide"
-                          style={{
-                            backgroundColor: `${KIND_COLORS[kindKey] ?? "#94a3b8"}1a`,
-                            color: KIND_COLORS[kindKey] ?? "#94a3b8",
-                          }}
-                        >
+                        <span className="inline-block px-2 py-0.5 border border-[var(--color-whisper)] rounded-[2px] text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--color-mid)]">
                           {KIND_LABELS[kindKey] ?? kindKey}
                         </span>
                       </td>
                       <td className="px-6 py-3 text-sm">
-                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                          u.status === "processed" ? "bg-[var(--color-positive)]/10 text-[var(--color-positive)]"
-                            : u.status === "failed" ? "bg-[var(--color-negative)]/10 text-[var(--color-negative)]"
-                              : "bg-[var(--color-pending)]/10 text-[var(--color-pending)]"
+                        <span className={`text-xs font-medium ${
+                          u.status === "processed" ? "text-[var(--color-positive)]"
+                            : u.status === "failed" ? "text-[var(--color-negative)]"
+                              : "text-[var(--color-pending)]"
                         }`}>
                           {u.status}
                         </span>

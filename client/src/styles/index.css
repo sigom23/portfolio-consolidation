@@ -3,7 +3,7 @@
 /* ─── Design Tokens ─── */
 
 @theme {
-  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-serif: 'EB Garamond', Georgia, serif;
   --font-sans: 'Outfit', system-ui, sans-serif;
 
   --color-charcoal: #1D1D1F;
@@ -57,6 +57,11 @@ body {
 }
 
 /* ─── Design system utilities ─── */
+
+/* Force lining (modern) numerals on serif financial figures */
+.font-serif {
+  font-variant-numeric: lining-nums tabular-nums;
+}
 
 .hero-card {
   background: var(--hero-bg);

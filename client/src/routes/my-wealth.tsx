@@ -163,7 +163,7 @@ function MyWealthPage() {
         {loading ? (
           <div className="h-12 w-64 bg-[var(--bg-tertiary)] rounded animate-pulse" />
         ) : (
-          <p className="text-[64px] font-serif font-light tracking-[-0.04em] text-[var(--text-primary)] tabular-nums tracking-tight">
+          <p className="text-[64px] font-serif font-normal tracking-[-0.04em] text-[var(--text-primary)] tabular-nums tracking-tight">
             <AnimatedNumber value={netWorth} format={format} />
           </p>
         )}
@@ -220,7 +220,7 @@ function MyWealthPage() {
               {loading ? (
                 <div className="h-7 w-28 bg-[var(--color-cloud)] rounded-[2px] animate-pulse" />
               ) : (
-                <p className="text-[27px] font-serif font-light text-[var(--color-charcoal)] tabular-nums tracking-[-0.03em]">
+                <p className="text-[27px] font-serif font-normal text-[var(--color-charcoal)] tabular-nums tracking-[-0.03em]">
                   {format(cat.value)}
                 </p>
               )}
@@ -255,7 +255,7 @@ function MyWealthPage() {
                 <div className="mt-2 h-8 w-40 bg-[var(--bg-tertiary)] rounded animate-pulse" />
               ) : (
                 <p
-                  className={`mt-1 text-[27px] font-serif font-light tabular-nums tracking-tight ${
+                  className={`mt-1 text-[27px] font-serif font-normal tabular-nums tracking-tight ${
                     (cashFlow?.net ?? 0) >= 0 ? "text-[var(--color-positive)]" : "text-[var(--color-negative)]"
                   }`}
                 >
@@ -346,7 +346,7 @@ function MyWealthPage() {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <p className="text-[27px] font-serif font-light text-[var(--text-primary)]">
+                  <p className="text-[27px] font-serif font-normal text-[var(--text-primary)]">
                     {format(netWorth)}
                   </p>
                 </div>

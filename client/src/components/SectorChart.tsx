@@ -87,7 +87,7 @@ export function SectorChart({ sectors, loading }: Props) {
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <p className="text-[27px] font-serif font-light text-[var(--text-primary)]">{formatShort(total)}</p>
+              <p className="text-[27px] font-serif font-normal text-[var(--text-primary)]">{formatShort(total)}</p>
             </div>
           </div>
 

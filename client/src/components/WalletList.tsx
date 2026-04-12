@@ -36,7 +36,7 @@ export function WalletList({ wallets, loading, showAddForm = true }: Props) {
     <div className="space-y-6">
       {/* Add Wallet Form */}
       {showAddForm && (
-        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 transition-colors">
+        <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 transition-colors">
           <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Add Wallet</h2>
           <div className="flex flex-col sm:flex-row gap-3">
             <input
@@ -44,19 +44,19 @@ export function WalletList({ wallets, loading, showAddForm = true }: Props) {
               placeholder="0x..."
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              className="flex-1 px-3 py-2 border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-[var(--text-muted)]"
+              className="flex-1 px-3 py-2 border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-[2px] text-sm focus:outline-none focus:border-[var(--color-charcoal)] placeholder:text-[var(--text-muted)]"
             />
             <input
               type="text"
               placeholder="Label (optional)"
               value={label}
               onChange={(e) => setLabel(e.target.value)}
-              className="sm:w-48 px-3 py-2 border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-[var(--text-muted)]"
+              className="sm:w-48 px-3 py-2 border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-[2px] text-sm focus:outline-none focus:border-[var(--color-charcoal)] placeholder:text-[var(--text-muted)]"
             />
             <button
               onClick={handleAdd}
               disabled={!address.trim() || addMutation.isPending}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+              className="px-4 py-2 bg-[var(--color-charcoal)] text-white rounded-full font-medium hover:bg-[var(--color-dark)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
             >
               {addMutation.isPending ? "Adding..." : "Add Wallet"}
             </button>
@@ -68,7 +68,7 @@ export function WalletList({ wallets, loading, showAddForm = true }: Props) {
       )}
 
       {/* Wallet List */}
-      <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden transition-colors">
+      <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden transition-colors">
         <div className="px-6 py-4 border-b border-[var(--border-color)]">
           <h2 className="text-lg font-semibold text-[var(--text-primary)]">Your Wallets</h2>
         </div>
@@ -98,7 +98,7 @@ export function WalletList({ wallets, loading, showAddForm = true }: Props) {
                   <button
                     onClick={() => refreshMutation.mutate(w.id)}
                     disabled={refreshMutation.isPending}
-                    className="px-3 py-1.5 text-xs bg-green-500/10 text-green-500 rounded-lg hover:bg-green-500/20 disabled:opacity-50 transition-colors"
+                    className="px-3 py-1.5 text-xs bg-green-500/10 text-green-500 rounded-[2px] hover:bg-green-500/20 disabled:opacity-50 transition-colors"
                   >
                     {refreshMutation.isPending ? "Refreshing..." : "Refresh"}
                   </button>

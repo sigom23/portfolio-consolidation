@@ -144,7 +144,7 @@ export function useCreateIncomeStream() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (stream: NewIncomeStream) => createIncomeStream(stream),
-    onSuccess: () => invalidateCashflow(queryClient),
+    onSuccess: () => { invalidateCashflow(queryClient); invalidateProperties(queryClient); },
   });
 }
 
@@ -153,7 +153,7 @@ export function useUpdateIncomeStream() {
   return useMutation({
     mutationFn: ({ id, updates }: { id: number; updates: Partial<NewIncomeStream> }) =>
       updateIncomeStream(id, updates),
-    onSuccess: () => invalidateCashflow(queryClient),
+    onSuccess: () => { invalidateCashflow(queryClient); invalidateProperties(queryClient); },
   });
 }
 
@@ -161,7 +161,7 @@ export function useDeleteIncomeStream() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => deleteIncomeStream(id),
-    onSuccess: () => invalidateCashflow(queryClient),
+    onSuccess: () => { invalidateCashflow(queryClient); invalidateProperties(queryClient); },
   });
 }
 

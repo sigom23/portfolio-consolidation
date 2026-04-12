@@ -96,7 +96,7 @@ function AssetsIlliquidPage() {
   if (authLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -113,7 +113,7 @@ function AssetsIlliquidPage() {
         </div>
         <button
           onClick={() => { setEditingAsset(null); setModalSubtype(currentTab); }}
-          className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-2 bg-[var(--color-charcoal)] text-white rounded-full text-sm font-medium hover:bg-[var(--color-dark)] transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -124,10 +124,10 @@ function AssetsIlliquidPage() {
 
       {/* Total value hero */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const }}
-        className="hero-card rounded-2xl p-6 mb-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] as const }}
+        className="rounded-[2px] border border-[var(--color-whisper)] bg-white p-6 mb-6"
       >
         <div className="flex items-center justify-between">
           <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1">
@@ -189,8 +189,8 @@ function AssetsIlliquidPage() {
       {/* Tab content */}
       <motion.div
         key={currentTab}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.25 }}
       >
         {currentTab === "private_equity" ? (
@@ -297,17 +297,17 @@ function PETab({
 
   if (items.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-[var(--border-color)] bg-[var(--bg-secondary)] p-12 text-center">
+      <div className="rounded-[2px] border border-dashed border-[var(--border-color)] bg-[var(--bg-secondary)] p-12 text-center">
         <p className="text-[var(--text-muted)] text-sm mb-3">{emptyCopy}</p>
         <div className="flex items-center justify-center gap-3">
-          <button onClick={onAdd} className="text-sm font-medium text-blue-500 hover:text-blue-400 transition-colors">
+          <button onClick={onAdd} className="text-sm font-medium text-[var(--color-charcoal)] hover:text-[var(--color-mid)] transition-colors">
             Add manually
           </button>
           <span className="text-[var(--text-muted)] text-sm">or</span>
           <button
             onClick={() => newFileInputRef.current?.click()}
             disabled={parseNewMutation.isPending}
-            className="text-sm font-medium text-blue-500 hover:text-blue-400 transition-colors disabled:opacity-50"
+            className="text-sm font-medium text-[var(--color-charcoal)] hover:text-[var(--color-mid)] transition-colors disabled:opacity-50"
           >
             {parseNewMutation.isPending ? "Parsing..." : "Upload a statement"}
           </button>
@@ -346,7 +346,7 @@ function PETab({
       </div>
 
       {/* Fund rows */}
-      <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden divide-y divide-[var(--border-color)]/50">
+      <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden divide-y divide-[var(--border-color)]/50">
         {items.map((fund) => (
           <PEFundRow
             key={fund.id}
@@ -361,14 +361,14 @@ function PETab({
         <div className="px-6 py-4 flex justify-center gap-3">
           <button
             onClick={onAdd}
-            className="px-4 py-2 rounded-lg border border-[var(--border-color)] text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+            className="px-4 py-2 rounded-[2px] border border-[var(--border-color)] text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors"
           >
             + Add Fund
           </button>
           <button
             onClick={() => newFileInputRef.current?.click()}
             disabled={parseNewMutation.isPending}
-            className="px-4 py-2 rounded-lg border border-[var(--border-color)] text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
+            className="px-4 py-2 rounded-[2px] border border-[var(--border-color)] text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
           >
             {parseNewMutation.isPending ? "Parsing..." : "Upload Statement"}
           </button>
@@ -570,14 +570,14 @@ function PEFundRow({
             <div className="mt-5 pt-4 border-t border-[var(--border-color)]/50 flex items-center gap-3">
               <button
                 onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                className="px-3 py-1.5 rounded-lg border border-[var(--border-color)] text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+                className="px-3 py-1.5 rounded-[2px] border border-[var(--border-color)] text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors"
               >
                 Edit
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
                 disabled={uploadMutation.isPending}
-                className="px-3 py-1.5 rounded-lg border border-[var(--border-color)] text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 rounded-[2px] border border-[var(--border-color)] text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
               >
                 {uploadMutation.isPending ? "Parsing..." : "Upload Statement"}
               </button>
@@ -591,7 +591,7 @@ function PEFundRow({
               <button
                 onClick={(e) => { e.stopPropagation(); handleDelete(); }}
                 disabled={deleteMutation.isPending}
-                className="px-3 py-1.5 rounded-lg border border-red-500/30 text-xs font-medium text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 rounded-[2px] border border-[var(--color-negative)]/30 text-xs font-medium text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50"
               >
                 {deleteMutation.isPending ? "Deleting..." : "Delete"}
               </button>
@@ -611,7 +611,7 @@ function PEFundRow({
 // ============================================================
 function KpiCard({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className="p-4 rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)]">
+    <div className="p-4 rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)]">
       <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1.5">{label}</p>
       <p className={`text-lg font-bold tabular-nums tracking-tight ${accent ? "text-green-500" : "text-[var(--text-primary)]"}`}>
         {value}
@@ -676,7 +676,7 @@ function GenericTab({
   }
 
   return (
-    <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden">
+    <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden">
       {/* Header */}
       <div className="px-6 py-4 border-b border-[var(--border-color)] flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
@@ -691,7 +691,7 @@ function GenericTab({
         </div>
         <button
           onClick={onAdd}
-          className="px-2.5 py-1.5 rounded-lg border border-[var(--border-color)] text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+          className="px-2.5 py-1.5 rounded-[2px] border border-[var(--border-color)] text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors"
         >
           + Add
         </button>
@@ -748,7 +748,7 @@ function AssetRow({ asset, onEdit }: { asset: IlliquidAsset; onEdit: () => void 
             {native.toLocaleString(undefined, { maximumFractionDigits: 0 })} {asset.currency}
           </p>
         </div>
-        <button onClick={onEdit} aria-label="Edit asset" className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md text-[var(--text-muted)] hover:text-blue-500 hover:bg-blue-500/10">
+        <button onClick={onEdit} aria-label="Edit asset" className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md text-[var(--text-muted)] hover:text-[var(--color-charcoal)] hover:bg-[var(--color-snow)]">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
           </svg>

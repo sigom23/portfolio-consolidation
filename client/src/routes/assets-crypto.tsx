@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { AnimatedNumber } from "../components/AnimatedNumber";
 import { useAddWallet, useDeleteWallet, useRefreshWallet } from "../hooks/usePortfolio";
-import type { Holding, Wallet } from "../types";
+
 
 function truncateAddress(addr: string): string {
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
@@ -101,7 +101,7 @@ function AssetsCryptoPage() {
   if (authLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -120,7 +120,7 @@ function AssetsCryptoPage() {
         </div>
         <button
           onClick={() => setShowAddWallet(!showAddWallet)}
-          className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 bg-[var(--color-charcoal)] text-white rounded-full text-sm font-medium hover:bg-[var(--color-dark)] transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -134,7 +134,7 @@ function AssetsCryptoPage() {
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
-          className="mb-6 rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5"
+          className="mb-6 rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5"
         >
           <div className="flex flex-col sm:flex-row gap-3">
             <input
@@ -142,14 +142,14 @@ function AssetsCryptoPage() {
               placeholder="0x..."
               value={walletAddress}
               onChange={(e) => setWalletAddress(e.target.value)}
-              className="flex-1 px-3 py-2 border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-lg text-sm focus:outline-none focus:border-blue-500 placeholder:text-[var(--text-muted)]"
+              className="flex-1 px-3 py-2 border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-[2px] text-sm focus:outline-none focus:border-[var(--color-charcoal)] placeholder:text-[var(--text-muted)]"
             />
             <input
               type="text"
               placeholder="Label (optional)"
               value={walletLabel}
               onChange={(e) => setWalletLabel(e.target.value)}
-              className="sm:w-48 px-3 py-2 border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-lg text-sm focus:outline-none focus:border-blue-500 placeholder:text-[var(--text-muted)]"
+              className="sm:w-48 px-3 py-2 border border-[var(--border-color)] bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-[2px] text-sm focus:outline-none focus:border-[var(--color-charcoal)] placeholder:text-[var(--text-muted)]"
             />
             <button
               onClick={() => {
@@ -160,13 +160,13 @@ function AssetsCryptoPage() {
                 );
               }}
               disabled={!walletAddress.trim() || addWallet.isPending}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              className="px-4 py-2 bg-[var(--color-charcoal)] text-white rounded-full text-sm font-medium hover:bg-[var(--color-dark)] disabled:opacity-50 transition-colors"
             >
               {addWallet.isPending ? "Adding..." : "Add"}
             </button>
             <button
               onClick={() => setShowAddWallet(false)}
-              className="px-3 py-2 border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg text-sm hover:bg-[var(--bg-tertiary)] transition-colors"
+              className="px-3 py-2 border border-[var(--border-color)] text-[var(--text-secondary)] rounded-[2px] text-sm hover:bg-[var(--bg-tertiary)] transition-colors"
             >
               Cancel
             </button>
@@ -179,10 +179,10 @@ function AssetsCryptoPage() {
 
       {/* Total value hero */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const }}
-        className="hero-card rounded-2xl p-6 mb-6 transition-all"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] as const }}
+        className="rounded-[2px] border border-[var(--color-whisper)] bg-white p-6 mb-6 transition-all"
       >
         <div className="flex items-center justify-between">
           <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1">
@@ -208,11 +208,11 @@ function AssetsCryptoPage() {
 
       {/* Wallet groups */}
       {loading ? (
-        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-8 text-center text-[var(--text-muted)]">
+        <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-8 text-center text-[var(--text-muted)]">
           Loading crypto holdings...
         </div>
       ) : groups.length === 0 ? (
-        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-8 text-center text-[var(--text-muted)]">
+        <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-8 text-center text-[var(--text-muted)]">
           No crypto holdings yet. Click "Add Wallet" above to start tracking tokens.
         </div>
       ) : (
@@ -225,7 +225,7 @@ function AssetsCryptoPage() {
               >
                 <div
                   className={`w-8 h-4 rounded-full relative transition-colors ${
-                    hideSpam ? "bg-blue-500" : "bg-[var(--bg-tertiary)]"
+                    hideSpam ? "bg-[var(--color-charcoal)]" : "bg-[var(--bg-tertiary)]"
                   }`}
                 >
                   <div
@@ -241,10 +241,10 @@ function AssetsCryptoPage() {
           {groups.map((group, i) => (
             <motion.section
               key={group.sourceId ?? "unassigned"}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const }}
-              className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: i * 0.08, duration: 0.4, ease: [0.25, 1, 0.5, 1] as const }}
+              className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden"
             >
               <div className="px-6 py-4 border-b border-[var(--border-color)] flex items-center justify-between">
                 <div>

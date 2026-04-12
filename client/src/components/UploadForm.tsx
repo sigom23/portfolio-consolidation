@@ -32,7 +32,7 @@ export function UploadForm() {
         : "";
 
   return (
-    <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 transition-colors">
+    <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 transition-colors">
       <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Upload Statement</h2>
       <div className="space-y-4">
         {/* Kind selector */}
@@ -40,7 +40,7 @@ export function UploadForm() {
           <label className="block text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-2">
             Statement type
           </label>
-          <div className="inline-flex rounded-lg border border-[var(--border-color)] bg-[var(--bg-tertiary)] p-1">
+          <div className="inline-flex rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-tertiary)] p-1">
             <button
               type="button"
               onClick={() => setKind("wealth")}
@@ -80,26 +80,26 @@ export function UploadForm() {
             type="file"
             accept=".pdf,.csv"
             onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
-            className="block w-full text-sm text-[var(--text-secondary)] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-500/10 file:text-blue-500 hover:file:bg-blue-500/20"
+            className="block w-full text-sm text-[var(--text-secondary)] file:mr-4 file:py-2 file:px-4 file:rounded-[2px] file:border-0 file:text-sm file:font-medium file:bg-[var(--color-charcoal)]/10 file:text-[var(--color-charcoal)] hover:file:bg-[var(--color-cloud)]"
           />
         </div>
 
         <button
           onClick={handleSubmit}
           disabled={!selectedFile || mutation.isPending}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+          className="px-4 py-2 bg-[var(--color-charcoal)] text-white rounded-full font-medium hover:bg-[var(--color-dark)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
         >
           {mutation.isPending ? "Parsing..." : "Upload & Parse"}
         </button>
 
         {mutation.isError && (
-          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-500">
+          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-[2px] text-sm text-red-500">
             {mutation.error.message}
           </div>
         )}
 
         {mutation.isSuccess && (
-          <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-sm text-green-500">
+          <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-[2px] text-sm text-green-500">
             {successMessage}
           </div>
         )}

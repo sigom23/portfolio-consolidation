@@ -9,6 +9,7 @@ const TYPES: { value: IncomeStreamType; label: string }[] = [
   { value: "freelance", label: "Freelance" },
   { value: "pension", label: "Pension" },
   { value: "interest", label: "Interest" },
+  { value: "rental", label: "Rental" },
   { value: "other", label: "Other" },
 ];
 
@@ -126,13 +127,13 @@ export function AddStreamModal({ open, onClose, stream }: Props) {
 
           {/* Modal */}
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.97 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
-            <div className="hero-card rounded-2xl w-full max-w-md p-6 pointer-events-auto max-h-[90vh] overflow-y-auto">
+            <div className="rounded-[2px] border border-[var(--color-whisper)] bg-white w-full max-w-md p-6 pointer-events-auto max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-lg font-semibold text-[var(--text-primary)]">
                   {isEdit ? "Edit Income Stream" : "Add Income Stream"}
@@ -155,7 +156,7 @@ export function AddStreamModal({ open, onClose, stream }: Props) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Day Job"
-                    className="w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors"
+                    className="w-full px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] outline-none focus:border-[var(--color-charcoal)] transition-colors"
                     required
                   />
                 </div>
@@ -165,7 +166,7 @@ export function AddStreamModal({ open, onClose, stream }: Props) {
                   <select
                     value={type}
                     onChange={(e) => setType(e.target.value as IncomeStreamType)}
-                    className="w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors"
+                    className="w-full px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] outline-none focus:border-[var(--color-charcoal)] transition-colors"
                   >
                     {TYPES.map((t) => (
                       <option key={t.value} value={t.value}>{t.label}</option>
@@ -182,7 +183,7 @@ export function AddStreamModal({ open, onClose, stream }: Props) {
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
                       placeholder="5000"
-                      className="w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] tabular-nums outline-none focus:border-blue-500 transition-colors"
+                      className="w-full px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] tabular-nums outline-none focus:border-[var(--color-charcoal)] transition-colors"
                       required
                     />
                   </div>
@@ -191,7 +192,7 @@ export function AddStreamModal({ open, onClose, stream }: Props) {
                     <select
                       value={currency}
                       onChange={(e) => setCurrency(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors"
+                      className="w-full px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] outline-none focus:border-[var(--color-charcoal)] transition-colors"
                     >
                       {CURRENCIES.map((c) => (
                         <option key={c} value={c}>{c}</option>
@@ -205,7 +206,7 @@ export function AddStreamModal({ open, onClose, stream }: Props) {
                   <select
                     value={frequency}
                     onChange={(e) => setFrequency(e.target.value as IncomeFrequency)}
-                    className="w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors"
+                    className="w-full px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] outline-none focus:border-[var(--color-charcoal)] transition-colors"
                   >
                     {FREQUENCIES.map((f) => (
                       <option key={f.value} value={f.value}>{f.label}</option>
@@ -222,7 +223,7 @@ export function AddStreamModal({ open, onClose, stream }: Props) {
                       max="31"
                       value={dayOfMonth}
                       onChange={(e) => setDayOfMonth(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] tabular-nums outline-none focus:border-blue-500 transition-colors"
+                      className="w-full px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] tabular-nums outline-none focus:border-[var(--color-charcoal)] transition-colors"
                     />
                   </div>
                 )}
@@ -234,7 +235,7 @@ export function AddStreamModal({ open, onClose, stream }: Props) {
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors"
+                      className="w-full px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] outline-none focus:border-[var(--color-charcoal)] transition-colors"
                       required
                     />
                   </div>
@@ -244,7 +245,7 @@ export function AddStreamModal({ open, onClose, stream }: Props) {
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors"
+                      className="w-full px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] outline-none focus:border-[var(--color-charcoal)] transition-colors"
                     />
                   </div>
                 </div>
@@ -269,7 +270,7 @@ export function AddStreamModal({ open, onClose, stream }: Props) {
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder=""
-                    className="w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors"
+                    className="w-full px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] outline-none focus:border-[var(--color-charcoal)] transition-colors"
                   />
                 </div>
 
@@ -281,14 +282,14 @@ export function AddStreamModal({ open, onClose, stream }: Props) {
                   <button
                     type="button"
                     onClick={onClose}
-                    className="flex-1 px-4 py-2 rounded-lg border border-[var(--border-color)] text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors"
+                    className="flex-1 px-4 py-2 rounded-[2px] border border-[var(--border-color)] text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={mutation.isPending}
-                    className="flex-1 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    className="flex-1 px-4 py-2 rounded-[2px] bg-[var(--color-charcoal)] text-white text-sm font-medium hover:bg-[var(--color-dark)] transition-colors disabled:opacity-50"
                   >
                     {mutation.isPending
                       ? isEdit ? "Saving..." : "Adding..."

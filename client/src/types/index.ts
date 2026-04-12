@@ -318,6 +318,7 @@ export interface NewIncomeStream {
   end_date?: string | null;
   is_active?: boolean;
   notes?: string | null;
+  property_id?: number | null;
 }
 
 export interface ApiResponse<T> {

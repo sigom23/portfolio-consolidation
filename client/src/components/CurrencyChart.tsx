@@ -49,8 +49,8 @@ export function CurrencyChart({ holdings, loading }: Props) {
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full flex items-center justify-center transition-colors">
-        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full flex items-center justify-center transition-colors">
+        <div className="w-6 h-6 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -68,14 +68,14 @@ export function CurrencyChart({ holdings, loading }: Props) {
   const total = sorted.reduce((sum, [, v]) => sum + v, 0);
 
   return (
-    <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full transition-colors">
+    <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full transition-colors">
       <div className="flex items-baseline justify-between mb-4">
         <h2 className="text-sm font-medium text-[var(--text-muted)]">Currencies & FX Rates</h2>
         <span className="text-[10px] text-[var(--text-muted)]">vs {baseCurrency}</span>
       </div>
 
       {sorted.length === 0 ? (
-        <div className="flex items-center justify-center h-48 rounded-lg bg-[var(--bg-tertiary)] border border-dashed border-[var(--border-color)]">
+        <div className="flex items-center justify-center h-48 rounded-[2px] bg-[var(--bg-tertiary)] border border-dashed border-[var(--border-color)]">
           <p className="text-[var(--text-muted)] text-sm">No holdings</p>
         </div>
       ) : (

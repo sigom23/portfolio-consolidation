@@ -55,7 +55,7 @@ function CashFlowExpensesPage() {
   if (authLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -74,7 +74,7 @@ function CashFlowExpensesPage() {
           <button
             onClick={() => reclassify.mutate()}
             disabled={reclassify.isPending}
-            className="flex items-center gap-1.5 px-3 py-1.5 border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg text-xs font-medium hover:bg-[var(--bg-tertiary)] transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 border border-[var(--border-color)] text-[var(--text-secondary)] rounded-[2px] text-xs font-medium hover:bg-[var(--bg-tertiary)] transition-colors disabled:opacity-50"
           >
             <svg className={`w-3.5 h-3.5 ${reclassify.isPending ? "animate-spin" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -90,10 +90,10 @@ function CashFlowExpensesPage() {
 
       {/* 3. Hero */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="hero-card rounded-2xl p-6 mb-6"
+        className="rounded-[2px] border border-[var(--color-whisper)] bg-white p-6 mb-6"
       >
         <div className="flex items-center justify-between mb-1">
           <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
@@ -132,7 +132,7 @@ function CashFlowExpensesPage() {
       </div>
 
       {/* 6. Transactions Table */}
-      <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden">
+      <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden">
         <div className="px-6 py-4 border-b border-[var(--border-color)] flex items-center justify-between">
           <h2 className="text-lg font-semibold text-[var(--text-primary)]">
             Transactions
@@ -145,7 +145,7 @@ function CashFlowExpensesPage() {
           {(filterCategory || filterMerchant) && (
             <button
               onClick={() => { setFilterCategory(null); setFilterMerchant(null); }}
-              className="text-xs text-blue-500 hover:text-blue-400 transition-colors"
+              className="text-xs text-[var(--color-charcoal)] hover:text-[var(--color-mid)] transition-colors"
             >
               Show all
             </button>

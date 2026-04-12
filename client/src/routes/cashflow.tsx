@@ -45,7 +45,7 @@ function CashFlowOverviewPage() {
   if (authLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -73,10 +73,10 @@ function CashFlowOverviewPage() {
 
       {/* 3. Hero: Net cash flow */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="hero-card rounded-2xl p-6 mb-6"
+        className="rounded-[2px] border border-[var(--color-whisper)] bg-white p-6 mb-6"
       >
         <div className="flex items-center justify-between mb-1">
           <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
@@ -114,10 +114,10 @@ function CashFlowOverviewPage() {
       {/* 4. Income vs Expenses summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5"
+          className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5"
         >
           <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1">
             Income
@@ -127,10 +127,10 @@ function CashFlowOverviewPage() {
           </p>
         </motion.div>
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.15 }}
-          className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5"
+          className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5"
         >
           <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1">
             Expenses

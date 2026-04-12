@@ -34,11 +34,10 @@ export function BreakdownCards({ summary, loading }: Props) {
         return (
           <motion.div
             key={cat.key}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 + i * 0.06, duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] as const }}
-            whileHover={{ y: -2, transition: { duration: 0.2 } }}
-            className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-4 transition-colors cursor-default"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1 + i * 0.06, duration: 0.35, ease: [0.25, 1, 0.5, 1] as const }}
+            className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-4 transition-colors cursor-default"
           >
             {loading ? (
               <div className="space-y-2 animate-pulse">

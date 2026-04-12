@@ -170,17 +170,17 @@ export function MonthSelector({
             <button
               key={m}
               onClick={() => onMonthChange(m)}
-              className={`relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`relative px-3 py-1.5 rounded-[2px] text-xs font-medium transition-all ${
                 isActive
-                  ? "bg-blue-600 text-white shadow-sm"
+                  ? "bg-[var(--color-charcoal)] text-white shadow-sm"
                   : hasData
-                    ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-color)] hover:border-blue-500/50"
+                    ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-color)] hover:border-[var(--color-charcoal)]/50"
                     : "bg-[var(--bg-secondary)] text-[var(--text-muted)] border border-transparent opacity-50 hover:opacity-75"
               }`}
             >
               {monthLabel(m)}
               {hasData && !isActive && (
-                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-blue-500" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[var(--color-charcoal)]" />
               )}
             </button>
           );
@@ -223,7 +223,7 @@ export function UploadButton({
       <button
         onClick={() => fileRef.current?.click()}
         disabled={mutation.isPending}
-        className="flex items-center gap-1.5 px-3 py-1.5 border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg text-xs font-medium hover:bg-[var(--bg-tertiary)] transition-colors disabled:opacity-50"
+        className="flex items-center gap-1.5 px-3 py-1.5 border border-[var(--border-color)] text-[var(--text-secondary)] rounded-[2px] text-xs font-medium hover:bg-[var(--bg-tertiary)] transition-colors disabled:opacity-50"
       >
         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -256,8 +256,8 @@ export function IncomeByTypeCard({
 
   if (loading) {
     return (
-      <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -282,7 +282,7 @@ export function IncomeByTypeCard({
   const total = data.reduce((sum, d) => sum + d.value, 0);
 
   return (
-    <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full">
+    <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full">
       <h3 className="text-sm font-medium text-[var(--text-muted)] mb-4">
         Income by Type
       </h3>
@@ -360,8 +360,8 @@ export function MonthlyTrendCard({
 
   if (loading) {
     return (
-      <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -384,7 +384,7 @@ export function MonthlyTrendCard({
   const barColor = isIncome ? "#22c55e" : "#ef4444";
 
   return (
-    <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full">
+    <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full">
       <h3 className="text-sm font-medium text-[var(--text-muted)] mb-4">
         {isIncome ? "Income Trend" : "Expense Trend"}
       </h3>
@@ -438,7 +438,7 @@ export function CategoryBreakdownCard({
   const clickable = !!onCategoryClick;
 
   return (
-    <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6">
+    <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-medium text-[var(--text-muted)]">
           Expenses by Category
@@ -446,7 +446,7 @@ export function CategoryBreakdownCard({
         {selectedCategory && onCategoryClick && (
           <button
             onClick={() => onCategoryClick(null)}
-            className="text-[10px] text-blue-500 hover:text-blue-400 transition-colors"
+            className="text-[10px] text-[var(--color-charcoal)] hover:text-[var(--color-mid)] transition-colors"
           >
             Clear filter
           </button>
@@ -532,7 +532,7 @@ export function TopMerchantsCard({
   const clickable = !!onMerchantClick;
 
   return (
-    <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6">
+    <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-medium text-[var(--text-muted)]">
           Top Merchants
@@ -540,7 +540,7 @@ export function TopMerchantsCard({
         {selectedMerchant && onMerchantClick && (
           <button
             onClick={() => onMerchantClick(null)}
-            className="text-[10px] text-blue-500 hover:text-blue-400 transition-colors"
+            className="text-[10px] text-[var(--color-charcoal)] hover:text-[var(--color-mid)] transition-colors"
           >
             Clear filter
           </button>

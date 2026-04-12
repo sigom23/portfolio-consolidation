@@ -132,7 +132,7 @@ function MyWealthPage() {
   if (authLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -149,10 +149,10 @@ function MyWealthPage() {
 
       {/* Net Worth hero */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const }}
-        className="hero-card rounded-2xl p-8 mb-6 transition-all"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] as const }}
+        className="rounded-[2px] border border-[var(--color-whisper)] bg-white p-8 mb-6 transition-all"
       >
         <div className="flex items-center justify-between">
           <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1">
@@ -202,13 +202,13 @@ function MyWealthPage() {
           return (
             <motion.div
               key={cat.key}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + i * 0.06, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 + i * 0.06, duration: 0.4, ease: [0.25, 1, 0.5, 1] as const }}
             >
               <Link
                 to={cat.to}
-                className="block rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 hover:border-blue-500/40 hover:-translate-y-0.5 transition-all"
+                className="block rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 hover:border-[var(--color-charcoal)]/40 hover:bg-[var(--color-snow)] transition-all"
               >
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
@@ -234,14 +234,14 @@ function MyWealthPage() {
 
       {/* Monthly Cash Flow strip */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.28, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.28, duration: 0.4, ease: [0.25, 1, 0.5, 1] as const }}
         className="mb-4"
       >
         <Link
           to="/cashflow"
-          className="block rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 hover:border-blue-500/40 hover:-translate-y-0.5 transition-all"
+          className="block rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 hover:border-[var(--color-charcoal)]/40 hover:bg-[var(--color-snow)] transition-all"
         >
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="min-w-0">
@@ -308,19 +308,19 @@ function MyWealthPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Wealth Composition */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const }}
-          className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.35, duration: 0.4, ease: [0.25, 1, 0.5, 1] as const }}
+          className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6"
         >
           <h2 className="text-sm font-medium text-[var(--text-muted)] mb-4">Wealth Composition</h2>
 
           {loading ? (
             <div className="flex items-center justify-center h-48">
-              <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
             </div>
           ) : donutData.length === 0 ? (
-            <div className="flex items-center justify-center h-48 rounded-lg bg-[var(--bg-tertiary)] border border-dashed border-[var(--border-color)]">
+            <div className="flex items-center justify-center h-48 rounded-[2px] bg-[var(--bg-tertiary)] border border-dashed border-[var(--border-color)]">
               <p className="text-[var(--text-muted)] text-sm">No wealth to display yet</p>
             </div>
           ) : (
@@ -386,16 +386,16 @@ function MyWealthPage() {
 
         {/* Top 5 Holdings */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.42, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const }}
-          className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden flex flex-col"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.42, duration: 0.4, ease: [0.25, 1, 0.5, 1] as const }}
+          className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden flex flex-col"
         >
           <div className="px-6 py-4 flex items-center justify-between border-b border-[var(--border-color)]">
             <h2 className="text-sm font-medium text-[var(--text-muted)]">Top Holdings</h2>
             <Link
               to="/assets/liquid"
-              className="text-xs text-blue-500 hover:text-blue-400 transition-colors"
+              className="text-xs text-[var(--color-charcoal)] hover:text-[var(--color-mid)] transition-colors"
             >
               View all →
             </Link>
@@ -403,7 +403,7 @@ function MyWealthPage() {
 
           {loading ? (
             <div className="flex-1 flex items-center justify-center p-8">
-              <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
             </div>
           ) : topHoldings.length === 0 ? (
             <div className="flex-1 flex items-center justify-center p-8">

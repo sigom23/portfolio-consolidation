@@ -12,6 +12,9 @@ import {
   useCreatePropertyCost,
   useUpdatePropertyCost,
   useDeletePropertyCost,
+  useCreateIncomeStream,
+  useUpdateIncomeStream,
+  useDeleteIncomeStream,
 } from "../hooks/usePortfolio";
 import { useCurrency } from "../contexts/CurrencyContext";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
@@ -23,7 +26,9 @@ import type {
   PropertyMortgage,
   PropertyCost,
   PropertyCostCategory,
+  IncomeStream,
   IncomeFrequency,
+  NewIncomeStream,
   NewProperty,
   NewMortgage,
   NewPropertyCost,
@@ -125,7 +130,7 @@ function RealEstatePage() {
   if (authLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -142,7 +147,7 @@ function RealEstatePage() {
         </div>
         <button
           onClick={() => setAddOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 bg-[var(--color-charcoal)] text-white rounded-full text-sm font-medium hover:bg-[var(--color-dark)] transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -153,10 +158,10 @@ function RealEstatePage() {
 
       {/* Hero */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="hero-card rounded-2xl p-6 mb-6"
+        className="rounded-[2px] border border-[var(--color-whisper)] bg-white p-6 mb-6"
       >
         <div className="flex items-center justify-between mb-1">
           <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
@@ -195,15 +200,15 @@ function RealEstatePage() {
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 h-48 animate-pulse" />
+            <div key={i} className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 h-48 animate-pulse" />
           ))}
         </div>
       ) : !properties || properties.length === 0 ? (
-        <div className="card-elevated rounded-xl border border-dashed border-[var(--border-color)] bg-[var(--bg-secondary)] p-12 text-center">
+        <div className="rounded-[2px] border border-dashed border-[var(--border-color)] bg-[var(--bg-secondary)] p-12 text-center">
           <p className="text-[var(--text-muted)] text-sm mb-3">No properties yet.</p>
           <button
             onClick={() => setAddOpen(true)}
-            className="text-sm font-medium text-blue-500 hover:text-blue-400 transition-colors"
+            className="text-sm font-medium text-[var(--color-charcoal)] hover:text-[var(--color-mid)] transition-colors"
           >
             Add your first property →
           </button>
@@ -254,12 +259,11 @@ function PropertyCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 + index * 0.05, duration: 0.35 }}
-      whileHover={{ y: -2 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.1 + index * 0.05, duration: 0.35, ease: [0.25, 1, 0.5, 1] as const }}
       onClick={onClick}
-      className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 cursor-pointer transition-colors"
+      className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 cursor-pointer transition-colors hover:bg-[var(--color-snow)]"
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
@@ -414,13 +418,13 @@ function AddPropertyModal({ open, onClose, editProperty }: { open: boolean; onCl
             onClick={onClose}
           />
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.97 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
-            <div className="hero-card rounded-2xl w-full max-w-md p-6 pointer-events-auto max-h-[90vh] overflow-y-auto">
+            <div className="rounded-[2px] border border-[var(--color-whisper)] bg-white w-full max-w-md p-6 pointer-events-auto max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-lg font-semibold text-[var(--text-primary)]">{isEditing ? "Edit Property" : "Add Property"}</h2>
                 <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
@@ -532,9 +536,12 @@ function PropertyDetailDrawer({
   const deleteProp = useDeleteProperty();
   const [addMortgageOpen, setAddMortgageOpen] = useState(false);
   const [addCostOpen, setAddCostOpen] = useState(false);
+  const [addRentalOpen, setAddRentalOpen] = useState(false);
   const [editPropertyOpen, setEditPropertyOpen] = useState(false);
   const [editingMortgage, setEditingMortgage] = useState<PropertyMortgage | null>(null);
   const [editingCost, setEditingCost] = useState<PropertyCost | null>(null);
+  const [editingRental, setEditingRental] = useState<IncomeStream | null>(null);
+  const deleteStream = useDeleteIncomeStream();
 
   if (!property) return null;
 
@@ -581,7 +588,7 @@ function PropertyDetailDrawer({
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setEditPropertyOpen(true)}
-                  className="text-[var(--text-muted)] hover:text-blue-500 transition-colors"
+                  className="text-[var(--text-muted)] hover:text-[var(--color-charcoal)] transition-colors"
                   title="Edit property"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -618,7 +625,7 @@ function PropertyDetailDrawer({
                   <h3 className="text-sm font-semibold text-[var(--text-primary)]">Mortgages</h3>
                   <button
                     onClick={() => { setEditingMortgage(null); setAddMortgageOpen(true); }}
-                    className="text-xs text-blue-500 hover:text-blue-400 font-medium"
+                    className="text-xs text-[var(--color-charcoal)] hover:text-[var(--color-mid)] font-medium"
                   >
                     + Add
                   </button>
@@ -640,7 +647,7 @@ function PropertyDetailDrawer({
                   <h3 className="text-sm font-semibold text-[var(--text-primary)]">Recurring Costs</h3>
                   <button
                     onClick={() => { setEditingCost(null); setAddCostOpen(true); }}
-                    className="text-xs text-blue-500 hover:text-blue-400 font-medium"
+                    className="text-xs text-[var(--color-charcoal)] hover:text-[var(--color-mid)] font-medium"
                   >
                     + Add
                   </button>
@@ -660,25 +667,52 @@ function PropertyDetailDrawer({
               <section>
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-[var(--text-primary)]">Rental Income</h3>
+                  <button
+                    onClick={() => { setEditingRental(null); setAddRentalOpen(true); }}
+                    className="text-xs text-[var(--color-charcoal)] hover:text-[var(--color-mid)] font-medium"
+                  >
+                    + Add
+                  </button>
                 </div>
                 {property.rental_streams.length === 0 ? (
-                  <p className="text-xs text-[var(--text-muted)]">
-                    No rental streams linked. Add one from the Cash Flow page as a "Rental" stream and link this property.
-                  </p>
+                  <p className="text-xs text-[var(--text-muted)]">No rental income added.</p>
                 ) : (
                   <div className="space-y-2">
                     {property.rental_streams.map((r) => (
                       <div
                         key={r.id}
-                        className="flex items-center justify-between py-2 px-3 rounded-lg bg-[var(--bg-tertiary)]/50 border border-[var(--border-color)]"
+                        className="group flex items-center justify-between py-2 px-3 rounded-[2px] bg-[var(--bg-tertiary)]/50 border border-[var(--border-color)]"
                       >
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="text-xs font-medium text-[var(--text-primary)]">{r.name}</p>
                           <p className="text-[10px] text-[var(--text-muted)]">{r.frequency}</p>
                         </div>
-                        <span className="text-xs font-semibold text-green-500 tabular-nums">
-                          +{formatLocalDecimals(r.amount, r.currency)}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-green-500 tabular-nums">
+                            +{formatLocalDecimals(r.amount, r.currency)}
+                          </span>
+                          <button
+                            onClick={() => { setEditingRental(r); setAddRentalOpen(true); }}
+                            className="opacity-0 group-hover:opacity-100 text-[var(--text-muted)] hover:text-[var(--color-charcoal)] transition-all"
+                            title="Edit"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (!confirm(`Remove "${r.name}"?`)) return;
+                              await deleteStream.mutateAsync(r.id);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 text-[var(--text-muted)] hover:text-red-500 transition-all"
+                            title="Delete"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -690,7 +724,7 @@ function PropertyDetailDrawer({
                 <button
                   onClick={handleDelete}
                   disabled={deleteProp.isPending}
-                  className="w-full px-4 py-2 rounded-lg border border-red-500/30 text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                  className="w-full px-4 py-2 rounded-[2px] border border-[var(--color-negative)]/30 text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50"
                 >
                   {deleteProp.isPending ? "Deleting..." : "Delete Property"}
                 </button>
@@ -717,6 +751,13 @@ function PropertyDetailDrawer({
             onClose={() => { setAddCostOpen(false); setEditingCost(null); }}
             editCost={editingCost}
           />
+          <AddRentalStreamModal
+            propertyId={property.id}
+            propertyCurrency={property.currency}
+            open={addRentalOpen}
+            onClose={() => { setAddRentalOpen(false); setEditingRental(null); }}
+            editStream={editingRental}
+          />
         </>
       )}
     </AnimatePresence>
@@ -726,7 +767,7 @@ function PropertyDetailDrawer({
 function SummaryBox({ label, value, color }: { label: string; value: string; color?: "green" | "red" }) {
   const colorClass = color === "green" ? "text-green-500" : color === "red" ? "text-red-500" : "text-[var(--text-primary)]";
   return (
-    <div className="p-3 rounded-lg bg-[var(--bg-tertiary)]/50 border border-[var(--border-color)]">
+    <div className="p-3 rounded-[2px] bg-[var(--bg-tertiary)]/50 border border-[var(--border-color)]">
       <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] mb-0.5">{label}</p>
       <p className={`text-lg font-bold tabular-nums ${colorClass}`}>{value}</p>
     </div>
@@ -738,7 +779,7 @@ function MortgageRow({ mortgage, propertyCurrency, onEdit }: { mortgage: Propert
   const monthlyInterest = (mortgage.current_balance * mortgage.interest_rate) / 12 / 100;
 
   return (
-    <div className="flex items-start justify-between py-2 px-3 rounded-lg bg-[var(--bg-tertiary)]/50 border border-[var(--border-color)]">
+    <div className="flex items-start justify-between py-2 px-3 rounded-[2px] bg-[var(--bg-tertiary)]/50 border border-[var(--border-color)]">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="text-xs font-medium text-[var(--text-primary)] truncate">
@@ -755,7 +796,7 @@ function MortgageRow({ mortgage, propertyCurrency, onEdit }: { mortgage: Propert
       <div className="flex items-center gap-1 ml-2 flex-shrink-0">
         <button
           onClick={onEdit}
-          className="text-[var(--text-muted)] hover:text-blue-500 transition-colors"
+          className="text-[var(--text-muted)] hover:text-[var(--color-charcoal)] transition-colors"
           title="Edit mortgage"
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -781,7 +822,7 @@ function MortgageRow({ mortgage, propertyCurrency, onEdit }: { mortgage: Propert
 function CostRow({ cost, onEdit }: { cost: PropertyCost; onEdit: () => void }) {
   const deleteC = useDeletePropertyCost();
   return (
-    <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-[var(--bg-tertiary)]/50 border border-[var(--border-color)]">
+    <div className="flex items-center justify-between py-2 px-3 rounded-[2px] bg-[var(--bg-tertiary)]/50 border border-[var(--border-color)]">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="text-xs font-medium text-[var(--text-primary)] truncate">{cost.label}</p>
@@ -796,7 +837,7 @@ function CostRow({ cost, onEdit }: { cost: PropertyCost; onEdit: () => void }) {
       <div className="flex items-center gap-1 ml-2 flex-shrink-0">
         <button
           onClick={onEdit}
-          className="text-[var(--text-muted)] hover:text-blue-500 transition-colors"
+          className="text-[var(--text-muted)] hover:text-[var(--color-charcoal)] transition-colors"
           title="Edit cost"
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -898,12 +939,12 @@ function AddMortgageModal({
             onClick={onClose}
           />
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.97 }}
             className="fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none"
           >
-            <div className="hero-card rounded-2xl w-full max-w-md p-6 pointer-events-auto">
+            <div className="rounded-[2px] border border-[var(--color-whisper)] bg-white w-full max-w-md p-6 pointer-events-auto">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-lg font-semibold text-[var(--text-primary)]">{isEditing ? "Edit Mortgage" : "Add Mortgage"}</h2>
                 <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
@@ -1026,12 +1067,12 @@ function AddCostModal({
             onClick={onClose}
           />
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.97 }}
             className="fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none"
           >
-            <div className="hero-card rounded-2xl w-full max-w-md p-6 pointer-events-auto">
+            <div className="rounded-[2px] border border-[var(--color-whisper)] bg-white w-full max-w-md p-6 pointer-events-auto">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-lg font-semibold text-[var(--text-primary)]">{isEditing ? "Edit Recurring Cost" : "Add Recurring Cost"}</h2>
                 <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
@@ -1078,15 +1119,177 @@ function AddCostModal({
 }
 
 // -------------------------------------------------------------------------------------
+// Add / edit rental stream modal
+// -------------------------------------------------------------------------------------
+
+function AddRentalStreamModal({
+  propertyId,
+  propertyCurrency,
+  open,
+  onClose,
+  editStream,
+}: {
+  propertyId: number;
+  propertyCurrency: string;
+  open: boolean;
+  onClose: () => void;
+  editStream?: IncomeStream | null;
+}) {
+  const create = useCreateIncomeStream();
+  const update = useUpdateIncomeStream();
+  const isEditing = !!editStream;
+
+  const [name, setName] = useState("");
+  const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState(propertyCurrency);
+  const [frequency, setFrequency] = useState<IncomeFrequency>("monthly");
+  const [dayOfMonth, setDayOfMonth] = useState("1");
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+  });
+  const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    if (editStream) {
+      setName(editStream.name);
+      setAmount(String(editStream.amount));
+      setCurrency(editStream.currency);
+      setFrequency(editStream.frequency);
+      setDayOfMonth(editStream.day_of_month != null ? String(editStream.day_of_month) : "1");
+      setStartDate(typeof editStream.start_date === "string" ? editStream.start_date.slice(0, 10) : editStream.start_date);
+      setNotes(editStream.notes ?? "");
+    } else {
+      setName("");
+      setAmount("");
+      setCurrency(propertyCurrency);
+      setFrequency("monthly");
+      setDayOfMonth("1");
+      setNotes("");
+      const d = new Date();
+      setStartDate(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editStream]);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!name.trim() || !amount || parseFloat(amount) <= 0) return;
+
+    const payload: NewIncomeStream = {
+      name: name.trim(),
+      type: "rental",
+      amount: parseFloat(amount),
+      currency,
+      frequency,
+      day_of_month: frequency === "monthly" || frequency === "quarterly" ? parseInt(dayOfMonth, 10) : null,
+      start_date: startDate,
+      is_active: true,
+      notes: notes.trim() || null,
+      property_id: propertyId,
+    };
+
+    try {
+      if (isEditing && editStream) {
+        await update.mutateAsync({ id: editStream.id, updates: payload });
+      } else {
+        await create.mutateAsync(payload);
+      }
+      onClose();
+    } catch {
+      // ignore
+    }
+  }
+
+  const mutation = isEditing ? update : create;
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.97 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none"
+          >
+            <div className="rounded-[2px] border border-[var(--color-whisper)] bg-white w-full max-w-md p-6 pointer-events-auto">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-lg font-semibold text-[var(--text-primary)]">{isEditing ? "Edit Rental Income" : "Add Rental Income"}</h2>
+                <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <Field label="Name">
+                  <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Tenant rent" className={inputClass} required />
+                </Field>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label={`Gross amount (${currency})`}>
+                    <input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="2500" className={`${inputClass} tabular-nums`} required />
+                  </Field>
+                  <Field label="Currency">
+                    <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={inputClass}>
+                      {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </Field>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Frequency">
+                    <select value={frequency} onChange={(e) => setFrequency(e.target.value as IncomeFrequency)} className={inputClass}>
+                      {FREQUENCIES.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
+                    </select>
+                  </Field>
+                  {(frequency === "monthly" || frequency === "quarterly") && (
+                    <Field label="Day of month">
+                      <input type="number" min="1" max="31" value={dayOfMonth} onChange={(e) => setDayOfMonth(e.target.value)} className={`${inputClass} tabular-nums`} />
+                    </Field>
+                  )}
+                </div>
+                <Field label="Start date">
+                  <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClass} required />
+                </Field>
+                <Field label="Notes (optional)">
+                  <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} className={inputClass} />
+                </Field>
+                {mutation.isError && <p className="text-xs text-red-500">{mutation.error.message}</p>}
+                <div className="flex gap-2 pt-2">
+                  <button type="button" onClick={onClose} className={cancelBtn}>Cancel</button>
+                  <button type="submit" disabled={mutation.isPending} className={submitBtn}>
+                    {mutation.isPending
+                      ? (isEditing ? "Saving..." : "Adding...")
+                      : (isEditing ? "Save Changes" : "Add Rental Income")}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// -------------------------------------------------------------------------------------
 // Shared form bits
 // -------------------------------------------------------------------------------------
 
 const inputClass =
-  "w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors";
+  "w-full px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] outline-none focus:border-[var(--color-charcoal)] transition-colors";
 const cancelBtn =
-  "flex-1 px-4 py-2 rounded-lg border border-[var(--border-color)] text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors";
+  "flex-1 px-4 py-2 rounded-[2px] border border-[var(--border-color)] text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors";
 const submitBtn =
-  "flex-1 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50";
+  "flex-1 px-4 py-2 rounded-[2px] bg-[var(--color-charcoal)] text-white text-sm font-medium hover:bg-[var(--color-dark)] transition-colors disabled:opacity-50";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

@@ -18,7 +18,7 @@ export function AnimatedNumber({ value, format, duration = 1.2 }: Props) {
 
     const controls = animate(from, to, {
       duration,
-      ease: [0.25, 0.46, 0.45, 0.94] as const,
+      ease: [0.25, 1, 0.5, 1] as const,
       onUpdate(latest) {
         setDisplay(format(latest));
       },

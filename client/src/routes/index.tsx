@@ -16,14 +16,14 @@ function IndexPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen gap-8 px-6">
-      <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center">
+      <div className="w-16 h-16 bg-[var(--color-charcoal)] rounded-[2px] flex items-center justify-center">
         <svg className="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
         </svg>
@@ -36,7 +36,7 @@ function IndexPage() {
       </div>
       <button
         onClick={login}
-        className="px-8 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors text-lg"
+        className="px-8 py-3 bg-[var(--color-charcoal)] text-white rounded-full font-medium hover:bg-[var(--color-dark)] transition-colors text-lg"
       >
         Login to Get Started
       </button>

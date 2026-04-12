@@ -41,7 +41,7 @@ const cardVariants = {
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.08, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const },
+    transition: { delay: i * 0.08, duration: 0.4, ease: [0.25, 1, 0.5, 1] as const },
   }),
 };
 
@@ -98,7 +98,7 @@ function AssetsLiquidPage() {
   if (authLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -119,7 +119,7 @@ function AssetsLiquidPage() {
           <button
             onClick={() => refreshPrices.mutate()}
             disabled={refreshPrices.isPending}
-            className="flex items-center gap-2 px-3 py-2 border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg text-sm font-medium hover:bg-[var(--bg-tertiary)] transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-3 py-2 border border-[var(--border-color)] text-[var(--text-secondary)] rounded-[2px] text-sm font-medium hover:bg-[var(--bg-tertiary)] transition-colors disabled:opacity-50"
           >
             <svg className={`w-4 h-4 ${refreshPrices.isPending ? "animate-spin" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -131,7 +131,7 @@ function AssetsLiquidPage() {
           </button>
           <a
             href="/data-room"
-            className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-[var(--color-charcoal)] text-white rounded-full text-sm font-medium hover:bg-[var(--color-dark)] transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -149,10 +149,10 @@ function AssetsLiquidPage() {
 
       {/* Total Value Card */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const }}
-        className="hero-card rounded-2xl p-6 mb-6 transition-all"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] as const }}
+        className="rounded-[2px] border border-[var(--color-whisper)] bg-white p-6 mb-6 transition-all"
       >
         <div className="flex items-center justify-between">
           <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1">
@@ -208,9 +208,9 @@ function AssetsLiquidPage() {
 
       {/* Holdings Table */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.35, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.35, duration: 0.4, ease: [0.25, 1, 0.5, 1] as const }}
       >
         <HoldingsTable
           holdings={filteredHoldings}

@@ -28,7 +28,7 @@ function SettingsPage() {
   if (authLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -81,7 +81,7 @@ function SettingsPage() {
       </div>
 
       {/* Account info */}
-      <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 mb-6 transition-colors">
+      <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 mb-6 transition-colors">
         <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-3">Account</h2>
         <div className="space-y-1 text-sm">
           <p className="text-[var(--text-secondary)]">
@@ -94,7 +94,7 @@ function SettingsPage() {
       </div>
 
       {/* Preferences */}
-      <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 mb-6 transition-colors">
+      <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 mb-6 transition-colors">
         <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Preferences</h2>
 
         {/* Base currency */}
@@ -108,7 +108,7 @@ function SettingsPage() {
           <select
             value={baseCurrency}
             onChange={(e) => setBaseCurrency(e.target.value)}
-            className="shrink-0 w-48 px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors cursor-pointer"
+            className="shrink-0 w-48 px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] outline-none focus:border-[var(--color-charcoal)] transition-colors cursor-pointer"
           >
             {currencies.map((c) => (
               <option key={c.code} value={c.code}>
@@ -128,7 +128,7 @@ function SettingsPage() {
           </div>
           <button
             onClick={toggleTheme}
-            className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm font-medium text-[var(--text-primary)] hover:border-blue-500/40 transition-colors"
+            className="shrink-0 flex items-center gap-2 px-4 py-2 rounded-[2px] bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm font-medium text-[var(--text-primary)] hover:border-[var(--color-charcoal)]/40 transition-colors"
           >
             {theme === "dark" ? <SunIcon /> : <MoonIcon />}
             {theme === "dark" ? "Light Mode" : "Dark Mode"}
@@ -141,7 +141,7 @@ function SettingsPage() {
         <h2 className="text-lg font-semibold text-[var(--text-primary)]">Privacy & Data</h2>
 
         {/* Export */}
-        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 transition-colors">
+        <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 transition-colors">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3 className="text-sm font-semibold text-[var(--text-primary)]">Export My Data</h3>
@@ -151,7 +151,7 @@ function SettingsPage() {
             </div>
             <button
               onClick={handleExport}
-              className="shrink-0 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+              className="shrink-0 px-4 py-2 bg-[var(--color-charcoal)] text-white rounded-full text-sm font-medium hover:bg-[var(--color-dark)] transition-colors"
             >
               Download
             </button>
@@ -159,7 +159,7 @@ function SettingsPage() {
         </div>
 
         {/* Clear holdings */}
-        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 transition-colors">
+        <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 transition-colors">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3 className="text-sm font-semibold text-[var(--text-primary)]">Clear All Holdings</h3>
@@ -170,7 +170,7 @@ function SettingsPage() {
             <button
               onClick={handleClearHoldings}
               disabled={clearing || holdingsLoading || (holdings?.length ?? 0) === 0}
-              className="shrink-0 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors disabled:opacity-50"
+              className="shrink-0 px-4 py-2 border border-[var(--color-pending)] text-[var(--color-pending)] rounded-full text-sm font-medium hover:bg-[var(--color-snow)] transition-colors disabled:opacity-50"
             >
               {clearing ? "Clearing..." : "Clear"}
             </button>
@@ -181,7 +181,7 @@ function SettingsPage() {
         </div>
 
         {/* Delete account */}
-        <div className="rounded-xl border border-red-500/30 bg-[var(--bg-secondary)] p-6 transition-colors">
+        <div className="rounded-[2px] border border-[var(--color-negative)]/30 bg-[var(--bg-secondary)] p-6 transition-colors">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3 className="text-sm font-semibold text-red-500">Delete My Account</h3>
@@ -192,7 +192,7 @@ function SettingsPage() {
             <button
               onClick={handleDeleteAccount}
               disabled={deleting}
-              className="shrink-0 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+              className="shrink-0 px-4 py-2 border border-[var(--color-negative)] text-[var(--color-negative)] rounded-full text-sm font-medium hover:bg-[var(--color-snow)] transition-colors disabled:opacity-50"
             >
               {deleting ? "Deleting..." : "Delete"}
             </button>

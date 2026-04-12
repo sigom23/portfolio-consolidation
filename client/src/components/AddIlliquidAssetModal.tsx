@@ -22,7 +22,7 @@ const PE_STATUSES = [
   { value: "largely_realized", label: "Largely Realized" },
 ];
 
-const fieldInput = "w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors";
+const fieldInput = "w-full px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] outline-none focus:border-[var(--color-charcoal)] transition-colors";
 const fieldInputNum = `${fieldInput} tabular-nums`;
 
 interface Props {
@@ -240,13 +240,13 @@ export function AddIlliquidAssetModal({ open, subtype, onClose, editAsset, prefi
 
           {/* Modal */}
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.97 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
-            <div className="hero-card rounded-2xl w-full max-w-md p-6 pointer-events-auto max-h-[90vh] overflow-y-auto">
+            <div className="rounded-[2px] border border-[var(--color-whisper)] bg-white w-full max-w-md p-6 pointer-events-auto max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-lg font-semibold text-[var(--text-primary)]">
                   {isEditing ? EDIT_TITLES[subtype] : TITLES[subtype]}
@@ -287,7 +287,7 @@ export function AddIlliquidAssetModal({ open, subtype, onClose, editAsset, prefi
                             ? "e.g. Google GSU 2024"
                             : "e.g. Acme AI"
                     }
-                    className="w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors"
+                    className="w-full px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] outline-none focus:border-[var(--color-charcoal)] transition-colors"
                     required
                   />
                   {subtype === "pension" && (
@@ -385,7 +385,7 @@ export function AddIlliquidAssetModal({ open, subtype, onClose, editAsset, prefi
                         value={employer}
                         onChange={(e) => setEmployer(e.target.value)}
                         placeholder="e.g. Google"
-                        className="w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors"
+                        className="w-full px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] outline-none focus:border-[var(--color-charcoal)] transition-colors"
                       />
                     </div>
                     <ValueCurrencyRow
@@ -407,7 +407,7 @@ export function AddIlliquidAssetModal({ open, subtype, onClose, editAsset, prefi
                           max="10"
                           value={vestingYears}
                           onChange={(e) => setVestingYears(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] tabular-nums outline-none focus:border-blue-500 transition-colors"
+                          className="w-full px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] tabular-nums outline-none focus:border-[var(--color-charcoal)] transition-colors"
                           required
                         />
                       </div>
@@ -421,7 +421,7 @@ export function AddIlliquidAssetModal({ open, subtype, onClose, editAsset, prefi
                           value={units}
                           onChange={(e) => setUnits(e.target.value)}
                           placeholder="0"
-                          className="w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] tabular-nums outline-none focus:border-blue-500 transition-colors"
+                          className="w-full px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] tabular-nums outline-none focus:border-[var(--color-charcoal)] transition-colors"
                         />
                       </div>
                     </div>
@@ -433,7 +433,7 @@ export function AddIlliquidAssetModal({ open, subtype, onClose, editAsset, prefi
                         type="date"
                         value={grantStartDate}
                         onChange={(e) => setGrantStartDate(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors"
+                        className="w-full px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] outline-none focus:border-[var(--color-charcoal)] transition-colors"
                         required
                       />
                     </div>
@@ -460,7 +460,7 @@ export function AddIlliquidAssetModal({ open, subtype, onClose, editAsset, prefi
                         value={amountInvested}
                         onChange={(e) => setAmountInvested(e.target.value)}
                         placeholder="0"
-                        className="w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] tabular-nums outline-none focus:border-blue-500 transition-colors"
+                        className="w-full px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] tabular-nums outline-none focus:border-[var(--color-charcoal)] transition-colors"
                       />
                     </div>
                     <div>
@@ -471,7 +471,7 @@ export function AddIlliquidAssetModal({ open, subtype, onClose, editAsset, prefi
                         type="date"
                         value={investmentDate}
                         onChange={(e) => setInvestmentDate(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors"
+                        className="w-full px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] outline-none focus:border-[var(--color-charcoal)] transition-colors"
                       />
                     </div>
                   </>
@@ -486,7 +486,7 @@ export function AddIlliquidAssetModal({ open, subtype, onClose, editAsset, prefi
                     type="text"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors"
+                    className="w-full px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] outline-none focus:border-[var(--color-charcoal)] transition-colors"
                   />
                 </div>
 
@@ -498,14 +498,14 @@ export function AddIlliquidAssetModal({ open, subtype, onClose, editAsset, prefi
                   <button
                     type="button"
                     onClick={onClose}
-                    className="flex-1 px-4 py-2 rounded-lg border border-[var(--border-color)] text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors"
+                    className="flex-1 px-4 py-2 rounded-[2px] border border-[var(--border-color)] text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={create.isPending || update.isPending}
-                    className="flex-1 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    className="flex-1 px-4 py-2 rounded-[2px] bg-[var(--color-charcoal)] text-white text-sm font-medium hover:bg-[var(--color-dark)] transition-colors disabled:opacity-50"
                   >
                     {(create.isPending || update.isPending)
                       ? (isEditing ? "Saving..." : "Adding...")
@@ -547,7 +547,7 @@ function ValueCurrencyRow({
           value={value}
           onChange={(e) => onValueChange(e.target.value)}
           placeholder="0"
-          className="w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] tabular-nums outline-none focus:border-blue-500 transition-colors"
+          className="w-full px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] tabular-nums outline-none focus:border-[var(--color-charcoal)] transition-colors"
           required={required}
         />
       </div>
@@ -556,7 +556,7 @@ function ValueCurrencyRow({
         <select
           value={currency}
           onChange={(e) => onCurrencyChange(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors"
+          className="w-full px-0 py-2 bg-transparent border-0 border-b border-[var(--color-whisper)] text-[15.7px] text-[var(--text-primary)] outline-none focus:border-[var(--color-charcoal)] transition-colors"
         >
           {CURRENCIES.map((c) => (
             <option key={c} value={c}>

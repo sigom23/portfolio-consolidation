@@ -86,7 +86,7 @@ function CashFlowIncomePage() {
   if (authLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -105,7 +105,7 @@ function CashFlowIncomePage() {
           <UploadButton kind="salary" accept=".pdf,.png,.jpg,.jpeg,.webp" label="Upload Salary" />
           <button
             onClick={() => { setEditingStream(null); setModalOpen(true); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-charcoal)] text-white rounded-full text-xs font-medium hover:bg-[var(--color-dark)] transition-colors"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -120,10 +120,10 @@ function CashFlowIncomePage() {
 
       {/* 3. Hero */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="hero-card rounded-2xl p-6 mb-6"
+        className="rounded-[2px] border border-[var(--color-whisper)] bg-white p-6 mb-6"
       >
         <div className="flex items-center justify-between mb-1">
           <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
@@ -154,18 +154,18 @@ function CashFlowIncomePage() {
             {Array.from({ length: 3 }).map((_, i) => (
               <div
                 key={i}
-                className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 h-32 animate-pulse"
+                className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 h-32 animate-pulse"
               />
             ))}
           </div>
         ) : sortedStreams.length === 0 ? (
-          <div className="card-elevated rounded-xl border border-dashed border-[var(--border-color)] bg-[var(--bg-secondary)] p-10 text-center">
+          <div className="rounded-[2px] border border-dashed border-[var(--border-color)] bg-[var(--bg-secondary)] p-10 text-center">
             <p className="text-[var(--text-muted)] text-sm mb-3">
               No income streams yet.
             </p>
             <button
               onClick={() => { setEditingStream(null); setModalOpen(true); }}
-              className="text-sm font-medium text-blue-500 hover:text-blue-400 transition-colors"
+              className="text-sm font-medium text-[var(--color-charcoal)] hover:text-[var(--color-mid)] transition-colors"
             >
               Add your first stream →
             </button>
@@ -196,7 +196,7 @@ function CashFlowIncomePage() {
       </div>
 
       {/* 6. Transactions Table */}
-      <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden">
+      <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden">
         <div className="px-6 py-4 border-b border-[var(--border-color)]">
           <h2 className="text-lg font-semibold text-[var(--text-primary)]">
             Transactions
@@ -241,11 +241,10 @@ function StreamCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 + index * 0.05, duration: 0.35 }}
-      whileHover={{ y: -2 }}
-      className={`card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 transition-colors cursor-pointer ${
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.1 + index * 0.05, duration: 0.35, ease: [0.25, 1, 0.5, 1] as const }}
+      className={`rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 transition-colors cursor-pointer hover:bg-[var(--color-snow)] ${
         !stream.is_active ? "opacity-60" : ""
       }`}
       onClick={onEdit}
@@ -260,7 +259,7 @@ function StreamCard({
         <div className="flex items-center gap-1">
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(); }}
-            className="text-[var(--text-muted)] hover:text-blue-500 transition-colors"
+            className="text-[var(--text-muted)] hover:text-[var(--color-charcoal)] transition-colors"
             title="Edit stream"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

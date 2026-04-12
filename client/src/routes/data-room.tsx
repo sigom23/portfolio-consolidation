@@ -143,7 +143,7 @@ function DataRoomPage() {
   if (authLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -162,17 +162,17 @@ function DataRoomPage() {
 
       {/* Drop Zone */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
-        className={`relative mb-6 rounded-2xl border-2 border-dashed p-10 text-center cursor-pointer transition-all duration-200 ${
+        className={`relative mb-6 rounded-[2px] border-2 border-dashed p-10 text-center cursor-pointer transition-all duration-200 ${
           dragOver
-            ? "border-blue-500 bg-blue-500/5 scale-[1.01]"
-            : "border-[var(--border-color)] bg-[var(--bg-secondary)] hover:border-blue-500/50 hover:bg-[var(--bg-tertiary)]"
+            ? "border-[var(--color-charcoal)] bg-[var(--color-charcoal)]/5 scale-[1.01]"
+            : "border-[var(--border-color)] bg-[var(--bg-secondary)] hover:border-[var(--color-charcoal)]/50 hover:bg-[var(--bg-tertiary)]"
         }`}
       >
         <input
@@ -187,10 +187,10 @@ function DataRoomPage() {
           }}
         />
         <div className="flex flex-col items-center gap-3">
-          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${
-            dragOver ? "bg-blue-500/20" : "bg-[var(--bg-tertiary)]"
+          <div className={`w-14 h-14 rounded-[2px] flex items-center justify-center transition-colors ${
+            dragOver ? "bg-[var(--color-cloud)]" : "bg-[var(--bg-tertiary)]"
           }`}>
-            <svg className={`w-7 h-7 transition-colors ${dragOver ? "text-blue-500" : "text-[var(--text-muted)]"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className={`w-7 h-7 transition-colors ${dragOver ? "text-[var(--color-charcoal)]" : "text-[var(--text-muted)]"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
             </svg>
           </div>
@@ -202,7 +202,7 @@ function DataRoomPage() {
               PDF, CSV, or images — salary slips, bank statements, portfolio reports, PE fund documents
             </p>
           </div>
-          <span className="text-[11px] text-[var(--text-muted)] border border-[var(--border-color)] rounded-lg px-3 py-1">
+          <span className="text-[11px] text-[var(--text-muted)] border border-[var(--border-color)] rounded-[2px] px-3 py-1">
             or click to browse
           </span>
         </div>
@@ -230,7 +230,7 @@ function DataRoomPage() {
                 </button>
               )}
             </div>
-            <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden divide-y divide-[var(--border-color)]/50">
+            <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden divide-y divide-[var(--border-color)]/50">
               {activeQueue.map((item) => (
                 <motion.div
                   key={item.id}
@@ -245,10 +245,10 @@ function DataRoomPage() {
                       <div className="w-5 h-5 rounded-full border-2 border-[var(--border-color)]" />
                     )}
                     {item.status === "detecting" && (
-                      <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
                     )}
                     {item.status === "processing" && (
-                      <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
                     )}
                     {item.status === "done" && (
                       <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -298,7 +298,7 @@ function DataRoomPage() {
                     {item.status === "error" && (
                       <button
                         onClick={() => retryItem(item.id)}
-                        className="text-xs text-blue-500 hover:text-blue-400 transition-colors"
+                        className="text-xs text-[var(--color-charcoal)] hover:text-[var(--color-mid)] transition-colors"
                       >
                         Retry
                       </button>
@@ -327,7 +327,7 @@ function DataRoomPage() {
         <h2 className="text-sm font-medium text-[var(--text-muted)] uppercase tracking-wider mb-3">
           Documents
         </h2>
-        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden">
+        <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden">
           {uploadsLoading ? (
             <div className="px-6 py-8 text-center text-[var(--text-muted)]">Loading...</div>
           ) : !uploads || uploads.length === 0 ? (
@@ -378,7 +378,7 @@ function DataRoomPage() {
                         <div className="flex items-center gap-3">
                           <a
                             href={`/api/uploads/${u.id}/download`}
-                            className="text-blue-500 hover:text-blue-400 text-xs"
+                            className="text-[var(--color-charcoal)] hover:text-[var(--color-mid)] text-xs"
                           >
                             Download
                           </a>

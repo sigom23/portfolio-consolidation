@@ -35,7 +35,7 @@ export function SourceFilter({ selected, onSelect, uploads, wallets }: Props) {
     <select
       value={value}
       onChange={(e) => handleChange(e.target.value)}
-      className="px-3 py-1.5 rounded-lg border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+      className="px-3 py-1.5 rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--color-charcoal)] cursor-pointer"
     >
       <option value="all">All Sources</option>
       {uploads.length > 0 && (

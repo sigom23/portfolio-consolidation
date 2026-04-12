@@ -1,7 +1,21 @@
+import { useRef } from "react";
 import { motion } from "motion/react";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { useCurrency } from "../contexts/CurrencyContext";
+import { useUploadStatement } from "../hooks/usePortfolio";
 import type {
   CashFlowSummary,
+  IncomeStream,
   IncomeStreamType,
   Transaction,
 } from "../types";
@@ -110,6 +124,301 @@ export function currentMonthKey(): string {
 // ============================================================
 // Shared components
 // ============================================================
+
+/** Generate last N months as YYYY-MM strings, most recent first. */
+export function lastNMonths(n: number): string[] {
+  const months: string[] = [];
+  const now = new Date();
+  for (let i = 0; i < n; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push(
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+    );
+  }
+  return months;
+}
+
+/** Format YYYY-MM to short label like "Sep 25". */
+export function monthLabel(key: string): string {
+  const [y, m] = key.split("-");
+  const d = new Date(Number(y), Number(m) - 1, 1);
+  return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+}
+
+/** 12-month pill selector with data indicators. */
+export function MonthSelector({
+  month,
+  onMonthChange,
+  monthCounts,
+}: {
+  month: string;
+  onMonthChange: (m: string) => void;
+  monthCounts: Record<string, number>;
+}) {
+  const months = lastNMonths(12);
+  return (
+    <div className="mb-5">
+      <label className="block text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-2">
+        Month
+      </label>
+      <div className="flex gap-1.5 flex-wrap">
+        {months.map((m) => {
+          const isActive = m === month;
+          const count = monthCounts[m] ?? 0;
+          const hasData = count > 0;
+          return (
+            <button
+              key={m}
+              onClick={() => onMonthChange(m)}
+              className={`relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                isActive
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : hasData
+                    ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-color)] hover:border-blue-500/50"
+                    : "bg-[var(--bg-secondary)] text-[var(--text-muted)] border border-transparent opacity-50 hover:opacity-75"
+              }`}
+            >
+              {monthLabel(m)}
+              {hasData && !isActive && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-blue-500" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** Compact upload button for page headers. */
+export function UploadButton({
+  kind,
+  accept,
+  label,
+}: {
+  kind: "salary" | "transactions";
+  accept: string;
+  label: string;
+}) {
+  const mutation = useUploadStatement();
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        ref={fileRef}
+        type="file"
+        accept={accept}
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) {
+            mutation.mutate(
+              { file: f, kind },
+              { onSuccess: () => { if (fileRef.current) fileRef.current.value = ""; } }
+            );
+          }
+        }}
+      />
+      <button
+        onClick={() => fileRef.current?.click()}
+        disabled={mutation.isPending}
+        className="flex items-center gap-1.5 px-3 py-1.5 border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg text-xs font-medium hover:bg-[var(--bg-tertiary)] transition-colors disabled:opacity-50"
+      >
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+        </svg>
+        {mutation.isPending ? "Parsing..." : label}
+      </button>
+      {mutation.isError && (
+        <span className="text-xs text-red-500">{mutation.error.message}</span>
+      )}
+      {mutation.isSuccess && (
+        <span className="text-xs text-green-500">
+          {mutation.data?.kind === "salary"
+            ? (mutation.data as any).updated ? "Stream updated" : "Stream created"
+            : `${mutation.data?.inserted ?? 0} inserted`}
+        </span>
+      )}
+    </div>
+  );
+}
+
+/** Income by type donut chart. */
+export function IncomeByTypeCard({
+  streams,
+  loading,
+}: {
+  streams: IncomeStream[];
+  loading: boolean;
+}) {
+  const { format } = useCurrency();
+
+  if (loading) {
+    return (
+      <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Group active streams by type
+  const byType: Record<string, number> = {};
+  for (const s of streams) {
+    if (!s.is_active) continue;
+    const monthly = monthlyEquivalent(s);
+    byType[s.type] = (byType[s.type] ?? 0) + monthly;
+  }
+
+  const data = Object.entries(byType)
+    .filter(([, v]) => v > 0)
+    .map(([type, value]) => ({
+      name: TYPE_LABELS[type as IncomeStreamType] ?? type,
+      value,
+      color: TYPE_COLORS[type as IncomeStreamType] ?? "#94a3b8",
+    }))
+    .sort((a, b) => b.value - a.value);
+
+  const total = data.reduce((sum, d) => sum + d.value, 0);
+
+  return (
+    <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full">
+      <h3 className="text-sm font-medium text-[var(--text-muted)] mb-4">
+        Income by Type
+      </h3>
+      {data.length === 0 ? (
+        <p className="text-sm text-[var(--text-muted)] py-8 text-center">
+          No active income streams.
+        </p>
+      ) : (
+        <div className="flex items-start gap-6">
+          <div className="relative w-36 h-36 flex-shrink-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={data}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={42}
+                  outerRadius={62}
+                  paddingAngle={2}
+                  dataKey="value"
+                  strokeWidth={0}
+                >
+                  {data.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="text-center">
+                <p className="text-[10px] text-[var(--text-muted)]">Monthly</p>
+                <p className="text-xs font-bold text-[var(--text-primary)]">
+                  {format(total)}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="flex-1 space-y-2 min-w-0">
+            {data.map((entry) => {
+              const pct = total > 0 ? (entry.value / total) * 100 : 0;
+              return (
+                <div key={entry.name} className="flex items-center gap-2">
+                  <div
+                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: entry.color }}
+                  />
+                  <span className="text-[11px] text-[var(--text-secondary)] truncate flex-1">
+                    {entry.name}
+                  </span>
+                  <span className="text-[11px] font-medium text-[var(--text-primary)] tabular-nums flex-shrink-0">
+                    {pct.toFixed(1)}%
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** 6-month trend bar chart for income or expenses. */
+export function MonthlyTrendCard({
+  transactions,
+  sign,
+  loading,
+}: {
+  transactions: Transaction[];
+  sign: "income" | "expense";
+  loading: boolean;
+}) {
+  const { format } = useCurrency();
+  const isIncome = sign === "income";
+
+  if (loading) {
+    return (
+      <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Group transactions by month, last 6 months
+  const months = lastNMonths(6).reverse();
+  const byMonth: Record<string, number> = {};
+  for (const tx of transactions) {
+    const key = typeof tx.date === "string" ? tx.date.slice(0, 7) : "";
+    if (!key) continue;
+    const amt = tx.amount_usd ?? tx.amount;
+    byMonth[key] = (byMonth[key] ?? 0) + Math.abs(amt);
+  }
+
+  const data = months.map((m) => ({
+    month: monthLabel(m),
+    value: byMonth[m] ?? 0,
+  }));
+
+  const barColor = isIncome ? "#22c55e" : "#ef4444";
+
+  return (
+    <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full">
+      <h3 className="text-sm font-medium text-[var(--text-muted)] mb-4">
+        {isIncome ? "Income Trend" : "Expense Trend"}
+      </h3>
+      {data.every((d) => d.value === 0) ? (
+        <p className="text-sm text-[var(--text-muted)] py-8 text-center">
+          No data yet.
+        </p>
+      ) : (
+        <ResponsiveContainer width="100%" height={160}>
+          <BarChart data={data} barCategoryGap="20%">
+            <XAxis
+              dataKey="month"
+              tickLine={false}
+              axisLine={false}
+              tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+            />
+            <YAxis hide />
+            <Tooltip
+              cursor={{ fill: "var(--bg-tertiary)" }}
+              contentStyle={{
+                background: "var(--bg-secondary)",
+                border: "1px solid var(--border-color)",
+                borderRadius: 8,
+                fontSize: 12,
+              }}
+              formatter={(value) => [format(Number(value)), isIncome ? "Income" : "Expenses"]}
+            />
+            <Bar dataKey="value" fill={barColor} radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      )}
+    </div>
+  );
+}
 
 /** Category breakdown used by Overview and Expenses. */
 export function CategoryBreakdownCard({

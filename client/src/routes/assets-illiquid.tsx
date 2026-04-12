@@ -104,13 +104,22 @@ function AssetsIlliquidPage() {
   return (
     <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
+      <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">Illiquid Assets</h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">
             Private equity, pension, unvested equity, and startup participation
           </p>
         </div>
+        <button
+          onClick={() => { setEditingAsset(null); setModalSubtype(currentTab); }}
+          className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Add {tabMeta.label}
+        </button>
       </div>
 
       {/* Total value hero */}

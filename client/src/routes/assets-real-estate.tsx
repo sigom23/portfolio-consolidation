@@ -133,7 +133,7 @@ function RealEstatePage() {
   return (
     <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
+      <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">Real Estate</h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">
@@ -151,59 +151,45 @@ function RealEstatePage() {
         </button>
       </div>
 
-      {/* Summary row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="hero-card rounded-2xl p-6"
-        >
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1">Total Value</p>
-          {isLoading ? (
-            <div className="h-9 w-40 bg-[var(--bg-tertiary)] rounded animate-pulse" />
-          ) : (
-            <p className="text-3xl font-bold text-[var(--text-primary)] tabular-nums tracking-tight">
-              <AnimatedNumber value={totals.value} format={format} />
+      {/* Hero */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="hero-card rounded-2xl p-6 mb-6"
+      >
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+            Total Value
+          </p>
+          <span className="text-xs text-[var(--text-muted)]">
+            {properties?.length ?? 0} propert{(properties?.length ?? 0) === 1 ? "y" : "ies"}
+          </span>
+        </div>
+        {isLoading ? (
+          <div className="h-10 w-56 bg-[var(--bg-tertiary)] rounded animate-pulse" />
+        ) : (
+          <p className="text-4xl font-bold text-[var(--text-primary)] tabular-nums tracking-tight">
+            <AnimatedNumber value={totals.value} format={format} />
+          </p>
+        )}
+        {!isLoading && (
+          <div className="flex items-center gap-6 mt-2">
+            <p className="text-xs text-[var(--text-muted)]">
+              Equity:{" "}
+              <span className="font-medium text-[var(--text-secondary)]">
+                {format(totals.equity)}
+              </span>
             </p>
-          )}
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.08 }}
-          className="card-elevated rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6"
-        >
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1">Equity</p>
-          {isLoading ? (
-            <div className="h-9 w-40 bg-[var(--bg-tertiary)] rounded animate-pulse" />
-          ) : (
-            <p className="text-3xl font-bold text-[var(--text-primary)] tabular-nums tracking-tight">
-              <AnimatedNumber value={totals.equity} format={format} />
+            <p className="text-xs text-[var(--text-muted)]">
+              Net monthly:{" "}
+              <span className={`font-medium ${totals.netMonthly >= 0 ? "text-green-500" : "text-red-500"}`}>
+                {totals.netMonthly >= 0 ? "+" : ""}{format(totals.netMonthly)}
+              </span>
             </p>
-          )}
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.16 }}
-          className="card-elevated rounded-2xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6"
-        >
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1">Net Monthly Income</p>
-          {isLoading ? (
-            <div className="h-9 w-40 bg-[var(--bg-tertiary)] rounded animate-pulse" />
-          ) : (
-            <p className={`text-3xl font-bold tabular-nums tracking-tight ${
-              totals.netMonthly >= 0 ? "text-green-500" : "text-red-500"
-            }`}>
-              {totals.netMonthly >= 0 ? "+" : "-"}
-              <AnimatedNumber value={Math.abs(totals.netMonthly)} format={format} />
-            </p>
-          )}
-        </motion.div>
-      </div>
+          </div>
+        )}
+      </motion.div>
 
       {/* Properties grid */}
       {isLoading ? (

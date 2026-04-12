@@ -1,14 +1,16 @@
 import { createRoute, useNavigate } from "@tanstack/react-router";
 import { Route as rootRoute } from "./__root";
 import { useAuth } from "../hooks/useAuth";
-import { useCashFlowSummary } from "../hooks/usePortfolio";
+import { useCashFlowSummary, useTransactions } from "../hooks/usePortfolio";
 import { useCurrency } from "../contexts/CurrencyContext";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { AnimatedNumber } from "../components/AnimatedNumber";
 import {
+  MonthSelector,
   CategoryBreakdownCard,
   TopMerchantsCard,
+  MonthlyTrendCard,
   currentMonthKey,
 } from "../components/cashflow-shared";
 
@@ -17,6 +19,7 @@ function CashFlowOverviewPage() {
   const navigate = useNavigate();
   const [month, setMonth] = useState(currentMonthKey());
   const { data: summary, isLoading } = useCashFlowSummary(month);
+  const { data: allTx, isLoading: txLoading } = useTransactions({ limit: 2000 });
   const { format } = useCurrency();
 
   useEffect(() => {
@@ -24,6 +27,20 @@ function CashFlowOverviewPage() {
       navigate({ to: "/" });
     }
   }, [authLoading, user, navigate]);
+
+  // Month counts from all transactions
+  const monthCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const tx of allTx ?? []) {
+      const key = typeof tx.date === "string" ? tx.date.slice(0, 7) : "";
+      if (key) counts[key] = (counts[key] ?? 0) + 1;
+    }
+    return counts;
+  }, [allTx]);
+
+  // Split transactions by sign for trend cards
+  const incomeTx = useMemo(() => (allTx ?? []).filter((t) => t.amount > 0), [allTx]);
+  const expenseTx = useMemo(() => (allTx ?? []).filter((t) => t.amount < 0), [allTx]);
 
   if (authLoading || !user) {
     return (
@@ -41,8 +58,8 @@ function CashFlowOverviewPage() {
 
   return (
     <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
+      {/* 1. Header */}
+      <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">Cash Flow</h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">
@@ -51,29 +68,25 @@ function CashFlowOverviewPage() {
         </div>
       </div>
 
-      {/* Month picker */}
-      <div className="mb-4 flex items-center gap-3">
-        <label className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
-          Month
-        </label>
-        <input
-          type="month"
-          value={month}
-          onChange={(e) => setMonth(e.target.value)}
-          className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors"
-        />
-      </div>
+      {/* 2. Month Selector */}
+      <MonthSelector month={month} onMonthChange={setMonth} monthCounts={monthCounts} />
 
-      {/* Hero: Net cash flow */}
+      {/* 3. Hero: Net cash flow */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
         className="hero-card rounded-2xl p-6 mb-6"
       >
-        <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1">
-          Net Cash Flow
-        </p>
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+            Net Cash Flow
+          </p>
+          <span className="text-xs text-[var(--text-muted)]">
+            {summary?.transactionCount ?? 0} transaction
+            {(summary?.transactionCount ?? 0) === 1 ? "" : "s"}
+          </span>
+        </div>
         {isLoading ? (
           <div className="h-10 w-56 bg-[var(--bg-tertiary)] rounded animate-pulse" />
         ) : (
@@ -98,7 +111,7 @@ function CashFlowOverviewPage() {
         </p>
       </motion.div>
 
-      {/* Income vs Expenses cards */}
+      {/* 4. Income vs Expenses summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -128,10 +141,16 @@ function CashFlowOverviewPage() {
         </motion.div>
       </div>
 
-      {/* Category breakdown + Top merchants */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* 5. Analytics Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <CategoryBreakdownCard summary={summary} loading={isLoading} />
         <TopMerchantsCard summary={summary} loading={isLoading} />
+      </div>
+
+      {/* 6. Trend Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <MonthlyTrendCard transactions={incomeTx} sign="income" loading={txLoading} />
+        <MonthlyTrendCard transactions={expenseTx} sign="expense" loading={txLoading} />
       </div>
     </div>
   );

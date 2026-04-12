@@ -1,13 +1,16 @@
 import { createRoute, useNavigate } from "@tanstack/react-router";
 import { Route as rootRoute } from "./__root";
 import { useAuth } from "../hooks/useAuth";
-import { useCashFlowSummary, useTransactions, useUploadStatement } from "../hooks/usePortfolio";
+import { useCashFlowSummary, useTransactions } from "../hooks/usePortfolio";
 import { useCurrency } from "../contexts/CurrencyContext";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { AnimatedNumber } from "../components/AnimatedNumber";
 import {
+  MonthSelector,
+  UploadButton,
   CategoryBreakdownCard,
+  TopMerchantsCard,
   TransactionsTable,
   currentMonthKey,
 } from "../components/cashflow-shared";
@@ -19,28 +22,25 @@ function CashFlowExpensesPage() {
   const { data: summary, isLoading: summaryLoading } = useCashFlowSummary(month);
   const { data: transactions, isLoading: txLoading } = useTransactions({
     sign: "expense",
-    limit: 200,
+    limit: 2000,
   });
   const { format } = useCurrency();
-  const uploadMutation = useUploadStatement();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  function handleUpload(file: File) {
-    uploadMutation.mutate(
-      { file, kind: "transactions" },
-      {
-        onSuccess: () => {
-          if (fileInputRef.current) fileInputRef.current.value = "";
-        },
-      }
-    );
-  }
 
   useEffect(() => {
     if (!authLoading && !user) {
       navigate({ to: "/" });
     }
   }, [authLoading, user, navigate]);
+
+  // Month counts for the selector
+  const monthCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const tx of transactions ?? []) {
+      const key = typeof tx.date === "string" ? tx.date.slice(0, 7) : "";
+      if (key) counts[key] = (counts[key] ?? 0) + 1;
+    }
+    return counts;
+  }, [transactions]);
 
   const filteredTx = useMemo(() => {
     return (transactions ?? []).filter((t) => t.date.startsWith(month));
@@ -56,30 +56,21 @@ function CashFlowExpensesPage() {
 
   return (
     <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
+      {/* 1. Header */}
+      <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">Expenses</h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">
-            Monthly spending by category and transaction
+            Monthly spending by category and source
           </p>
         </div>
+        <UploadButton kind="transactions" accept=".pdf,.csv,.png,.jpg,.jpeg,.webp" label="Upload Statement" />
       </div>
 
-      {/* Month picker */}
-      <div className="mb-4 flex items-center gap-3">
-        <label className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
-          Month
-        </label>
-        <input
-          type="month"
-          value={month}
-          onChange={(e) => setMonth(e.target.value)}
-          className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors"
-        />
-      </div>
+      {/* 2. Month Selector */}
+      <MonthSelector month={month} onMonthChange={setMonth} monthCounts={monthCounts} />
 
-      {/* Hero: expenses this month */}
+      {/* 3. Hero */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -104,51 +95,15 @@ function CashFlowExpensesPage() {
         )}
       </motion.div>
 
-      {/* Category breakdown */}
-      <div className="mb-6">
+      {/* 4. Source Cards — skipped for expenses (no expense source entities) */}
+
+      {/* 5. Analytics Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <CategoryBreakdownCard summary={summary} loading={summaryLoading} />
+        <TopMerchantsCard summary={summary} loading={summaryLoading} />
       </div>
 
-      {/* Upload statement */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15, duration: 0.35 }}
-        className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 mb-6"
-      >
-        <h2 className="text-sm font-medium text-[var(--text-muted)] uppercase tracking-wider mb-3">
-          Upload Statement
-        </h2>
-        <p className="text-xs text-[var(--text-muted)] mb-3">
-          Upload a credit card or bank statement (PDF, CSV, or image). Transactions will be extracted and categorized automatically.
-        </p>
-        <div className="flex items-center gap-3 flex-wrap">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.csv,.png,.jpg,.jpeg,.webp"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) handleUpload(f);
-            }}
-            className="text-sm text-[var(--text-secondary)] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-blue-500/10 file:text-blue-500 hover:file:bg-blue-500/20"
-          />
-          {uploadMutation.isPending && (
-            <span className="text-xs text-[var(--text-muted)]">Parsing...</span>
-          )}
-        </div>
-        {uploadMutation.isError && (
-          <p className="text-xs text-red-500 mt-2">{uploadMutation.error.message}</p>
-        )}
-        {uploadMutation.isSuccess && uploadMutation.data?.kind === "transactions" && (
-          <p className="text-xs text-green-500 mt-2">
-            Parsed {uploadMutation.data.parsed ?? 0} transaction(s), inserted {uploadMutation.data.inserted ?? 0}
-            {uploadMutation.data.duplicates ? `, skipped ${uploadMutation.data.duplicates} duplicate(s)` : ""}
-          </p>
-        )}
-      </motion.div>
-
-      {/* Expense transactions table */}
+      {/* 6. Transactions Table */}
       <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden">
         <div className="px-6 py-4 border-b border-[var(--border-color)]">
           <h2 className="text-lg font-semibold text-[var(--text-primary)]">

@@ -78,8 +78,8 @@ function CashFlowExpensesPage() {
             Monthly Expenses
           </p>
           <span className="text-xs text-[var(--text-muted)]">
-            {summary?.transactionCount ?? 0} transaction
-            {summary?.transactionCount === 1 ? "" : "s"}
+            {summary?.expenseCount ?? 0} transaction
+            {summary?.expenseCount === 1 ? "" : "s"}
           </span>
         </div>
         {summaryLoading ? (

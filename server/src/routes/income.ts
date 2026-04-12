@@ -271,6 +271,8 @@ router.get("/cashflow/summary", async (req: Request, res: Response) => {
 
     let income = 0;
     let expenses = 0;
+    let incomeCount = 0;
+    let expenseCount = 0;
     const byCategory: Record<string, number> = {};
     const byMerchant: Record<string, number> = {};
 
@@ -278,8 +280,8 @@ router.get("/cashflow/summary", async (req: Request, res: Response) => {
       const ccy = (tx.currency ?? "USD").toUpperCase();
       const usd = tx.amount_usd ?? toUsd(tx.amount, ccy);
 
-      if (tx.amount > 0) income += usd;
-      else expenses += Math.abs(usd);
+      if (tx.amount > 0) { income += usd; incomeCount++; }
+      else if (tx.amount < 0) { expenses += Math.abs(usd); expenseCount++; }
 
       const category = tx.category ?? "Other";
       // Exclude transfers from both income and expense totals? Keep for summary but flag.
@@ -315,6 +317,8 @@ router.get("/cashflow/summary", async (req: Request, res: Response) => {
         net,
         savingsRate,
         transactionCount: filtered.length,
+        incomeCount,
+        expenseCount,
         categories,
         topMerchants,
       },

@@ -292,6 +292,8 @@ export interface CashFlowSummary {
   net: number;
   savingsRate: number;
   transactionCount: number;
+  incomeCount: number;
+  expenseCount: number;
   categories: { name: string; value: number }[];
   topMerchants: { name: string; value: number }[];
 }

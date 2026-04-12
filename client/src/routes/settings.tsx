@@ -11,7 +11,7 @@ import { deleteAccount, exportUserData, clearAllHoldings } from "../services/api
 function SettingsPage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { data: holdings } = useHoldings();
+  const { data: holdings, isLoading: holdingsLoading } = useHoldings();
   const { theme, toggle: toggleTheme } = useTheme();
   const { baseCurrency, setBaseCurrency, currencies } = useCurrency();
   const queryClient = useQueryClient();
@@ -164,12 +164,12 @@ function SettingsPage() {
             <div>
               <h3 className="text-sm font-semibold text-[var(--text-primary)]">Clear All Holdings</h3>
               <p className="text-xs text-[var(--text-muted)] mt-1">
-                Remove all {holdings?.length ?? 0} holding(s) while keeping your account, uploads, and wallets. You can re-parse uploads afterwards.
+                Remove all {holdingsLoading ? "..." : `${holdings?.length ?? 0}`} holding(s) while keeping your account, uploads, and wallets. You can re-parse uploads afterwards.
               </p>
             </div>
             <button
               onClick={handleClearHoldings}
-              disabled={clearing || (holdings?.length ?? 0) === 0}
+              disabled={clearing || holdingsLoading || (holdings?.length ?? 0) === 0}
               className="shrink-0 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors disabled:opacity-50"
             >
               {clearing ? "Clearing..." : "Clear"}

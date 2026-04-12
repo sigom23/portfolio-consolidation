@@ -3,7 +3,7 @@ import { Route as rootRoute } from "./__root";
 import { useAuth } from "../hooks/useAuth";
 import { useHoldings, useWallets } from "../hooks/usePortfolio";
 import { useCurrency } from "../contexts/CurrencyContext";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { AnimatedNumber } from "../components/AnimatedNumber";
 import type { Holding, Wallet } from "../types";
@@ -19,12 +19,15 @@ type WalletGroup = {
   totalUsd: number;
 };
 
+const SPAM_THRESHOLD = 1; // $1
+
 function AssetsCryptoPage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { data: holdings, isLoading: holdingsLoading } = useHoldings();
   const { data: wallets, isLoading: walletsLoading } = useWallets();
   const { format, baseCurrency, flag } = useCurrency();
+  const [hideSpam, setHideSpam] = useState(true);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -35,6 +38,16 @@ function AssetsCryptoPage() {
   const cryptoHoldings = useMemo(
     () => (holdings ?? []).filter((h) => h.asset_type === "crypto"),
     [holdings]
+  );
+
+  const spamCount = useMemo(
+    () => cryptoHoldings.filter((h) => (h.value_usd ?? 0) < SPAM_THRESHOLD).length,
+    [cryptoHoldings]
+  );
+
+  const visibleHoldings = useMemo(
+    () => hideSpam ? cryptoHoldings.filter((h) => (h.value_usd ?? 0) >= SPAM_THRESHOLD) : cryptoHoldings,
+    [cryptoHoldings, hideSpam]
   );
 
   const totalUsd = useMemo(
@@ -53,7 +66,7 @@ function AssetsCryptoPage() {
       totalUsd: 0,
     };
 
-    for (const h of cryptoHoldings) {
+    for (const h of visibleHoldings) {
       const sourceId = h.source_id;
       if (!sourceId) {
         unassigned.holdings.push(h);
@@ -76,7 +89,7 @@ function AssetsCryptoPage() {
       g.holdings.sort((a, b) => (b.value_usd ?? 0) - (a.value_usd ?? 0));
     }
     return result;
-  }, [cryptoHoldings, wallets]);
+  }, [visibleHoldings, wallets]);
 
   if (authLoading || !user) {
     return (
@@ -119,8 +132,11 @@ function AssetsCryptoPage() {
           </p>
         )}
         <p className="text-[11px] text-[var(--text-muted)] mt-2">
-          {cryptoHoldings.length} token{cryptoHoldings.length === 1 ? "" : "s"} across{" "}
+          {visibleHoldings.length} token{visibleHoldings.length === 1 ? "" : "s"} across{" "}
           {groups.length} wallet{groups.length === 1 ? "" : "s"}
+          {hideSpam && spamCount > 0 && (
+            <span className="text-[var(--text-muted)]"> · {spamCount} low-value hidden</span>
+          )}
         </p>
       </motion.div>
 
@@ -137,6 +153,27 @@ function AssetsCryptoPage() {
         </div>
       ) : (
         <div className="space-y-6">
+          {spamCount > 0 && (
+            <div className="flex justify-end">
+              <button
+                onClick={() => setHideSpam(!hideSpam)}
+                className="flex items-center gap-2 text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
+              >
+                <div
+                  className={`w-8 h-4 rounded-full relative transition-colors ${
+                    hideSpam ? "bg-blue-500" : "bg-[var(--bg-tertiary)]"
+                  }`}
+                >
+                  <div
+                    className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform ${
+                      hideSpam ? "translate-x-4" : "translate-x-0.5"
+                    }`}
+                  />
+                </div>
+                Hide low-value tokens ({spamCount})
+              </button>
+            </div>
+          )}
           {groups.map((group, i) => (
             <motion.section
               key={group.sourceId ?? "unassigned"}

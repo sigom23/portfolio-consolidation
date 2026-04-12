@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState, useMemo } from "react";
 import { motion } from "motion/react";
 import {
   PieChart,
@@ -601,6 +601,17 @@ const INCOME_CATEGORIES = [
   "Transfers", "Other",
 ];
 
+type SortKey = "date" | "description" | "category" | "amount";
+type SortDir = "asc" | "desc";
+
+function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
+  return (
+    <svg className={`inline w-3 h-3 ml-1 transition-colors ${active ? "text-[var(--text-primary)]" : "text-[var(--text-muted)] opacity-0 group-hover:opacity-50"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={active && dir === "asc" ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"} />
+    </svg>
+  );
+}
+
 /** Shared transactions table — used by Income and Expenses. */
 export function TransactionsTable({
   transactions,
@@ -613,6 +624,40 @@ export function TransactionsTable({
 }) {
   const { format, rates } = useCurrency();
   const updateCategory = useUpdateTransactionCategory();
+  const [sortKey, setSortKey] = useState<SortKey>("date");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir(sortDir === "desc" ? "asc" : "desc");
+    } else {
+      setSortKey(key);
+      setSortDir(key === "amount" ? "desc" : "asc");
+    }
+  }
+
+  const sorted = useMemo(() => {
+    const txs = [...transactions];
+    txs.sort((a, b) => {
+      let cmp = 0;
+      switch (sortKey) {
+        case "date":
+          cmp = (a.date ?? "").localeCompare(b.date ?? "");
+          break;
+        case "description":
+          cmp = (a.description ?? "").localeCompare(b.description ?? "");
+          break;
+        case "category":
+          cmp = (a.category ?? "").localeCompare(b.category ?? "");
+          break;
+        case "amount":
+          cmp = Math.abs(a.amount) - Math.abs(b.amount);
+          break;
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+    return txs;
+  }, [transactions, sortKey, sortDir]);
 
   if (loading) {
     return (
@@ -642,14 +687,22 @@ export function TransactionsTable({
       <table className="w-full">
         <thead>
           <tr className="text-left text-xs text-[var(--text-muted)] border-b border-[var(--border-color)]">
-            <th className="px-6 py-3 font-medium">Date</th>
-            <th className="px-6 py-3 font-medium">Description</th>
-            <th className="px-6 py-3 font-medium">Category</th>
-            <th className="px-6 py-3 font-medium text-right">Amount</th>
+            <th className="px-6 py-3 font-medium cursor-pointer select-none group" onClick={() => toggleSort("date")}>
+              Date<SortIcon active={sortKey === "date"} dir={sortDir} />
+            </th>
+            <th className="px-6 py-3 font-medium cursor-pointer select-none group" onClick={() => toggleSort("description")}>
+              Description<SortIcon active={sortKey === "description"} dir={sortDir} />
+            </th>
+            <th className="px-6 py-3 font-medium cursor-pointer select-none group" onClick={() => toggleSort("category")}>
+              Category<SortIcon active={sortKey === "category"} dir={sortDir} />
+            </th>
+            <th className="px-6 py-3 font-medium text-right cursor-pointer select-none group" onClick={() => toggleSort("amount")}>
+              Amount<SortIcon active={sortKey === "amount"} dir={sortDir} />
+            </th>
           </tr>
         </thead>
         <tbody>
-          {transactions.map((tx, i) => {
+          {sorted.map((tx, i) => {
             const amountUsd =
               tx.amount_usd ?? toUsd(tx.amount, tx.currency, rates);
             const isIncome = tx.amount > 0;

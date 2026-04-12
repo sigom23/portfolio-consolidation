@@ -275,7 +275,7 @@ export function AddStreamModal({ open, onClose, stream }: Props) {
                 </div>
 
                 {mutation.isError && (
-                  <p className="text-xs text-red-500">{mutation.error.message}</p>
+                  <p className="text-xs text-[var(--color-negative)]">{mutation.error.message}</p>
                 )}
 
                 <div className="flex gap-2 pt-2">

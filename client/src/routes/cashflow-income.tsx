@@ -136,7 +136,7 @@ function CashFlowIncomePage() {
         {summaryLoading ? (
           <div className="h-10 w-56 bg-[var(--bg-tertiary)] rounded animate-pulse" />
         ) : (
-          <p className="text-[38px] font-serif font-light tracking-[-0.03em] text-green-500 tabular-nums tracking-tight">
+          <p className="text-[38px] font-serif font-light tracking-[-0.03em] text-[var(--color-positive)] tabular-nums tracking-tight">
             +<AnimatedNumber value={summary?.income ?? 0} format={format} />
           </p>
         )}
@@ -268,7 +268,7 @@ function StreamCard({
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            className="text-[var(--text-muted)] hover:text-red-500 transition-colors"
+            className="text-[var(--text-muted)] hover:text-[var(--color-negative)] transition-colors"
             title="Delete stream"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

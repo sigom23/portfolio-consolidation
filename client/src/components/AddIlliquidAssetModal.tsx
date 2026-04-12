@@ -491,7 +491,7 @@ export function AddIlliquidAssetModal({ open, subtype, onClose, editAsset, prefi
                 </div>
 
                 {(create.isError || update.isError) && (
-                  <p className="text-xs text-red-500">{(create.error ?? update.error)?.message}</p>
+                  <p className="text-xs text-[var(--color-negative)]">{(create.error ?? update.error)?.message}</p>
                 )}
 
                 <div className="flex gap-2 pt-2">

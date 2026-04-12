@@ -23,10 +23,10 @@ const TABS: {
   emptyCopy: string;
   color: string;
 }[] = [
-  { key: "private_equity", label: "Private Equity", emptyCopy: "No private equity funds tracked yet.", color: "#8b5cf6" },
-  { key: "pension", label: "Pension", emptyCopy: "No pension accounts tracked yet.", color: "#06b6d4" },
-  { key: "unvested_equity", label: "Unvested Equity", emptyCopy: "No grants tracked yet.", color: "#3b82f6" },
-  { key: "startup", label: "Startup", emptyCopy: "No startup investments tracked yet.", color: "#f59e0b" },
+  { key: "private_equity", label: "Private Equity", emptyCopy: "No private equity funds tracked yet.", color: "#A89B8C" },
+  { key: "pension", label: "Pension", emptyCopy: "No pension accounts tracked yet.", color: "#7D8E7B" },
+  { key: "unvested_equity", label: "Unvested Equity", emptyCopy: "No grants tracked yet.", color: "#6B7B8D" },
+  { key: "startup", label: "Startup", emptyCopy: "No startup investments tracked yet.", color: "#8E87A5" },
 ];
 
 const STRATEGY_LABELS: Record<string, string> = {
@@ -230,9 +230,9 @@ function AssetsIlliquidPage() {
 // ============================================================
 
 // Bar colors — tonal, restrained, matching the premium palette
-const BAR_CALLED = "#8b5cf6";        // violet — capital drawn
-const BAR_DISTRIBUTED = "#22c55e";   // green — cash returned
-const BAR_NAV = "#3b82f6";           // blue — unrealized value
+const BAR_CALLED = "#A89B8C";        // violet — capital drawn
+const BAR_DISTRIBUTED = "#6E9E96";   // green — cash returned
+const BAR_NAV = "#6B7B8D";           // blue — unrealized value
 
 function PETab({
   items,
@@ -320,7 +320,7 @@ function PETab({
           />
         </div>
         {parseNewMutation.isError && (
-          <p className="mt-3 text-xs text-red-500">{parseNewMutation.error.message}</p>
+          <p className="mt-3 text-xs text-[var(--color-negative)]">{parseNewMutation.error.message}</p>
         )}
       </div>
     );
@@ -381,7 +381,7 @@ function PETab({
           />
         </div>
         {parseNewMutation.isError && (
-          <p className="px-6 pb-4 text-xs text-red-500 text-center">{parseNewMutation.error.message}</p>
+          <p className="px-6 pb-4 text-xs text-[var(--color-negative)] text-center">{parseNewMutation.error.message}</p>
         )}
       </div>
     </div>
@@ -591,12 +591,12 @@ function PEFundRow({
               <button
                 onClick={(e) => { e.stopPropagation(); handleDelete(); }}
                 disabled={deleteMutation.isPending}
-                className="px-3 py-1.5 rounded-[2px] border border-[var(--color-negative)]/30 text-xs font-medium text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 rounded-[2px] border border-[var(--color-negative)]/30 text-xs font-medium text-[var(--color-negative)] hover:bg-[var(--color-negative)]/10 transition-colors disabled:opacity-50"
               >
                 {deleteMutation.isPending ? "Deleting..." : "Delete"}
               </button>
               {uploadMutation.isError && (
-                <span className="text-xs text-red-500">{uploadMutation.error.message}</span>
+                <span className="text-xs text-[var(--color-negative)]">{uploadMutation.error.message}</span>
               )}
             </div>
           </div>
@@ -613,7 +613,7 @@ function KpiCard({ label, value, accent }: { label: string; value: string; accen
   return (
     <div className="p-4 rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)]">
       <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1.5">{label}</p>
-      <p className={`text-[18px] font-medium tabular-nums tracking-tight ${accent ? "text-green-500" : "text-[var(--text-primary)]"}`}>
+      <p className={`text-[18px] font-medium tabular-nums tracking-tight ${accent ? "text-[var(--color-positive)]" : "text-[var(--text-primary)]"}`}>
         {value}
       </p>
     </div>
@@ -632,7 +632,7 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 function Metric({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
     <div>
-      <p className={`text-xs font-semibold ${accent ? "text-green-500" : "text-[var(--text-primary)]"}`}>{value}</p>
+      <p className={`text-xs font-semibold ${accent ? "text-[var(--color-positive)]" : "text-[var(--text-primary)]"}`}>{value}</p>
       <p className="text-[9px] text-[var(--text-muted)] uppercase tracking-wider">{label}</p>
     </div>
   );
@@ -753,7 +753,7 @@ function AssetRow({ asset, onEdit }: { asset: IlliquidAsset; onEdit: () => void 
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" />
           </svg>
         </button>
-        <button onClick={handleDelete} disabled={deleteMutation.isPending} aria-label="Delete asset" className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md text-[var(--text-muted)] hover:text-red-500 hover:bg-red-500/10 disabled:opacity-50">
+        <button onClick={handleDelete} disabled={deleteMutation.isPending} aria-label="Delete asset" className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md text-[var(--text-muted)] hover:text-[var(--color-negative)] hover:bg-[var(--color-negative)]/10 disabled:opacity-50">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
           </svg>

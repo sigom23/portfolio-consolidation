@@ -25,13 +25,13 @@ import type {
 // ============================================================
 
 export const TYPE_COLORS: Record<IncomeStreamType, string> = {
-  salary: "#3b82f6",
-  dividend: "#8b5cf6",
-  freelance: "#f59e0b",
-  pension: "#14b8a6",
-  interest: "#22c55e",
-  rental: "#06b6d4",
-  other: "#64748b",
+  salary: "#6B7B8D",
+  dividend: "#A89B8C",
+  freelance: "#8E87A5",
+  pension: "#6E9E96",
+  interest: "#6E9E96",
+  rental: "#7D8E7B",
+  other: "#B8B8BD",
 };
 
 export const TYPE_LABELS: Record<IncomeStreamType, string> = {
@@ -45,19 +45,19 @@ export const TYPE_LABELS: Record<IncomeStreamType, string> = {
 };
 
 export const CATEGORY_COLORS: Record<string, string> = {
-  Housing: "#3b82f6",
-  Groceries: "#10b981",
-  Transport: "#6366f1",
-  "Food & Drink": "#f97316",
-  Shopping: "#ec4899",
-  Entertainment: "#8b5cf6",
-  Health: "#ef4444",
-  Travel: "#14b8a6",
-  Subscriptions: "#a78bfa",
-  Bills: "#f59e0b",
-  Boat: "#06b6d4",
-  Income: "#22c55e",
-  Transfers: "#64748b",
+  Housing: "#6B7B8D",
+  Groceries: "#6E9E96",
+  Transport: "#8E87A5",
+  "Food & Drink": "#C4A96D",
+  Shopping: "#A89B8C",
+  Entertainment: "#A89B8C",
+  Health: "#C47D6D",
+  Travel: "#6E9E96",
+  Subscriptions: "#8E87A5",
+  Bills: "#8E87A5",
+  Boat: "#7D8E7B",
+  Income: "#6E9E96",
+  Transfers: "#B8B8BD",
   Other: "#94a3b8",
 };
 
@@ -78,7 +78,7 @@ export const CURRENCY_SYMBOLS: Record<string, string> = {
 export function getCategoryColor(cat: string, i: number): string {
   return (
     CATEGORY_COLORS[cat] ??
-    ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#6366f1"][i % 6]
+    ["#6B7B8D", "#6E9E96", "#8E87A5", "#C47D6D", "#A89B8C", "#8E87A5"][i % 6]
   );
 }
 
@@ -231,10 +231,10 @@ export function UploadButton({
         {mutation.isPending ? "Parsing..." : label}
       </button>
       {mutation.isError && (
-        <span className="text-xs text-red-500">{mutation.error.message}</span>
+        <span className="text-xs text-[var(--color-negative)]">{mutation.error.message}</span>
       )}
       {mutation.isSuccess && (
-        <span className="text-xs text-green-500">
+        <span className="text-xs text-[var(--color-positive)]">
           {mutation.data?.kind === "salary"
             ? (mutation.data as any).updated ? "Stream updated" : "Stream created"
             : `${mutation.data?.inserted ?? 0} inserted`}
@@ -381,7 +381,7 @@ export function MonthlyTrendCard({
     value: byMonth[m] ?? 0,
   }));
 
-  const barColor = isIncome ? "#22c55e" : "#ef4444";
+  const barColor = isIncome ? "#6E9E96" : "#C47D6D";
 
   return (
     <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full">
@@ -707,7 +707,7 @@ export function TransactionsTable({
               tx.amount_usd ?? toUsd(tx.amount, tx.currency, rates);
             const isIncome = tx.amount > 0;
             const sign = isIncome ? "+" : "-";
-            const colorClass = isIncome ? "text-green-500" : "text-red-500";
+            const colorClass = isIncome ? "text-[var(--color-positive)]" : "text-[var(--color-negative)]";
             return (
               <motion.tr
                 key={tx.id}

@@ -176,7 +176,7 @@ function SettingsPage() {
             </button>
           </div>
           {clearResult !== null && (
-            <p className="text-xs text-green-500 mt-2">Cleared {clearResult} holding(s)</p>
+            <p className="text-xs text-[var(--color-positive)] mt-2">Cleared {clearResult} holding(s)</p>
           )}
         </div>
 
@@ -184,7 +184,7 @@ function SettingsPage() {
         <div className="rounded-[2px] border border-[var(--color-negative)]/30 bg-[var(--bg-secondary)] p-6 transition-colors">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h3 className="text-sm font-semibold text-red-500">Delete My Account</h3>
+              <h3 className="text-sm font-semibold text-[var(--color-negative)]">Delete My Account</h3>
               <p className="text-xs text-[var(--text-muted)] mt-1">
                 Permanently delete your account and all associated data including holdings, uploads, and wallets. This cannot be undone.
               </p>

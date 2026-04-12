@@ -21,10 +21,10 @@ const KIND_LABELS: Record<string, string> = {
 };
 
 const KIND_COLORS: Record<string, string> = {
-  salary: "#3b82f6",
-  transactions: "#ef4444",
-  wealth: "#22c55e",
-  pe_statement: "#8b5cf6",
+  salary: "#6B7B8D",
+  transactions: "#C47D6D",
+  wealth: "#6E9E96",
+  pe_statement: "#A89B8C",
 };
 
 interface QueueItem {
@@ -251,12 +251,12 @@ function DataRoomPage() {
                       <div className="w-5 h-5 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
                     )}
                     {item.status === "done" && (
-                      <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-[var(--color-positive)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                     )}
                     {item.status === "error" && (
-                      <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-[var(--color-negative)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     )}
@@ -286,10 +286,10 @@ function DataRoomPage() {
                     {item.status === "detecting" && "Classifying..."}
                     {item.status === "processing" && "Processing..."}
                     {item.status === "done" && (
-                      <span className="text-green-500">{item.result}</span>
+                      <span className="text-[var(--color-positive)]">{item.result}</span>
                     )}
                     {item.status === "error" && (
-                      <span className="text-red-500">{item.error}</span>
+                      <span className="text-[var(--color-negative)]">{item.error}</span>
                     )}
                   </span>
 
@@ -306,7 +306,7 @@ function DataRoomPage() {
                     {(item.status === "queued" || item.status === "done" || item.status === "error") && (
                       <button
                         onClick={() => removeFromQueue(item.id)}
-                        className="text-[var(--text-muted)] hover:text-red-500 transition-colors"
+                        className="text-[var(--text-muted)] hover:text-[var(--color-negative)] transition-colors"
                         title="Remove"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -364,9 +364,9 @@ function DataRoomPage() {
                       </td>
                       <td className="px-6 py-3 text-sm">
                         <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                          u.status === "processed" ? "bg-green-500/10 text-green-500"
-                            : u.status === "failed" ? "bg-red-500/10 text-red-500"
-                              : "bg-yellow-500/10 text-yellow-500"
+                          u.status === "processed" ? "bg-[var(--color-positive)]/10 text-[var(--color-positive)]"
+                            : u.status === "failed" ? "bg-[var(--color-negative)]/10 text-[var(--color-negative)]"
+                              : "bg-[var(--color-pending)]/10 text-[var(--color-pending)]"
                         }`}>
                           {u.status}
                         </span>
@@ -385,7 +385,7 @@ function DataRoomPage() {
                           <button
                             onClick={() => deleteMutation.mutate(u.id)}
                             disabled={deleteMutation.isPending}
-                            className="text-red-500 hover:text-red-400 text-xs"
+                            className="text-[var(--color-negative)] hover:text-[var(--color-negative)] text-xs"
                           >
                             Delete
                           </button>

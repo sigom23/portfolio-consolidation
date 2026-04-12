@@ -188,7 +188,7 @@ function RealEstatePage() {
             </p>
             <p className="text-xs text-[var(--text-muted)]">
               Net monthly:{" "}
-              <span className={`font-medium ${totals.netMonthly >= 0 ? "text-green-500" : "text-red-500"}`}>
+              <span className={`font-medium ${totals.netMonthly >= 0 ? "text-[var(--color-positive)]" : "text-[var(--color-negative)]"}`}>
                 {totals.netMonthly >= 0 ? "+" : ""}{format(totals.netMonthly)}
               </span>
             </p>
@@ -286,7 +286,7 @@ function PropertyCard({
         </p>
         {appreciation != null && (
           <p className="text-[11px] mt-0.5">
-            <span className={appreciation >= 0 ? "text-green-500" : "text-red-500"}>
+            <span className={appreciation >= 0 ? "text-[var(--color-positive)]" : "text-[var(--color-negative)]"}>
               {appreciation >= 0 ? "+" : ""}
               {appreciation.toFixed(1)}%
             </span>
@@ -310,7 +310,7 @@ function PropertyCard({
         <div className="pt-2 border-t border-[var(--border-color)]/50 flex items-center justify-between">
           <span className="text-xs font-medium text-[var(--text-secondary)]">Net / month</span>
           <span className={`text-sm font-bold tabular-nums ${
-            property.net_monthly_income >= 0 ? "text-green-500" : "text-red-500"
+            property.net_monthly_income >= 0 ? "text-[var(--color-positive)]" : "text-[var(--color-negative)]"
           }`}>
             {property.net_monthly_income >= 0 ? "+" : "-"}
             {formatLocalDecimals(Math.abs(property.net_monthly_income), property.currency)}
@@ -320,7 +320,7 @@ function PropertyCard({
           <div className="flex items-center justify-between pt-1">
             <span className="text-[11px] text-[var(--text-muted)]">Annual ROI on equity</span>
             <span className={`text-[11px] font-medium tabular-nums ${
-              roi >= 0 ? "text-[var(--text-secondary)]" : "text-red-500"
+              roi >= 0 ? "text-[var(--text-secondary)]" : "text-[var(--color-negative)]"
             }`}>
               {roi.toFixed(1)}%
             </span>
@@ -335,7 +335,7 @@ function Row({ label, value, positive }: { label: string; value: string; positiv
   return (
     <div className="flex items-center justify-between">
       <span className="text-[11px] text-[var(--text-muted)]">{label}</span>
-      <span className={`text-xs font-medium tabular-nums ${positive ? "text-green-500" : "text-[var(--text-primary)]"}`}>
+      <span className={`text-xs font-medium tabular-nums ${positive ? "text-[var(--color-positive)]" : "text-[var(--text-primary)]"}`}>
         {value}
       </span>
     </div>
@@ -500,7 +500,7 @@ function AddPropertyModal({ open, onClose, editProperty }: { open: boolean; onCl
                     />
                   </Field>
                 </div>
-                {(create.isError || updateProp.isError) && <p className="text-xs text-red-500">{(create.error ?? updateProp.error)?.message}</p>}
+                {(create.isError || updateProp.isError) && <p className="text-xs text-[var(--color-negative)]">{(create.error ?? updateProp.error)?.message}</p>}
                 <div className="flex gap-2 pt-2">
                   <button type="button" onClick={onClose} className={cancelBtn}>
                     Cancel
@@ -688,7 +688,7 @@ function PropertyDetailDrawer({
                           <p className="text-[10px] text-[var(--text-muted)]">{r.frequency}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-green-500 tabular-nums">
+                          <span className="text-xs font-semibold text-[var(--color-positive)] tabular-nums">
                             +{formatLocalDecimals(r.amount, r.currency)}
                           </span>
                           <button
@@ -705,7 +705,7 @@ function PropertyDetailDrawer({
                               if (!confirm(`Remove "${r.name}"?`)) return;
                               await deleteStream.mutateAsync(r.id);
                             }}
-                            className="opacity-0 group-hover:opacity-100 text-[var(--text-muted)] hover:text-red-500 transition-all"
+                            className="opacity-0 group-hover:opacity-100 text-[var(--text-muted)] hover:text-[var(--color-negative)] transition-all"
                             title="Delete"
                           >
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -724,7 +724,7 @@ function PropertyDetailDrawer({
                 <button
                   onClick={handleDelete}
                   disabled={deleteProp.isPending}
-                  className="w-full px-4 py-2 rounded-[2px] border border-[var(--color-negative)]/30 text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                  className="w-full px-4 py-2 rounded-[2px] border border-[var(--color-negative)]/30 text-sm font-medium text-[var(--color-negative)] hover:bg-[var(--color-negative)]/10 transition-colors disabled:opacity-50"
                 >
                   {deleteProp.isPending ? "Deleting..." : "Delete Property"}
                 </button>
@@ -765,7 +765,7 @@ function PropertyDetailDrawer({
 }
 
 function SummaryBox({ label, value, color }: { label: string; value: string; color?: "green" | "red" }) {
-  const colorClass = color === "green" ? "text-green-500" : color === "red" ? "text-red-500" : "text-[var(--text-primary)]";
+  const colorClass = color === "green" ? "text-[var(--color-positive)]" : color === "red" ? "text-[var(--color-negative)]" : "text-[var(--text-primary)]";
   return (
     <div className="p-3 rounded-[2px] bg-[var(--bg-tertiary)]/50 border border-[var(--border-color)]">
       <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] mb-0.5">{label}</p>
@@ -807,7 +807,7 @@ function MortgageRow({ mortgage, propertyCurrency, onEdit }: { mortgage: Propert
           onClick={() => {
             if (confirm(`Delete mortgage "${mortgage.lender ?? "this mortgage"}"?`)) deleteM.mutate(mortgage.id);
           }}
-          className="text-[var(--text-muted)] hover:text-red-500 transition-colors"
+          className="text-[var(--text-muted)] hover:text-[var(--color-negative)] transition-colors"
           title="Delete mortgage"
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -848,7 +848,7 @@ function CostRow({ cost, onEdit }: { cost: PropertyCost; onEdit: () => void }) {
           onClick={() => {
             if (confirm(`Delete cost "${cost.label}"?`)) deleteC.mutate(cost.id);
           }}
-          className="text-[var(--text-muted)] hover:text-red-500 transition-colors"
+          className="text-[var(--text-muted)] hover:text-[var(--color-negative)] transition-colors"
           title="Delete cost"
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -973,7 +973,7 @@ function AddMortgageModal({
                     <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClass} />
                   </Field>
                 </div>
-                {(create.isError || updateM.isError) && <p className="text-xs text-red-500">{(create.error ?? updateM.error)?.message}</p>}
+                {(create.isError || updateM.isError) && <p className="text-xs text-[var(--color-negative)]">{(create.error ?? updateM.error)?.message}</p>}
                 <div className="flex gap-2 pt-2">
                   <button type="button" onClick={onClose} className={cancelBtn}>Cancel</button>
                   <button type="submit" disabled={create.isPending || updateM.isPending} className={submitBtn}>
@@ -1100,7 +1100,7 @@ function AddCostModal({
                     </select>
                   </Field>
                 </div>
-                {(create.isError || updateC.isError) && <p className="text-xs text-red-500">{(create.error ?? updateC.error)?.message}</p>}
+                {(create.isError || updateC.isError) && <p className="text-xs text-[var(--color-negative)]">{(create.error ?? updateC.error)?.message}</p>}
                 <div className="flex gap-2 pt-2">
                   <button type="button" onClick={onClose} className={cancelBtn}>Cancel</button>
                   <button type="submit" disabled={create.isPending || updateC.isPending} className={submitBtn}>
@@ -1262,7 +1262,7 @@ function AddRentalStreamModal({
                 <Field label="Notes (optional)">
                   <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} className={inputClass} />
                 </Field>
-                {mutation.isError && <p className="text-xs text-red-500">{mutation.error.message}</p>}
+                {mutation.isError && <p className="text-xs text-[var(--color-negative)]">{mutation.error.message}</p>}
                 <div className="flex gap-2 pt-2">
                   <button type="button" onClick={onClose} className={cancelBtn}>Cancel</button>
                   <button type="submit" disabled={mutation.isPending} className={submitBtn}>

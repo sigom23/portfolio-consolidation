@@ -3,12 +3,12 @@ import { useCurrency } from "../contexts/CurrencyContext";
 import { motion } from "motion/react";
 
 const CATEGORIES: { key: keyof PortfolioSummary["breakdown"]; label: string; color: string }[] = [
-  { key: "stocks", label: "Stocks", color: "#3b82f6" },
-  { key: "real_estate", label: "Real Estate", color: "#06b6d4" },
-  { key: "crypto", label: "Crypto", color: "#8b5cf6" },
-  { key: "bonds", label: "Bonds", color: "#14b8a6" },
-  { key: "cash", label: "Cash", color: "#22c55e" },
-  { key: "other", label: "Other", color: "#64748b" },
+  { key: "stocks", label: "Stocks", color: "#6B7B8D" },
+  { key: "real_estate", label: "Real Estate", color: "#7D8E7B" },
+  { key: "crypto", label: "Crypto", color: "#A89B8C" },
+  { key: "bonds", label: "Bonds", color: "#6E9E96" },
+  { key: "cash", label: "Cash", color: "#6E9E96" },
+  { key: "other", label: "Other", color: "#B8B8BD" },
 ];
 
 interface Props {

@@ -100,10 +100,10 @@ function MyWealthPage() {
   const loading = holdingsLoading || propertiesLoading;
 
   const categories: Category[] = [
-    { key: "liquid", label: "Liquid", to: "/assets/liquid", value: categoryTotals.liquid, color: "#3b82f6" },
-    { key: "illiquid", label: "Illiquid", to: "/assets/illiquid", value: categoryTotals.illiquid, color: "#8b5cf6" },
-    { key: "real_estate", label: "Real Estate", to: "/assets/real-estate", value: categoryTotals.real_estate, color: "#06b6d4" },
-    { key: "crypto", label: "Crypto", to: "/assets/crypto", value: categoryTotals.crypto, color: "#f59e0b" },
+    { key: "liquid", label: "Liquid", to: "/assets/liquid", value: categoryTotals.liquid, color: "#6B7B8D" },
+    { key: "illiquid", label: "Illiquid", to: "/assets/illiquid", value: categoryTotals.illiquid, color: "#A89B8C" },
+    { key: "real_estate", label: "Real Estate", to: "/assets/real-estate", value: categoryTotals.real_estate, color: "#7D8E7B" },
+    { key: "crypto", label: "Crypto", to: "/assets/crypto", value: categoryTotals.crypto, color: "#8E87A5" },
   ];
 
   const donutData = categories
@@ -177,7 +177,7 @@ function MyWealthPage() {
             </span>
             <span>
               Liabilities{" "}
-              <span className="font-medium text-red-500 tabular-nums">
+              <span className="font-medium text-[var(--color-negative)] tabular-nums">
                 -{format(totalMortgageUsd)}
               </span>
             </span>
@@ -256,7 +256,7 @@ function MyWealthPage() {
               ) : (
                 <p
                   className={`mt-1 text-[27px] font-serif font-light tabular-nums tracking-tight ${
-                    (cashFlow?.net ?? 0) >= 0 ? "text-green-500" : "text-red-500"
+                    (cashFlow?.net ?? 0) >= 0 ? "text-[var(--color-positive)]" : "text-[var(--color-negative)]"
                   }`}
                 >
                   {(cashFlow?.net ?? 0) >= 0 ? "+" : "-"}
@@ -289,10 +289,10 @@ function MyWealthPage() {
                   <p
                     className={`text-[18px] font-serif font-normal tabular-nums ${
                       cashFlow.savingsRate >= 0.2
-                        ? "text-green-500"
+                        ? "text-[var(--color-positive)]"
                         : cashFlow.savingsRate >= 0
-                          ? "text-yellow-500"
-                          : "text-red-500"
+                          ? "text-[var(--color-pending)]"
+                          : "text-[var(--color-negative)]"
                     }`}
                   >
                     {(cashFlow.savingsRate * 100).toFixed(0)}%
@@ -326,16 +326,16 @@ function MyWealthPage() {
           ) : (
             <div className="flex items-center gap-6">
               {/* Donut */}
-              <div className="relative w-40 h-40 flex-shrink-0">
+              <div className="relative w-[180px] h-[180px] flex-shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={donutData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={48}
-                      outerRadius={68}
-                      paddingAngle={3}
+                      innerRadius={66}
+                      outerRadius={88}
+                      paddingAngle={2}
                       dataKey="value"
                       strokeWidth={0}
                     >
@@ -346,12 +346,9 @@ function MyWealthPage() {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="text-center">
-                    <p className="text-[10px] text-[var(--text-muted)]">Net Worth</p>
-                    <p className="text-sm font-bold text-[var(--text-primary)]">
-                      {format(netWorth)}
-                    </p>
-                  </div>
+                  <p className="text-[27px] font-serif font-light text-[var(--text-primary)]">
+                    {format(netWorth)}
+                  </p>
                 </div>
               </div>
 

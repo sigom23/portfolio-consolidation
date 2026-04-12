@@ -62,7 +62,7 @@ export function WalletList({ wallets, loading, showAddForm = true }: Props) {
             </button>
           </div>
           {addMutation.isError && (
-            <p className="mt-2 text-sm text-red-500">{addMutation.error.message}</p>
+            <p className="mt-2 text-sm text-[var(--color-negative)]">{addMutation.error.message}</p>
           )}
         </div>
       )}
@@ -98,14 +98,14 @@ export function WalletList({ wallets, loading, showAddForm = true }: Props) {
                   <button
                     onClick={() => refreshMutation.mutate(w.id)}
                     disabled={refreshMutation.isPending}
-                    className="px-3 py-1.5 text-xs bg-green-500/10 text-green-500 rounded-[2px] hover:bg-green-500/20 disabled:opacity-50 transition-colors"
+                    className="px-3 py-1.5 text-xs bg-[var(--color-positive)]/10 text-[var(--color-positive)] rounded-[2px] hover:bg-[var(--color-positive)]/20 disabled:opacity-50 transition-colors"
                   >
                     {refreshMutation.isPending ? "Refreshing..." : "Refresh"}
                   </button>
                   <button
                     onClick={() => deleteMutation.mutate(w.id)}
                     disabled={deleteMutation.isPending}
-                    className="px-3 py-1.5 text-xs text-red-500 hover:text-red-400 transition-colors"
+                    className="px-3 py-1.5 text-xs text-[var(--color-negative)] hover:text-[var(--color-negative)] transition-colors"
                   >
                     Delete
                   </button>

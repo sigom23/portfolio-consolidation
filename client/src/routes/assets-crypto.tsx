@@ -172,7 +172,7 @@ function AssetsCryptoPage() {
             </button>
           </div>
           {addWallet.isError && (
-            <p className="mt-2 text-xs text-red-500">{addWallet.error.message}</p>
+            <p className="mt-2 text-xs text-[var(--color-negative)]">{addWallet.error.message}</p>
           )}
         </motion.div>
       )}
@@ -266,14 +266,14 @@ function AssetsCryptoPage() {
                       <button
                         onClick={() => refreshWallet.mutate(group.wallet!.id)}
                         disabled={refreshWallet.isPending}
-                        className="px-2 py-1 text-[10px] bg-green-500/10 text-green-500 rounded hover:bg-green-500/20 disabled:opacity-50 transition-colors"
+                        className="px-2 py-1 text-[10px] bg-[var(--color-positive)]/10 text-[var(--color-positive)] rounded hover:bg-[var(--color-positive)]/20 disabled:opacity-50 transition-colors"
                         title="Refresh"
                       >
                         {refreshWallet.isPending ? "..." : "Refresh"}
                       </button>
                       <button
                         onClick={() => { if (confirm(`Delete wallet ${truncateAddress(group.wallet!.address)}?`)) deleteWallet.mutate(group.wallet!.id); }}
-                        className="px-2 py-1 text-[10px] text-red-500 hover:text-red-400 transition-colors"
+                        className="px-2 py-1 text-[10px] text-[var(--color-negative)] hover:text-[var(--color-negative)] transition-colors"
                         title="Delete"
                       >
                         Delete

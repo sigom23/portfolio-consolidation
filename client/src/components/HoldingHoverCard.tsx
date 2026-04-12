@@ -101,8 +101,8 @@ export function HoldingHoverCard({ ticker, exchCode, figiData, children }: Props
   }, []);
 
   const chartColor = history.length >= 2 && history[history.length - 1].price >= history[0].price
-    ? "#22c55e"
-    : "#ef4444";
+    ? "#6E9E96"
+    : "#C47D6D";
 
   const hasChart = history.length > 1;
   const cardWidth = hasChart ? "w-[38rem]" : "w-80";
@@ -147,7 +147,7 @@ export function HoldingHoverCard({ ticker, exchCode, figiData, children }: Props
               <span className="text-[18px] font-medium text-[var(--text-primary)] tabular-nums">
                 {formatNativePrice(profile.price, profile.currency)}
               </span>
-              <span className={`text-xs font-medium ${profile.change >= 0 ? "text-green-500" : "text-red-500"}`}>
+              <span className={`text-xs font-medium ${profile.change >= 0 ? "text-[var(--color-positive)]" : "text-[var(--color-negative)]"}`}>
                 {profile.change >= 0 ? "+" : ""}{profile.changePercentage.toFixed(2)}%
               </span>
             </div>

@@ -6,11 +6,11 @@ export interface GeographyAllocation {
 }
 
 const REGION_COLORS: Record<string, string> = {
-  "North America": "#3b82f6",
-  Europe: "#8b5cf6",
-  "Asia Pacific": "#14b8a6",
-  "Emerging Markets": "#f59e0b",
-  Unknown: "#64748b",
+  "North America": "#6B7B8D",
+  Europe: "#A89B8C",
+  "Asia Pacific": "#6E9E96",
+  "Emerging Markets": "#8E87A5",
+  Unknown: "#B8B8BD",
 };
 
 const REGION_FLAGS: Record<string, string> = {
@@ -22,7 +22,7 @@ const REGION_FLAGS: Record<string, string> = {
 
 function getColor(region: string, index: number): string {
   if (REGION_COLORS[region]) return REGION_COLORS[region];
-  const fallbacks = ["#7dd3fc", "#a78bfa", "#86efac", "#fbbf24"];
+  const fallbacks = ["#6B7B8D", "#8E87A5", "#7D8E7B", "#fbbf24"];
   return fallbacks[index % fallbacks.length];
 }
 

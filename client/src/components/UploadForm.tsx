@@ -93,13 +93,13 @@ export function UploadForm() {
         </button>
 
         {mutation.isError && (
-          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-[2px] text-sm text-red-500">
+          <div className="p-3 bg-[var(--color-negative)]/10 border border-[var(--color-negative)]/20 rounded-[2px] text-sm text-[var(--color-negative)]">
             {mutation.error.message}
           </div>
         )}
 
         {mutation.isSuccess && (
-          <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-[2px] text-sm text-green-500">
+          <div className="p-3 bg-[var(--color-positive)]/10 border border-[var(--color-positive)]/20 rounded-[2px] text-sm text-[var(--color-positive)]">
             {successMessage}
           </div>
         )}

@@ -126,7 +126,7 @@ function AssetsLiquidPage() {
             </svg>
             {refreshPrices.isPending ? "Updating..." : "Refresh"}
             {refreshPrices.isSuccess && (
-              <span className="text-green-500 text-xs">({refreshPrices.data.updated})</span>
+              <span className="text-[var(--color-positive)] text-xs">({refreshPrices.data.updated})</span>
             )}
           </button>
           <a

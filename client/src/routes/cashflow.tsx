@@ -54,7 +54,7 @@ function CashFlowOverviewPage() {
   const expenses = summary?.expenses ?? 0;
   const net = summary?.net ?? 0;
   const savingsRate = summary?.savingsRate ?? 0;
-  const netColor = net >= 0 ? "text-green-500" : "text-red-500";
+  const netColor = net >= 0 ? "text-[var(--color-positive)]" : "text-[var(--color-negative)]";
 
   return (
     <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto">
@@ -100,10 +100,10 @@ function CashFlowOverviewPage() {
           <span
             className={`font-medium ${
               savingsRate >= 0.2
-                ? "text-green-500"
+                ? "text-[var(--color-positive)]"
                 : savingsRate >= 0
-                  ? "text-yellow-500"
-                  : "text-red-500"
+                  ? "text-[var(--color-pending)]"
+                  : "text-[var(--color-negative)]"
             }`}
           >
             {(savingsRate * 100).toFixed(1)}%
@@ -122,7 +122,7 @@ function CashFlowOverviewPage() {
           <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)] mb-1">
             Income
           </p>
-          <p className="text-[27px] font-serif font-normal tracking-[-0.03em] text-green-500 tabular-nums tracking-tight">
+          <p className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--color-positive)] tabular-nums tracking-tight">
             +{format(income)}
           </p>
         </motion.div>
@@ -135,7 +135,7 @@ function CashFlowOverviewPage() {
           <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)] mb-1">
             Expenses
           </p>
-          <p className="text-[27px] font-serif font-normal tracking-[-0.03em] text-red-500 tabular-nums tracking-tight">
+          <p className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--color-negative)] tabular-nums tracking-tight">
             -{format(expenses)}
           </p>
         </motion.div>

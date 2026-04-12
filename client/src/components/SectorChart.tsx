@@ -3,23 +3,23 @@ import { useCurrency } from "../contexts/CurrencyContext";
 import type { SectorAllocation } from "../services/api";
 
 const SECTOR_COLORS: Record<string, string> = {
-  Technology: "#3b82f6",
-  "Financial Services": "#10b981",
-  Healthcare: "#ef4444",
-  "Consumer Defensive": "#f59e0b",
-  "Consumer Cyclical": "#f97316",
-  "Communication Services": "#8b5cf6",
-  Industrials: "#6366f1",
-  Energy: "#14b8a6",
-  "Real Estate": "#ec4899",
-  Utilities: "#84cc16",
+  Technology: "#6B7B8D",
+  "Financial Services": "#6E9E96",
+  Healthcare: "#C47D6D",
+  "Consumer Defensive": "#8E87A5",
+  "Consumer Cyclical": "#C4A96D",
+  "Communication Services": "#A89B8C",
+  Industrials: "#8E87A5",
+  Energy: "#6E9E96",
+  "Real Estate": "#A89B8C",
+  Utilities: "#7D8E7B",
   "Basic Materials": "#78716c",
   Unknown: "#94a3b8",
 };
 
 function getColor(sector: string, index: number): string {
   if (SECTOR_COLORS[sector]) return SECTOR_COLORS[sector];
-  const fallbacks = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#6366f1"];
+  const fallbacks = ["#6B7B8D", "#6E9E96", "#8E87A5", "#C47D6D", "#A89B8C", "#8E87A5"];
   return fallbacks[index % fallbacks.length];
 }
 
@@ -67,15 +67,15 @@ export function SectorChart({ sectors, loading }: Props) {
       ) : (
         <div className="flex items-start gap-6">
           {/* Donut */}
-          <div className="relative w-36 h-36 flex-shrink-0">
+          <div className="relative w-[180px] h-[180px] flex-shrink-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={data}
                   cx="50%"
                   cy="50%"
-                  innerRadius={42}
-                  outerRadius={62}
+                  innerRadius={66}
+                  outerRadius={88}
                   paddingAngle={2}
                   dataKey="value"
                   strokeWidth={0}
@@ -87,10 +87,7 @@ export function SectorChart({ sectors, loading }: Props) {
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="text-center">
-                <p className="text-[10px] text-[var(--text-muted)]">Stocks</p>
-                <p className="text-xs font-bold text-[var(--text-primary)]">{formatShort(total)}</p>
-              </div>
+              <p className="text-[27px] font-serif font-light text-[var(--text-primary)]">{formatShort(total)}</p>
             </div>
           </div>
 

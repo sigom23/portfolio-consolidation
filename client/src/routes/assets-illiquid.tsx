@@ -290,9 +290,29 @@ function PETab({
     return (
       <div className="rounded-xl border border-dashed border-[var(--border-color)] bg-[var(--bg-secondary)] p-12 text-center">
         <p className="text-[var(--text-muted)] text-sm mb-3">{emptyCopy}</p>
-        <button onClick={onAdd} className="text-sm font-medium text-blue-500 hover:text-blue-400 transition-colors">
-          Add your first fund →
-        </button>
+        <div className="flex items-center justify-center gap-3">
+          <button onClick={onAdd} className="text-sm font-medium text-blue-500 hover:text-blue-400 transition-colors">
+            Add manually
+          </button>
+          <span className="text-[var(--text-muted)] text-sm">or</span>
+          <button
+            onClick={() => newFileInputRef.current?.click()}
+            disabled={parseNewMutation.isPending}
+            className="text-sm font-medium text-blue-500 hover:text-blue-400 transition-colors disabled:opacity-50"
+          >
+            {parseNewMutation.isPending ? "Parsing..." : "Upload a statement"}
+          </button>
+          <input
+            ref={newFileInputRef}
+            type="file"
+            accept=".pdf"
+            className="hidden"
+            onChange={handleNewUpload}
+          />
+        </div>
+        {parseNewMutation.isError && (
+          <p className="mt-3 text-xs text-red-500">{parseNewMutation.error.message}</p>
+        )}
       </div>
     );
   }

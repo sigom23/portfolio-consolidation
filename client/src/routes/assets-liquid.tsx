@@ -68,7 +68,7 @@ function AssetsLiquidPage() {
   const liquidHoldings = useMemo(() => {
     if (!holdings) return [];
     return holdings.filter(
-      (h) => h.asset_type !== "crypto" && h.asset_type !== "real_estate"
+      (h) => h.asset_type !== "crypto" && h.asset_type !== "real_estate" && h.asset_type !== "illiquid"
     );
   }, [holdings]);
 

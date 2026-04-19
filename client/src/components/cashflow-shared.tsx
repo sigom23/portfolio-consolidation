@@ -735,11 +735,7 @@ export function TransactionsTable({
                   <select
                     value={tx.category ?? "Other"}
                     onChange={(e) => updateCategory.mutate({ id: tx.id, category: e.target.value })}
-                    className="appearance-none cursor-pointer px-2 py-0.5 rounded text-[10px] font-medium border-0 outline-none bg-transparent"
-                    style={{
-                      backgroundColor: `${CATEGORY_COLORS[tx.category ?? "Other"] ?? "#94a3b8"}1a`,
-                      color: CATEGORY_COLORS[tx.category ?? "Other"] ?? "#94a3b8",
-                    }}
+                    className="appearance-none cursor-pointer px-2 py-0.5 rounded-[2px] text-[10.4px] font-medium uppercase tracking-[0.12em] border border-[var(--color-whisper)] outline-none bg-transparent text-[var(--color-mid)] hover:border-[var(--color-charcoal)] transition-colors"
                   >
                     {(showAmountSign === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map((cat) => (
                       <option key={cat} value={cat}>{cat}</option>

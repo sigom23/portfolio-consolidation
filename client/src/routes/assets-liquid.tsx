@@ -13,7 +13,8 @@ import { CurrencyChart } from "../components/CurrencyChart";
 import { GeographyChart } from "../components/GeographyChart";
 import { SourceFilter, type SourceSelection } from "../components/SourceFilter";
 import { AnimatedNumber } from "../components/AnimatedNumber";
-import { RefreshCw, Upload } from "lucide-react";
+import { UploadOnlyModal } from "../components/UploadOnlyModal";
+import { RefreshCw, Plus } from "lucide-react";
 import type { Holding, PortfolioSummary } from "../types";
 
 function computeSummary(holdings: Holding[]): PortfolioSummary {
@@ -56,6 +57,7 @@ function AssetsLiquidPage() {
   const { data: geographyData, isLoading: geographyLoading } = useGeographyAllocation();
   const { format, baseCurrency, flag } = useCurrency();
   const [sourceFilter, setSourceFilter] = useState<SourceSelection>({ type: "all" });
+  const [addOpen, setAddOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -128,15 +130,25 @@ function AssetsLiquidPage() {
               <span className="text-[var(--color-positive)] text-xs">({refreshPrices.data.updated})</span>
             )}
           </button>
-          <a
-            href="/data-room"
+          <button
+            onClick={() => setAddOpen(true)}
             className="flex items-center gap-2 px-4 py-2 bg-[var(--color-charcoal)] text-white rounded-full text-[14px] font-medium hover:bg-[var(--color-dark)] transition-colors"
           >
-            <Upload className="w-3.5 h-3.5" strokeWidth={1.5} />
-            Upload
-          </a>
+            <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
+            Add
+          </button>
         </div>
       </div>
+
+      <UploadOnlyModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        title="Add Liquid Assets"
+        kind="wealth"
+        accept=".pdf,.csv,.png,.jpg,.jpeg,.webp"
+        headline="Drop a brokerage statement"
+        hint="PDF, CSV, or image — holdings will be extracted automatically"
+      />
 
       {/* Total Value Card */}
       <motion.div
@@ -182,13 +194,13 @@ function AssetsLiquidPage() {
           <p className="font-serif italic text-[18px] text-[var(--color-mid)]">
             No liquid assets connected yet.
           </p>
-          <a
-            href="/data-room"
+          <button
+            onClick={() => setAddOpen(true)}
             className="inline-flex items-center gap-2 mt-6 px-6 py-2.5 border border-[var(--color-faint)] text-[var(--color-mid)] rounded-full text-[14px] font-medium hover:border-[var(--color-charcoal)] hover:text-[var(--color-charcoal)] transition-colors"
           >
-            <Upload className="w-3.5 h-3.5" strokeWidth={1.5} />
-            Upload a statement
-          </a>
+            <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
+            Add your first
+          </button>
         </motion.div>
       ) : (
         <>

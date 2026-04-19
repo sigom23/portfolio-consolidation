@@ -1,7 +1,7 @@
 import { createRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { Route as rootRoute } from "./__root";
 import { useAuth } from "../hooks/useAuth";
-import { useIlliquidAssets, useDeleteIlliquidAsset, useUploadPEStatement, useParsePEStatementNew } from "../hooks/usePortfolio";
+import { useIlliquidAssets, useDeleteIlliquidAsset, useUploadPEStatement } from "../hooks/usePortfolio";
 import { useCurrency } from "../contexts/CurrencyContext";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "motion/react";
@@ -57,7 +57,6 @@ function AssetsIlliquidPage() {
   const { format, baseCurrency, flag, rates } = useCurrency();
   const [modalSubtype, setModalSubtype] = useState<IlliquidSubtype | null>(null);
   const [editingAsset, setEditingAsset] = useState<IlliquidAsset | null>(null);
-  const [prefill, setPrefill] = useState<Partial<IlliquidAsset> | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/" });
@@ -194,7 +193,6 @@ function AssetsIlliquidPage() {
             emptyCopy={tabMeta.emptyCopy}
             onAdd={() => { setEditingAsset(null); setModalSubtype("private_equity"); }}
             onEdit={(a) => { setEditingAsset(a); setModalSubtype(a.subtype); }}
-            onCreatePrefilled={(a) => { setEditingAsset(null); setModalSubtype("private_equity"); setPrefill(a); }}
           />
         ) : (
           <GenericTab
@@ -212,8 +210,7 @@ function AssetsIlliquidPage() {
         open={modalSubtype !== null}
         subtype={modalSubtype}
         editAsset={editingAsset}
-        prefill={prefill}
-        onClose={() => { setModalSubtype(null); setEditingAsset(null); setPrefill(null); }}
+        onClose={() => { setModalSubtype(null); setEditingAsset(null); }}
       />
     </div>
   );
@@ -234,42 +231,15 @@ function PETab({
   emptyCopy,
   onAdd,
   onEdit,
-  onCreatePrefilled,
 }: {
   items: IlliquidAsset[];
   loading: boolean;
   emptyCopy: string;
   onAdd: () => void;
   onEdit: (a: IlliquidAsset) => void;
-  onCreatePrefilled: (a: Partial<IlliquidAsset>) => void;
 }) {
   const { format, rates } = useCurrency();
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const parseNewMutation = useParsePEStatementNew();
-  const newFileInputRef = useRef<HTMLInputElement>(null);
-
-  async function handleNewUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-    try {
-      const result = await parseNewMutation.mutateAsync(file);
-      const ex = result.extracted;
-      onCreatePrefilled({
-        name: ex.fund_name ?? undefined,
-        current_value: ex.nav,
-        committed_capital: ex.committed_capital,
-        called_capital: ex.called_capital,
-        distributed_capital: ex.distributed_capital,
-        currency: ex.currency,
-        gp_name: ex.gp_name,
-        vintage_year: ex.vintage_year,
-        strategy: ex.strategy,
-      } as Partial<IlliquidAsset>);
-    } catch {
-      // error shown via mutation state
-    }
-  }
 
   const totals = useMemo(() => {
     let nav = 0, committed = 0, called = 0, distributed = 0;
@@ -291,31 +261,14 @@ function PETab({
 
   if (items.length === 0) {
     return (
-      <div className="rounded-[2px] border border-dashed border-[var(--border-color)] bg-[var(--bg-secondary)] p-12 text-center">
-        <p className="text-[var(--text-muted)] text-sm mb-3">{emptyCopy}</p>
-        <div className="flex items-center justify-center gap-3">
-          <button onClick={onAdd} className="text-sm font-medium text-[var(--color-charcoal)] hover:text-[var(--color-mid)] transition-colors">
-            Add manually
-          </button>
-          <span className="text-[var(--text-muted)] text-sm">or</span>
-          <button
-            onClick={() => newFileInputRef.current?.click()}
-            disabled={parseNewMutation.isPending}
-            className="text-sm font-medium text-[var(--color-charcoal)] hover:text-[var(--color-mid)] transition-colors disabled:opacity-50"
-          >
-            {parseNewMutation.isPending ? "Parsing..." : "Upload a statement"}
-          </button>
-          <input
-            ref={newFileInputRef}
-            type="file"
-            accept=".pdf"
-            className="hidden"
-            onChange={handleNewUpload}
-          />
-        </div>
-        {parseNewMutation.isError && (
-          <p className="mt-3 text-xs text-[var(--color-negative)]">{parseNewMutation.error.message}</p>
-        )}
+      <div className="rounded-[2px] border border-[var(--color-whisper)] bg-white py-16 px-6 text-center">
+        <p className="font-serif italic text-[18px] text-[var(--color-mid)]">{emptyCopy}</p>
+        <button
+          onClick={onAdd}
+          className="inline-flex items-center gap-2 mt-5 px-4 py-2 border border-[var(--color-faint)] text-[var(--color-mid)] rounded-full text-[12.5px] font-medium hover:border-[var(--color-charcoal)] hover:text-[var(--color-charcoal)] transition-colors"
+        >
+          Add your first
+        </button>
       </div>
     );
   }
@@ -352,7 +305,7 @@ function PETab({
         ))}
 
         {/* Add / Upload row */}
-        <div className="px-6 py-4 flex justify-center gap-3">
+        <div className="px-6 py-4 flex justify-center">
           <button
             onClick={onAdd}
             className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[var(--color-faint)] text-[12.5px] font-medium text-[var(--color-mid)] hover:border-[var(--color-charcoal)] hover:text-[var(--color-charcoal)] transition-colors"
@@ -360,25 +313,7 @@ function PETab({
             <Plus className="w-3 h-3" strokeWidth={1.5} />
             Add Fund
           </button>
-          <button
-            onClick={() => newFileInputRef.current?.click()}
-            disabled={parseNewMutation.isPending}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[var(--color-faint)] text-[12.5px] font-medium text-[var(--color-mid)] hover:border-[var(--color-charcoal)] hover:text-[var(--color-charcoal)] transition-colors disabled:opacity-50"
-          >
-            <Upload className="w-3 h-3" strokeWidth={1.5} />
-            {parseNewMutation.isPending ? "Parsing..." : "Upload Statement"}
-          </button>
-          <input
-            ref={newFileInputRef}
-            type="file"
-            accept=".pdf"
-            className="hidden"
-            onChange={handleNewUpload}
-          />
         </div>
-        {parseNewMutation.isError && (
-          <p className="px-6 pb-4 text-xs text-[var(--color-negative)] text-center">{parseNewMutation.error.message}</p>
-        )}
       </div>
     </div>
   );

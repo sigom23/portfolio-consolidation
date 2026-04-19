@@ -15,7 +15,6 @@ import { AddStreamModal } from "../components/AddStreamModal";
 import { Plus } from "lucide-react";
 import {
   MonthSelector,
-  UploadButton,
   IncomeByTypeCard,
   MonthlyTrendCard,
   TransactionsTable,
@@ -102,16 +101,13 @@ function CashFlowIncomePage() {
             Recurring streams and monthly activity
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <UploadButton kind="salary" accept=".pdf,.png,.jpg,.jpeg,.webp" label="Upload" />
-          <button
-            onClick={() => { setEditingStream(null); setModalOpen(true); }}
-            className="flex items-center gap-2 px-4 py-2 bg-[var(--color-charcoal)] text-white rounded-full text-[14px] font-medium hover:bg-[var(--color-dark)] transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
-            Add
-          </button>
-        </div>
+        <button
+          onClick={() => { setEditingStream(null); setModalOpen(true); }}
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--color-charcoal)] text-white rounded-full text-[14px] font-medium hover:bg-[var(--color-dark)] transition-colors"
+        >
+          <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
+          Add
+        </button>
       </div>
 
       {/* 2. Month Selector */}

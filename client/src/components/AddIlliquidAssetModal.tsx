@@ -1,6 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { useCreateIlliquidAsset, useUpdateIlliquidAsset } from "../hooks/usePortfolio";
+import { useCreateIlliquidAsset, useUpdateIlliquidAsset, useParsePEStatementNew } from "../hooks/usePortfolio";
+import { X } from "lucide-react";
+import { UploadDropzone } from "./UploadDropzone";
 import type { IlliquidAsset, IlliquidSubtype, NewIlliquidAsset } from "../types";
 
 const CURRENCIES = ["CHF", "EUR", "USD", "GBP", "JPY", "CAD", "AUD"];
@@ -57,6 +59,7 @@ const SUBMIT_LABELS: Record<IlliquidSubtype, string> = {
 export function AddIlliquidAssetModal({ open, subtype, onClose, editAsset, prefill }: Props) {
   const create = useCreateIlliquidAsset();
   const update = useUpdateIlliquidAsset();
+  const parsePE = useParsePEStatementNew();
   const isEditing = !!editAsset;
 
   // Common
@@ -255,11 +258,45 @@ export function AddIlliquidAssetModal({ open, subtype, onClose, editAsset, prefi
                   onClick={onClose}
                   className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <X className="w-5 h-5" strokeWidth={1.5} />
                 </button>
               </div>
+
+              {!isEditing && subtype === "private_equity" && (
+                <>
+                  <UploadDropzone
+                    customUpload={{
+                      mutate: (file, opts) => parsePE.mutate(file, opts),
+                      isPending: parsePE.isPending,
+                      isError: parsePE.isError,
+                      error: parsePE.error,
+                    }}
+                    accept=".pdf"
+                    headline="Drop a PE statement"
+                    hint="PDF — we'll pre-fill the form from your document"
+                    onSuccess={(result: Awaited<ReturnType<typeof parsePE.mutateAsync>>) => {
+                      const ex = result.extracted;
+                      if (ex.fund_name) setName(ex.fund_name);
+                      if (ex.currency) setCurrency(ex.currency);
+                      if (ex.nav != null) setCurrentValue(String(ex.nav));
+                      if (ex.committed_capital != null) setCommittedCapital(String(ex.committed_capital));
+                      if (ex.called_capital != null) setCalledCapital(String(ex.called_capital));
+                      if (ex.distributed_capital != null) setDistributedCapital(String(ex.distributed_capital));
+                      if (ex.vintage_year != null) setVintageYear(String(ex.vintage_year));
+                      if (ex.strategy) setStrategy(ex.strategy);
+                      if (ex.gp_name) setGpName(ex.gp_name);
+                    }}
+                    compact
+                  />
+                  <div className="flex items-center gap-3 my-5">
+                    <div className="flex-1 h-px bg-[var(--color-whisper)]" />
+                    <span className="text-[10.4px] uppercase tracking-[0.22em] text-[var(--color-muted)]">
+                      or enter manually
+                    </span>
+                    <div className="flex-1 h-px bg-[var(--color-whisper)]" />
+                  </div>
+                </>
+              )}
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Name — common */}

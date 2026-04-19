@@ -1,4 +1,4 @@
-import { useRef, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "motion/react";
 import {
   PieChart,
@@ -12,8 +12,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useCurrency } from "../contexts/CurrencyContext";
-import { useUploadStatement, useUpdateTransactionCategory } from "../hooks/usePortfolio";
-import { Upload, RefreshCw } from "lucide-react";
+import { useUpdateTransactionCategory } from "../hooks/usePortfolio";
 import type {
   CashFlowSummary,
   IncomeStream,
@@ -191,57 +190,6 @@ export function MonthSelector({
   );
 }
 
-/** Compact upload button for page headers. */
-export function UploadButton({
-  kind,
-  accept,
-  label,
-}: {
-  kind: "salary" | "transactions";
-  accept: string;
-  label: string;
-}) {
-  const mutation = useUploadStatement();
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  return (
-    <div className="flex items-center gap-2">
-      <input
-        ref={fileRef}
-        type="file"
-        accept={accept}
-        className="hidden"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) {
-            mutation.mutate(
-              { file: f, kind },
-              { onSuccess: () => { if (fileRef.current) fileRef.current.value = ""; } }
-            );
-          }
-        }}
-      />
-      <button
-        onClick={() => fileRef.current?.click()}
-        disabled={mutation.isPending}
-        className="flex items-center gap-2 px-4 py-2 border border-[var(--color-faint)] text-[var(--color-mid)] rounded-full text-[14px] font-medium hover:border-[var(--color-charcoal)] hover:text-[var(--color-charcoal)] transition-colors disabled:opacity-50"
-      >
-        <Upload className="w-3.5 h-3.5" strokeWidth={1.5} />
-        {mutation.isPending ? "Parsing..." : label}
-      </button>
-      {mutation.isError && (
-        <span className="text-xs text-[var(--color-negative)]">{mutation.error.message}</span>
-      )}
-      {mutation.isSuccess && (
-        <span className="text-xs text-[var(--color-positive)]">
-          {mutation.data?.kind === "salary"
-            ? (mutation.data as any).updated ? "Stream updated" : "Stream created"
-            : `${mutation.data?.inserted ?? 0} inserted`}
-        </span>
-      )}
-    </div>
-  );
-}
 
 /** Income by type donut chart. */
 export function IncomeByTypeCard({

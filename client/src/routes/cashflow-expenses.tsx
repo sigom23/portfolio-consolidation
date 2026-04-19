@@ -6,10 +6,10 @@ import { useCurrency } from "../contexts/CurrencyContext";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { AnimatedNumber } from "../components/AnimatedNumber";
-import { RefreshCw } from "lucide-react";
+import { UploadOnlyModal } from "../components/UploadOnlyModal";
+import { RefreshCw, Plus } from "lucide-react";
 import {
   MonthSelector,
-  UploadButton,
   CategoryBreakdownCard,
   TopMerchantsCard,
   TransactionsTable,
@@ -29,6 +29,7 @@ function CashFlowExpensesPage() {
   const reclassify = useReclassifyTransactions();
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [filterMerchant, setFilterMerchant] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -80,9 +81,25 @@ function CashFlowExpensesPage() {
             <RefreshCw className={`w-3.5 h-3.5 ${reclassify.isPending ? "animate-spin" : ""}`} strokeWidth={1.5} />
             {reclassify.isPending ? "Reclassifying..." : reclassify.isSuccess ? `${reclassify.data.updated} updated` : "Reclassify"}
           </button>
-          <UploadButton kind="transactions" accept=".pdf,.csv,.png,.jpg,.jpeg,.webp" label="Upload" />
+          <button
+            onClick={() => setAddOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--color-charcoal)] text-white rounded-full text-[14px] font-medium hover:bg-[var(--color-dark)] transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
+            Add
+          </button>
         </div>
       </div>
+
+      <UploadOnlyModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        title="Add Expenses"
+        kind="transactions"
+        accept=".pdf,.csv,.png,.jpg,.jpeg,.webp"
+        headline="Drop a bank or credit-card statement"
+        hint="PDF, CSV, or image — transactions will be extracted and categorized"
+      />
 
       {/* 2. Month Selector */}
       <MonthSelector month={month} onMonthChange={setMonth} monthCounts={monthCounts} />

@@ -1,6 +1,8 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useCreateIncomeStream, useUpdateIncomeStream } from "../hooks/usePortfolio";
+import { X } from "lucide-react";
+import { UploadDropzone } from "./UploadDropzone";
 import type { IncomeStream, IncomeStreamType, IncomeFrequency, NewIncomeStream } from "../types";
 
 const TYPES: { value: IncomeStreamType; label: string }[] = [
@@ -142,11 +144,29 @@ export function AddStreamModal({ open, onClose, stream }: Props) {
                   onClick={onClose}
                   className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <X className="w-5 h-5" strokeWidth={1.5} />
                 </button>
               </div>
+
+              {!isEdit && (
+                <>
+                  <UploadDropzone
+                    kind="salary"
+                    accept=".pdf,.png,.jpg,.jpeg,.webp"
+                    headline="Drop a salary slip"
+                    hint="PDF or image — we'll create the stream automatically"
+                    onSuccess={onClose}
+                    compact
+                  />
+                  <div className="flex items-center gap-3 my-5">
+                    <div className="flex-1 h-px bg-[var(--color-whisper)]" />
+                    <span className="text-[10.4px] uppercase tracking-[0.22em] text-[var(--color-muted)]">
+                      or enter manually
+                    </span>
+                    <div className="flex-1 h-px bg-[var(--color-whisper)]" />
+                  </div>
+                </>
+              )}
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>

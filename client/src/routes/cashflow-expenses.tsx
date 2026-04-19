@@ -6,6 +6,7 @@ import { useCurrency } from "../contexts/CurrencyContext";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { AnimatedNumber } from "../components/AnimatedNumber";
+import { RefreshCw } from "lucide-react";
 import {
   MonthSelector,
   UploadButton,
@@ -74,11 +75,9 @@ function CashFlowExpensesPage() {
           <button
             onClick={() => reclassify.mutate()}
             disabled={reclassify.isPending}
-            className="flex items-center gap-1.5 px-3 py-1.5 border border-[var(--border-color)] text-[var(--text-secondary)] rounded-[2px] text-xs font-medium hover:bg-[var(--bg-tertiary)] transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-4 py-1.5 border border-[var(--color-faint)] text-[var(--color-mid)] rounded-full text-[12.5px] font-medium hover:border-[var(--color-charcoal)] hover:text-[var(--color-charcoal)] transition-colors disabled:opacity-50"
           >
-            <svg className={`w-3.5 h-3.5 ${reclassify.isPending ? "animate-spin" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
+            <RefreshCw className={`w-3 h-3 ${reclassify.isPending ? "animate-spin" : ""}`} strokeWidth={1.5} />
             {reclassify.isPending ? "Reclassifying..." : reclassify.isSuccess ? `${reclassify.data.updated} updated` : "Reclassify"}
           </button>
           <UploadButton kind="transactions" accept=".pdf,.csv,.png,.jpg,.jpeg,.webp" label="Upload Statement" />

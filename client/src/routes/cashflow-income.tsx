@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { AnimatedNumber } from "../components/AnimatedNumber";
 import { AddStreamModal } from "../components/AddStreamModal";
+import { Plus } from "lucide-react";
 import {
   MonthSelector,
   UploadButton,
@@ -105,11 +106,9 @@ function CashFlowIncomePage() {
           <UploadButton kind="salary" accept=".pdf,.png,.jpg,.jpeg,.webp" label="Upload Salary" />
           <button
             onClick={() => { setEditingStream(null); setModalOpen(true); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-charcoal)] text-white rounded-full text-xs font-medium hover:bg-[var(--color-dark)] transition-colors"
+            className="flex items-center gap-1.5 px-4 py-1.5 bg-[var(--color-charcoal)] text-white rounded-full text-[12.5px] font-medium hover:bg-[var(--color-dark)] transition-colors"
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
+            <Plus className="w-3 h-3" strokeWidth={1.5} />
             Add Stream
           </button>
         </div>

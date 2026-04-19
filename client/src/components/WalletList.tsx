@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Wallet } from "../types";
 import { useAddWallet, useDeleteWallet, useRefreshWallet } from "../hooks/usePortfolio";
+import { Plus, RefreshCw, Trash2, Wallet as WalletIcon } from "lucide-react";
 
 interface Props {
   wallets: Wallet[];
@@ -56,8 +57,9 @@ export function WalletList({ wallets, loading, showAddForm = true }: Props) {
             <button
               onClick={handleAdd}
               disabled={!address.trim() || addMutation.isPending}
-              className="px-4 py-2 bg-[var(--color-charcoal)] text-white rounded-full font-medium hover:bg-[var(--color-dark)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--color-charcoal)] text-white rounded-full font-medium hover:bg-[var(--color-dark)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-[14px]"
             >
+              <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
               {addMutation.isPending ? "Adding..." : "Add Wallet"}
             </button>
           </div>
@@ -82,31 +84,36 @@ export function WalletList({ wallets, loading, showAddForm = true }: Props) {
           <div className="divide-y divide-[var(--border-color)]/50">
             {wallets.map((w) => (
               <div key={w.id} className="px-6 py-4 flex items-center justify-between hover:bg-[var(--bg-tertiary)]/50 transition-colors">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-mono text-[var(--text-primary)]">{truncateAddress(w.address)}</span>
-                    {w.label && (
-                      <span className="text-xs bg-[var(--bg-tertiary)] text-[var(--text-secondary)] px-2 py-0.5 rounded">{w.label}</span>
-                    )}
-                    <span className="text-xs text-[var(--text-muted)]">{w.chain}</span>
+                <div className="flex items-center gap-3 min-w-0">
+                  <WalletIcon className="w-4 h-4 text-[var(--color-light)] flex-shrink-0" strokeWidth={1.5} />
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-mono text-[var(--text-primary)]">{truncateAddress(w.address)}</span>
+                      {w.label && (
+                        <span className="text-[10.4px] border border-[var(--color-whisper)] text-[var(--color-mid)] px-2 py-0.5 rounded-[2px]">{w.label}</span>
+                      )}
+                      <span className="text-xs text-[var(--color-muted)]">{w.chain}</span>
+                    </div>
+                    <p className="text-xs text-[var(--color-muted)] mt-0.5">
+                      Added {new Date(w.added_at).toLocaleDateString()}
+                    </p>
                   </div>
-                  <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                    Added {new Date(w.added_at).toLocaleDateString()}
-                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => refreshMutation.mutate(w.id)}
                     disabled={refreshMutation.isPending}
-                    className="px-3 py-1.5 text-xs bg-[var(--color-positive)]/10 text-[var(--color-positive)] rounded-[2px] hover:bg-[var(--color-positive)]/20 disabled:opacity-50 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] text-[var(--color-mid)] hover:text-[var(--color-charcoal)] disabled:opacity-50 transition-colors"
                   >
+                    <RefreshCw className={`w-3 h-3 ${refreshMutation.isPending ? "animate-spin" : ""}`} strokeWidth={1.5} />
                     {refreshMutation.isPending ? "Refreshing..." : "Refresh"}
                   </button>
                   <button
                     onClick={() => deleteMutation.mutate(w.id)}
                     disabled={deleteMutation.isPending}
-                    className="px-3 py-1.5 text-xs text-[var(--color-negative)] hover:text-[var(--color-negative)] transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] text-[var(--color-mid)] hover:text-[var(--color-negative)] transition-colors"
                   >
+                    <Trash2 className="w-3 h-3" strokeWidth={1.5} />
                     Delete
                   </button>
                 </div>

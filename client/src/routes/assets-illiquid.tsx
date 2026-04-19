@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { AnimatedNumber } from "../components/AnimatedNumber";
 import { AddIlliquidAssetModal } from "../components/AddIlliquidAssetModal";
+import { Plus, Upload } from "lucide-react";
 import {
   illiquidAssetNativeValue,
   computeUnvestedVestedValue,
@@ -113,11 +114,9 @@ function AssetsIlliquidPage() {
         </div>
         <button
           onClick={() => { setEditingAsset(null); setModalSubtype(currentTab); }}
-          className="flex items-center gap-1.5 px-3 py-2 bg-[var(--color-charcoal)] text-white rounded-full text-sm font-medium hover:bg-[var(--color-dark)] transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--color-charcoal)] text-white rounded-full text-[14px] font-medium hover:bg-[var(--color-dark)] transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+          <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
           Add {tabMeta.label}
         </button>
       </div>
@@ -361,15 +360,17 @@ function PETab({
         <div className="px-6 py-4 flex justify-center gap-3">
           <button
             onClick={onAdd}
-            className="px-4 py-2 rounded-[2px] border border-[var(--border-color)] text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[var(--color-faint)] text-[12.5px] font-medium text-[var(--color-mid)] hover:border-[var(--color-charcoal)] hover:text-[var(--color-charcoal)] transition-colors"
           >
-            + Add Fund
+            <Plus className="w-3 h-3" strokeWidth={1.5} />
+            Add Fund
           </button>
           <button
             onClick={() => newFileInputRef.current?.click()}
             disabled={parseNewMutation.isPending}
-            className="px-4 py-2 rounded-[2px] border border-[var(--border-color)] text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-[var(--color-faint)] text-[12.5px] font-medium text-[var(--color-mid)] hover:border-[var(--color-charcoal)] hover:text-[var(--color-charcoal)] transition-colors disabled:opacity-50"
           >
+            <Upload className="w-3 h-3" strokeWidth={1.5} />
             {parseNewMutation.isPending ? "Parsing..." : "Upload Statement"}
           </button>
           <input

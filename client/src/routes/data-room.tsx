@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { WalletList } from "../components/WalletList";
 import { detectDocumentType, uploadStatement } from "../services/api";
+import { Upload, Download, Trash2 } from "lucide-react";
 
 // ============================================================
 // Queue types
@@ -186,23 +187,17 @@ function DataRoomPage() {
             e.target.value = "";
           }}
         />
-        <div className="flex flex-col items-center gap-3">
-          <div className={`w-14 h-14 rounded-[2px] flex items-center justify-center transition-colors ${
-            dragOver ? "bg-[var(--color-cloud)]" : "bg-[var(--bg-tertiary)]"
-          }`}>
-            <svg className={`w-7 h-7 transition-colors ${dragOver ? "text-[var(--color-charcoal)]" : "text-[var(--text-muted)]"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-            </svg>
-          </div>
+        <div className="flex flex-col items-center gap-4">
+          <Upload className={`w-8 h-8 transition-colors ${dragOver ? "text-[var(--color-charcoal)]" : "text-[var(--color-light)]"}`} strokeWidth={1.25} />
           <div>
             <p className="text-sm font-medium text-[var(--text-primary)]">
               Drop files here
             </p>
-            <p className="text-xs text-[var(--text-muted)] mt-1">
+            <p className="text-xs text-[var(--color-muted)] mt-1">
               PDF, CSV, or images — salary slips, bank statements, portfolio reports, PE fund documents
             </p>
           </div>
-          <span className="text-[11px] text-[var(--text-muted)] border border-[var(--border-color)] rounded-[2px] px-3 py-1">
+          <span className="text-[11px] text-[var(--color-mid)] border border-[var(--color-whisper)] rounded-full px-4 py-1.5">
             or click to browse
           </span>
         </div>
@@ -363,18 +358,20 @@ function DataRoomPage() {
                         {new Date(u.uploaded_at).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-3 text-sm">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-4">
                           <a
                             href={`/api/uploads/${u.id}/download`}
-                            className="text-[var(--color-charcoal)] hover:text-[var(--color-mid)] text-xs"
+                            className="inline-flex items-center gap-1.5 text-[var(--color-mid)] hover:text-[var(--color-charcoal)] text-xs transition-colors"
                           >
+                            <Download className="w-3 h-3" strokeWidth={1.5} />
                             Download
                           </a>
                           <button
                             onClick={() => deleteMutation.mutate(u.id)}
                             disabled={deleteMutation.isPending}
-                            className="text-[var(--color-negative)] hover:text-[var(--color-negative)] text-xs"
+                            className="inline-flex items-center gap-1.5 text-[var(--color-mid)] hover:text-[var(--color-negative)] text-xs transition-colors"
                           >
+                            <Trash2 className="w-3 h-3" strokeWidth={1.5} />
                             Delete
                           </button>
                         </div>

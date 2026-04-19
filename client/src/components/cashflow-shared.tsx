@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { useCurrency } from "../contexts/CurrencyContext";
 import { useUploadStatement, useUpdateTransactionCategory } from "../hooks/usePortfolio";
+import { Upload, RefreshCw } from "lucide-react";
 import type {
   CashFlowSummary,
   IncomeStream,
@@ -223,11 +224,9 @@ export function UploadButton({
       <button
         onClick={() => fileRef.current?.click()}
         disabled={mutation.isPending}
-        className="flex items-center gap-1.5 px-3 py-1.5 border border-[var(--border-color)] text-[var(--text-secondary)] rounded-[2px] text-xs font-medium hover:bg-[var(--bg-tertiary)] transition-colors disabled:opacity-50"
+        className="flex items-center gap-1.5 px-4 py-1.5 border border-[var(--color-faint)] text-[var(--color-mid)] rounded-full text-[12.5px] font-medium hover:border-[var(--color-charcoal)] hover:text-[var(--color-charcoal)] transition-colors disabled:opacity-50"
       >
-        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-        </svg>
+        <Upload className="w-3 h-3" strokeWidth={1.5} />
         {mutation.isPending ? "Parsing..." : label}
       </button>
       {mutation.isError && (

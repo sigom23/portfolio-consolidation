@@ -7,6 +7,7 @@ import { useEffect, useMemo } from "react";
 import { motion } from "motion/react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { AnimatedNumber } from "../components/AnimatedNumber";
+import { ArrowRight } from "lucide-react";
 import type { Holding } from "../types";
 
 function currentMonthKey(): string {
@@ -392,9 +393,10 @@ function MyWealthPage() {
             <h2 className="text-sm font-medium text-[var(--text-muted)]">Top Holdings</h2>
             <Link
               to="/assets/liquid"
-              className="text-xs text-[var(--color-charcoal)] hover:text-[var(--color-mid)] transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-[var(--color-mid)] hover:text-[var(--color-charcoal)] transition-colors"
             >
-              View all →
+              View all
+              <ArrowRight className="w-3 h-3" strokeWidth={1.5} />
             </Link>
           </div>
 

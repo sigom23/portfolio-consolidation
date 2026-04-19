@@ -20,6 +20,7 @@ import { useCurrency } from "../contexts/CurrencyContext";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { AnimatedNumber } from "../components/AnimatedNumber";
+import { Building2, Home, Store, Trees, MapPin, Plus, type LucideIcon } from "lucide-react";
 import type {
   PropertyType,
   PropertyWithDetails,
@@ -38,12 +39,12 @@ import type {
 // Constants and helpers
 // -------------------------------------------------------------------------------------
 
-const PROPERTY_TYPES: { value: PropertyType; label: string; icon: string }[] = [
-  { value: "apartment", label: "Apartment", icon: "\ud83c\udfe2" },
-  { value: "house", label: "House", icon: "\ud83c\udfe0" },
-  { value: "commercial", label: "Commercial", icon: "\ud83c\udfec" },
-  { value: "land", label: "Land", icon: "\ud83c\udf33" },
-  { value: "other", label: "Other", icon: "\ud83d\udccd" },
+const PROPERTY_TYPES: { value: PropertyType; label: string; Icon: LucideIcon }[] = [
+  { value: "apartment", label: "Apartment", Icon: Building2 },
+  { value: "house", label: "House", Icon: Home },
+  { value: "commercial", label: "Commercial", Icon: Store },
+  { value: "land", label: "Land", Icon: Trees },
+  { value: "other", label: "Other", Icon: MapPin },
 ];
 
 const COST_CATEGORIES: { value: PropertyCostCategory; label: string }[] = [
@@ -147,11 +148,9 @@ function RealEstatePage() {
         </div>
         <button
           onClick={() => setAddOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 bg-[var(--color-charcoal)] text-white rounded-full text-sm font-medium hover:bg-[var(--color-dark)] transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--color-charcoal)] text-white rounded-full text-[14px] font-medium hover:bg-[var(--color-dark)] transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+          <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
           Add Property
         </button>
       </div>
@@ -266,8 +265,8 @@ function PropertyCard({
       className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 cursor-pointer transition-colors hover:bg-[var(--color-snow)]"
     >
       <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-lg">{meta.icon}</span>
+        <div className="flex items-center gap-2.5">
+          <meta.Icon className="w-4 h-4 text-[var(--color-mid)] flex-shrink-0" strokeWidth={1.5} />
           <div>
             <h3 className="text-base font-semibold text-[var(--text-primary)] leading-tight">{property.name}</h3>
             {property.address && (
@@ -447,7 +446,7 @@ function AddPropertyModal({ open, onClose, editProperty }: { open: boolean; onCl
                 <Field label="Type">
                   <select value={type} onChange={(e) => setType(e.target.value as PropertyType)} className={inputClass}>
                     {PROPERTY_TYPES.map((t) => (
-                      <option key={t.value} value={t.value}>{t.icon} {t.label}</option>
+                      <option key={t.value} value={t.value}>{t.label}</option>
                     ))}
                   </select>
                 </Field>
@@ -579,7 +578,7 @@ function PropertyDetailDrawer({
             {/* Header */}
             <div className="sticky top-0 bg-[var(--bg-secondary)] border-b border-[var(--border-color)] px-6 py-4 flex items-center justify-between z-10">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">{meta.icon}</span>
+                <meta.Icon className="w-5 h-5 text-[var(--color-mid)] flex-shrink-0" strokeWidth={1.5} />
                 <div>
                   <h2 className="text-[18px] font-normal text-[var(--text-primary)]">{property.name}</h2>
                   {property.address && <p className="text-[11px] text-[var(--text-muted)]">{property.address}</p>}

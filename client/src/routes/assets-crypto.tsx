@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { AnimatedNumber } from "../components/AnimatedNumber";
 import { useAddWallet, useDeleteWallet, useRefreshWallet } from "../hooks/usePortfolio";
+import { Plus, RefreshCw, Trash2 } from "lucide-react";
 
 
 function truncateAddress(addr: string): string {
@@ -120,11 +121,9 @@ function AssetsCryptoPage() {
         </div>
         <button
           onClick={() => setShowAddWallet(!showAddWallet)}
-          className="flex items-center gap-2 px-3 py-2 bg-[var(--color-charcoal)] text-white rounded-full text-sm font-medium hover:bg-[var(--color-dark)] transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--color-charcoal)] text-white rounded-full text-[14px] font-medium hover:bg-[var(--color-dark)] transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+          <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
           Add Wallet
         </button>
       </div>
@@ -262,20 +261,22 @@ function AssetsCryptoPage() {
                     {format(group.totalUsd)}
                   </p>
                   {group.wallet && (
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2">
                       <button
                         onClick={() => refreshWallet.mutate(group.wallet!.id)}
                         disabled={refreshWallet.isPending}
-                        className="px-2 py-1 text-[10px] bg-[var(--color-positive)]/10 text-[var(--color-positive)] rounded hover:bg-[var(--color-positive)]/20 disabled:opacity-50 transition-colors"
+                        className="flex items-center gap-1 px-2.5 py-1 text-[10.4px] text-[var(--color-mid)] hover:text-[var(--color-charcoal)] disabled:opacity-50 transition-colors"
                         title="Refresh"
                       >
+                        <RefreshCw className={`w-3 h-3 ${refreshWallet.isPending ? "animate-spin" : ""}`} strokeWidth={1.5} />
                         {refreshWallet.isPending ? "..." : "Refresh"}
                       </button>
                       <button
                         onClick={() => { if (confirm(`Delete wallet ${truncateAddress(group.wallet!.address)}?`)) deleteWallet.mutate(group.wallet!.id); }}
-                        className="px-2 py-1 text-[10px] text-[var(--color-negative)] hover:text-[var(--color-negative)] transition-colors"
+                        className="flex items-center gap-1 px-2.5 py-1 text-[10.4px] text-[var(--color-mid)] hover:text-[var(--color-negative)] transition-colors"
                         title="Delete"
                       >
+                        <Trash2 className="w-3 h-3" strokeWidth={1.5} />
                         Delete
                       </button>
                     </div>

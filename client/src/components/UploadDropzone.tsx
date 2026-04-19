@@ -38,6 +38,7 @@ export function UploadDropzone<T = unknown>(props: Props<T>) {
   const { accept, headline, hint, onSuccess, compact = false } = props;
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [pendingFilename, setPendingFilename] = useState<string | null>(null);
   const standardMutation = useUploadStatement();
 
   const isCustom = "customUpload" in props && props.customUpload != null;
@@ -48,10 +49,12 @@ export function UploadDropzone<T = unknown>(props: Props<T>) {
     : standardMutation.error?.message;
 
   function submit(file: File) {
+    setPendingFilename(file.name);
     if (isCustom) {
       props.customUpload!.mutate(file, {
         onSuccess: (data) => {
           if (fileRef.current) fileRef.current.value = "";
+          setPendingFilename(null);
           (onSuccess as ((data: T) => void) | undefined)?.(data);
         },
       });
@@ -61,6 +64,7 @@ export function UploadDropzone<T = unknown>(props: Props<T>) {
         {
           onSuccess: () => {
             if (fileRef.current) fileRef.current.value = "";
+            setPendingFilename(null);
             (onSuccess as (() => void) | undefined)?.();
           },
         }
@@ -125,10 +129,14 @@ export function UploadDropzone<T = unknown>(props: Props<T>) {
           )}
           <div>
             <p className="text-[14px] font-medium text-[var(--color-charcoal)]">
-              {mutation.isPending ? "Processing..." : headline}
+              {mutation.isPending
+                ? pendingFilename
+                  ? `Processing ${pendingFilename}...`
+                  : "Processing..."
+                : headline}
             </p>
             <p className="text-[11px] text-[var(--color-muted)] mt-1">
-              {hint}
+              {mutation.isPending ? "This can take up to a minute — our AI is reading your document." : hint}
             </p>
           </div>
         </div>

@@ -148,6 +148,7 @@ export function AddIlliquidAssetModal({ open, subtype, onClose, editAsset, prefi
     }
     create.reset();
     update.reset();
+    parsePE.reset();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, subtype, editAsset, prefill]);
 

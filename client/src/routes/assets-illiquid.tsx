@@ -117,7 +117,7 @@ function AssetsIlliquidPage() {
           className="flex items-center gap-2 px-4 py-2 bg-[var(--color-charcoal)] text-white rounded-full text-[14px] font-medium hover:bg-[var(--color-dark)] transition-colors"
         >
           <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
-          Add {tabMeta.label}
+          Add
         </button>
       </div>
 

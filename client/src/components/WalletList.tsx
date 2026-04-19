@@ -60,7 +60,7 @@ export function WalletList({ wallets, loading, showAddForm = true }: Props) {
               className="flex items-center gap-2 px-4 py-2 bg-[var(--color-charcoal)] text-white rounded-full font-medium hover:bg-[var(--color-dark)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-[14px]"
             >
               <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
-              {addMutation.isPending ? "Adding..." : "Add Wallet"}
+              {addMutation.isPending ? "Adding..." : "Add"}
             </button>
           </div>
           {addMutation.isError && (

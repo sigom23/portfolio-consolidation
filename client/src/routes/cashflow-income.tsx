@@ -109,7 +109,7 @@ function CashFlowIncomePage() {
             className="flex items-center gap-1.5 px-4 py-1.5 bg-[var(--color-charcoal)] text-white rounded-full text-[12.5px] font-medium hover:bg-[var(--color-dark)] transition-colors"
           >
             <Plus className="w-3 h-3" strokeWidth={1.5} />
-            Add Stream
+            Add
           </button>
         </div>
       </div>

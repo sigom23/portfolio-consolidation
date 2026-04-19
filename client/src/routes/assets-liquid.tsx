@@ -135,12 +135,6 @@ function AssetsLiquidPage() {
             <Upload className="w-3.5 h-3.5" strokeWidth={1.5} />
             Upload
           </a>
-          <SourceFilter
-            selected={sourceFilter}
-            onSelect={setSourceFilter}
-            uploads={uploads ?? []}
-            wallets={[]}
-          />
         </div>
       </div>
 
@@ -229,6 +223,14 @@ function AssetsLiquidPage() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.35, duration: 0.4, ease: [0.25, 1, 0.5, 1] as const }}
           >
+            <div className="mb-3 flex items-center justify-end">
+              <SourceFilter
+                selected={sourceFilter}
+                onSelect={setSourceFilter}
+                uploads={uploads ?? []}
+                wallets={[]}
+              />
+            </div>
             <HoldingsTable
               holdings={filteredHoldings}
               loading={holdingsLoading}

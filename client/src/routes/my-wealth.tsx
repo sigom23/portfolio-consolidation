@@ -162,14 +162,14 @@ function MyWealthPage() {
           <span className="text-xs text-[var(--text-muted)]">{flag} {baseCurrency}</span>
         </div>
         {loading ? (
-          <div className="h-12 w-64 bg-[var(--bg-tertiary)] rounded animate-pulse" />
+          <div className="h-14 w-64 bg-[var(--bg-tertiary)] rounded animate-pulse mt-2" />
         ) : (
-          <p className="text-[64px] font-serif font-normal tracking-[-0.04em] text-[var(--text-primary)] tabular-nums tracking-tight">
+          <p className="text-[64px] font-serif font-normal tracking-[-0.04em] leading-[1.05] text-[var(--text-primary)] tabular-nums mt-2">
             <AnimatedNumber value={netWorth} format={format} />
           </p>
         )}
         {!loading && totalMortgageUsd > 0 && (
-          <div className="flex items-center gap-5 mt-3 text-[11px] text-[var(--text-muted)]">
+          <div className="flex items-center gap-5 mt-4 text-[11px] text-[var(--text-muted)]">
             <span>
               Assets{" "}
               <span className="font-medium text-[var(--text-secondary)] tabular-nums">
@@ -256,7 +256,7 @@ function MyWealthPage() {
                 <div className="mt-2 h-8 w-40 bg-[var(--bg-tertiary)] rounded animate-pulse" />
               ) : (
                 <p
-                  className={`mt-1 text-[27px] font-serif font-normal tabular-nums tracking-tight ${
+                  className={`mt-1 text-[27px] font-serif font-normal tabular-nums ${
                     (cashFlow?.net ?? 0) >= 0 ? "text-[var(--color-positive)]" : "text-[var(--color-negative)]"
                   }`}
                 >
@@ -284,8 +284,8 @@ function MyWealthPage() {
             <div className="text-right shrink-0">
               {!cashFlowLoading && cashFlow && (
                 <>
-                  <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
-                    Savings rate
+                  <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)]">
+                    Savings Rate
                   </p>
                   <p
                     className={`text-[18px] font-serif font-normal tabular-nums ${
@@ -424,10 +424,10 @@ function MyWealthPage() {
                       )}
                     </div>
                     <div className="text-right shrink-0 ml-3">
-                      <p className="text-sm font-medium text-[var(--text-primary)] tabular-nums">
+                      <p className="text-[14px] font-serif font-normal text-[var(--color-charcoal)] tabular-nums">
                         {format(h.value_usd ?? 0)}
                       </p>
-                      <p className="text-[11px] text-[var(--text-muted)] tabular-nums">
+                      <p className="text-[10.4px] text-[var(--color-light)] tabular-nums mt-0.5">
                         {pct.toFixed(1)}%
                       </p>
                     </div>

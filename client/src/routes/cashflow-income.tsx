@@ -135,7 +135,7 @@ function CashFlowIncomePage() {
         {summaryLoading ? (
           <div className="h-10 w-56 bg-[var(--bg-tertiary)] rounded animate-pulse" />
         ) : (
-          <p className="text-[38px] font-serif font-normal tracking-[-0.03em] text-[var(--color-positive)] tabular-nums tracking-tight">
+          <p className="text-[38px] font-serif font-normal tracking-[-0.03em] text-[var(--color-positive)] tabular-nums">
             +<AnimatedNumber value={summary?.income ?? 0} format={format} />
           </p>
         )}
@@ -279,7 +279,7 @@ function StreamCard({
       <h3 className="text-base font-semibold text-[var(--text-primary)] mb-1">
         {stream.name}
       </h3>
-      <p className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)] tabular-nums tracking-tight">
+      <p className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)] tabular-nums">
         {formatLocal(stream.amount, stream.currency)}
       </p>
       <p className="text-[11px] text-[var(--text-muted)] mt-1">{cadenceLabel}</p>

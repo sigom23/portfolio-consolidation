@@ -173,7 +173,7 @@ function RealEstatePage() {
         {isLoading ? (
           <div className="h-10 w-56 bg-[var(--bg-tertiary)] rounded animate-pulse" />
         ) : (
-          <p className="text-[38px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)] tabular-nums tracking-tight">
+          <p className="text-[38px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)] tabular-nums">
             <AnimatedNumber value={totals.value} format={format} />
           </p>
         )}
@@ -280,7 +280,7 @@ function PropertyCard({
       </div>
 
       <div className="mb-4">
-        <p className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)] tabular-nums tracking-tight">
+        <p className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)] tabular-nums">
           {formatLocal(property.current_value, property.currency)}
         </p>
         {appreciation != null && (

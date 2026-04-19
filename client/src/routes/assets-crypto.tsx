@@ -192,7 +192,7 @@ function AssetsCryptoPage() {
         {loading ? (
           <div className="h-10 w-56 bg-[var(--bg-tertiary)] rounded animate-pulse" />
         ) : (
-          <p className="text-[38px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)] tabular-nums tracking-tight">
+          <p className="text-[38px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)] tabular-nums">
             <AnimatedNumber value={totalUsd} format={format} />
           </p>
         )}

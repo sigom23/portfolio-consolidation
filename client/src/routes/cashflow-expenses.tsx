@@ -106,7 +106,7 @@ function CashFlowExpensesPage() {
         {summaryLoading ? (
           <div className="h-10 w-56 bg-[var(--bg-tertiary)] rounded animate-pulse" />
         ) : (
-          <p className="text-[38px] font-serif font-normal tracking-[-0.03em] text-[var(--color-negative)] tabular-nums tracking-tight">
+          <p className="text-[38px] font-serif font-normal tracking-[-0.03em] text-[var(--color-negative)] tabular-nums">
             -<AnimatedNumber value={summary?.expenses ?? 0} format={format} />
           </p>
         )}

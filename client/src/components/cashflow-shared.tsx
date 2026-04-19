@@ -181,7 +181,7 @@ export function MonthSelector({
             >
               {monthLabel(m)}
               {hasData && !isActive && (
-                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[var(--color-charcoal)]" />
+                <span className="absolute top-0.5 right-0.5 w-1 h-1 rounded-full bg-[var(--color-light)]" />
               )}
             </button>
           );

@@ -137,7 +137,7 @@ function AssetsIlliquidPage() {
         {assetsLoading ? (
           <div className="h-10 w-56 bg-[var(--bg-tertiary)] rounded animate-pulse" />
         ) : (
-          <p className="text-[38px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)] tabular-nums tracking-tight">
+          <p className="text-[38px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)] tabular-nums">
             <AnimatedNumber value={totalUsd} format={format} />
           </p>
         )}
@@ -162,13 +162,9 @@ function AssetsIlliquidPage() {
               }`}
             >
               <span className="flex items-center gap-2">
-                <span
-                  className="w-1.5 h-1.5 rounded-full"
-                  style={{ backgroundColor: tab.color }}
-                />
                 {tab.label}
                 {count > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--bg-tertiary)] text-[var(--text-muted)] tabular-nums">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--color-cloud)] text-[var(--color-muted)] tabular-nums">
                     {count}
                   </span>
                 )}
@@ -176,8 +172,7 @@ function AssetsIlliquidPage() {
               {isActive && (
                 <motion.div
                   layoutId="illiquid-tab-underline"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
-                  style={{ backgroundColor: tab.color }}
+                  className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-[var(--color-charcoal)]"
                 />
               )}
             </button>
@@ -614,7 +609,7 @@ function KpiCard({ label, value, accent }: { label: string; value: string; accen
   return (
     <div className="p-4 rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)]">
       <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1.5">{label}</p>
-      <p className={`text-[18px] font-medium tabular-nums tracking-tight ${accent ? "text-[var(--color-positive)]" : "text-[var(--text-primary)]"}`}>
+      <p className={`text-[18px] font-medium tabular-nums ${accent ? "text-[var(--color-positive)]" : "text-[var(--text-primary)]"}`}>
         {value}
       </p>
     </div>

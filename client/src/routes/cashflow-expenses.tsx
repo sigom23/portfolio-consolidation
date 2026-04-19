@@ -75,12 +75,12 @@ function CashFlowExpensesPage() {
           <button
             onClick={() => reclassify.mutate()}
             disabled={reclassify.isPending}
-            className="flex items-center gap-1.5 px-4 py-1.5 border border-[var(--color-faint)] text-[var(--color-mid)] rounded-full text-[12.5px] font-medium hover:border-[var(--color-charcoal)] hover:text-[var(--color-charcoal)] transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 border border-[var(--color-faint)] text-[var(--color-mid)] rounded-full text-[14px] font-medium hover:border-[var(--color-charcoal)] hover:text-[var(--color-charcoal)] transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`w-3 h-3 ${reclassify.isPending ? "animate-spin" : ""}`} strokeWidth={1.5} />
+            <RefreshCw className={`w-3.5 h-3.5 ${reclassify.isPending ? "animate-spin" : ""}`} strokeWidth={1.5} />
             {reclassify.isPending ? "Reclassifying..." : reclassify.isSuccess ? `${reclassify.data.updated} updated` : "Reclassify"}
           </button>
-          <UploadButton kind="transactions" accept=".pdf,.csv,.png,.jpg,.jpeg,.webp" label="Upload Statement" />
+          <UploadButton kind="transactions" accept=".pdf,.csv,.png,.jpg,.jpeg,.webp" label="Upload" />
         </div>
       </div>
 

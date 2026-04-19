@@ -224,9 +224,9 @@ export function UploadButton({
       <button
         onClick={() => fileRef.current?.click()}
         disabled={mutation.isPending}
-        className="flex items-center gap-1.5 px-4 py-1.5 border border-[var(--color-faint)] text-[var(--color-mid)] rounded-full text-[12.5px] font-medium hover:border-[var(--color-charcoal)] hover:text-[var(--color-charcoal)] transition-colors disabled:opacity-50"
+        className="flex items-center gap-2 px-4 py-2 border border-[var(--color-faint)] text-[var(--color-mid)] rounded-full text-[14px] font-medium hover:border-[var(--color-charcoal)] hover:text-[var(--color-charcoal)] transition-colors disabled:opacity-50"
       >
-        <Upload className="w-3 h-3" strokeWidth={1.5} />
+        <Upload className="w-3.5 h-3.5" strokeWidth={1.5} />
         {mutation.isPending ? "Parsing..." : label}
       </button>
       {mutation.isError && (

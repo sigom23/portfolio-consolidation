@@ -103,12 +103,12 @@ function CashFlowIncomePage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <UploadButton kind="salary" accept=".pdf,.png,.jpg,.jpeg,.webp" label="Upload Salary" />
+          <UploadButton kind="salary" accept=".pdf,.png,.jpg,.jpeg,.webp" label="Upload" />
           <button
             onClick={() => { setEditingStream(null); setModalOpen(true); }}
-            className="flex items-center gap-1.5 px-4 py-1.5 bg-[var(--color-charcoal)] text-white rounded-full text-[12.5px] font-medium hover:bg-[var(--color-dark)] transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--color-charcoal)] text-white rounded-full text-[14px] font-medium hover:bg-[var(--color-dark)] transition-colors"
           >
-            <Plus className="w-3 h-3" strokeWidth={1.5} />
+            <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
             Add
           </button>
         </div>

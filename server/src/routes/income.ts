@@ -359,4 +359,53 @@ router.get("/cashflow/summary", async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/cashflow/trend?months=12 — savings rate + net per month, oldest→newest
+router.get("/cashflow/trend", async (req: Request, res: Response) => {
+  try {
+    const userId = req.session.userId!;
+    const monthsParam = parseInt(String(req.query.months ?? "12"), 10);
+    const months = Math.min(Math.max(Number.isFinite(monthsParam) ? monthsParam : 12, 1), 36);
+
+    const all = await getTransactionsByUser(userId, { limit: 50000 });
+    const rates = await getExchangeRates("USD");
+    const toUsd = (amount: number, ccy: string) =>
+      ccy === "USD" ? amount : rates[ccy] ? amount / rates[ccy] : amount;
+
+    const monthKey = (d: unknown): string => {
+      const date = typeof d === "string" ? new Date(d) : d instanceof Date ? d : null;
+      if (!date || isNaN(date.getTime())) return "";
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    };
+
+    // Seed the last N months so gaps render as empty bars
+    const now = new Date();
+    const buckets = new Map<string, { income: number; expenses: number }>();
+    for (let i = months - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      buckets.set(key, { income: 0, expenses: 0 });
+    }
+
+    for (const tx of all) {
+      const key = monthKey(tx.date);
+      const bucket = buckets.get(key);
+      if (!bucket) continue;
+      const ccy = (tx.currency ?? "USD").toUpperCase();
+      const usd = tx.amount_usd ?? toUsd(tx.amount, ccy);
+      if (tx.amount > 0) bucket.income += usd;
+      else if (tx.amount < 0) bucket.expenses += Math.abs(usd);
+    }
+
+    const trend = Array.from(buckets.entries()).map(([month, { income, expenses }]) => {
+      const net = income - expenses;
+      const savingsRate = income > 0 ? net / income : 0;
+      return { month, income, expenses, net, savingsRate };
+    });
+
+    res.json({ success: true, data: trend });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err instanceof Error ? err.message : "Failed to compute trend" });
+  }
+});
+
 export default router;

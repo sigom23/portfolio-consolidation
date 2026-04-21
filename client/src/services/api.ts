@@ -259,6 +259,19 @@ export async function fetchCashFlowSummary(month?: string): Promise<CashFlowSumm
   return data.data!;
 }
 
+export interface CashFlowTrendPoint {
+  month: string;
+  income: number;
+  expenses: number;
+  net: number;
+  savingsRate: number;
+}
+
+export async function fetchCashFlowTrend(months = 12): Promise<CashFlowTrendPoint[]> {
+  const { data } = await api.get<ApiResponse<CashFlowTrendPoint[]>>(`/api/cashflow/trend?months=${months}`);
+  return data.data ?? [];
+}
+
 // Real Estate
 export async function fetchProperties(): Promise<PropertyWithDetails[]> {
   const { data } = await api.get<ApiResponse<PropertyWithDetails[]>>("/api/properties");

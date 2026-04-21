@@ -13,6 +13,7 @@ import {
   MonthlyTrendCard,
   currentMonthKey,
 } from "../components/cashflow-shared";
+import { SavingsTrendCard } from "../components/SavingsTrendCard";
 
 function CashFlowOverviewPage() {
   const { user, loading: authLoading } = useAuth();
@@ -110,6 +111,9 @@ function CashFlowOverviewPage() {
           </span>
         </p>
       </motion.div>
+
+      {/* 3b. Savings rate — last 12 months */}
+      <SavingsTrendCard selectedMonth={month} onSelectMonth={setMonth} />
 
       {/* 4. Income vs Expenses summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">

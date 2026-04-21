@@ -6,6 +6,7 @@ import {
   fetchIncomeStreams, createIncomeStream, updateIncomeStream, deleteIncomeStream,
   fetchTransactions, createManualTransaction, updateTransactionCategory, deleteTransaction, reclassifyTransactions,
   fetchCashFlowSummary,
+  fetchCashFlowTrend,
   fetchProperties, createProperty, updateProperty, deleteProperty,
   createMortgage, updateMortgage, deleteMortgage,
   createPropertyCost, updatePropertyCost, deletePropertyCost,
@@ -176,6 +177,13 @@ export function useCashFlowSummary(month?: string) {
   return useQuery({
     queryKey: ["cashflow-summary", month ?? "all"],
     queryFn: () => fetchCashFlowSummary(month),
+  });
+}
+
+export function useCashFlowTrend(months = 12) {
+  return useQuery({
+    queryKey: ["cashflow-trend", months],
+    queryFn: () => fetchCashFlowTrend(months),
   });
 }
 

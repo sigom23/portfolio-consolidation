@@ -201,7 +201,7 @@ function MyWealthPage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.12, duration: 0.4, ease: [0.25, 1, 0.5, 1] as const }}
-        className="border border-[var(--color-whisper)] rounded-[2px] mb-6 grid grid-cols-2"
+        className="bg-[var(--bg-secondary)] border border-[var(--color-whisper)] rounded-[2px] mb-6 grid grid-cols-2"
       >
         {categories.map((cat, i) => {
           const pct = netWorth > 0 ? (cat.value / netWorth) * 100 : 0;

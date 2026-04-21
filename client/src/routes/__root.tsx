@@ -21,7 +21,7 @@ function RootLayout() {
   return (
     <div className="min-h-screen">
       <Sidebar />
-      <main className="lg:ml-[220px] min-h-screen">
+      <main className="main-bg lg:ml-[220px] min-h-screen">
         <Outlet />
       </main>
     </div>

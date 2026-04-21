@@ -49,6 +49,10 @@
 
 /* ─── Base ─── */
 
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   font-family: 'Outfit', system-ui, sans-serif;
   background-color: var(--bg-primary);
@@ -57,6 +61,42 @@ body {
 }
 
 /* ─── Design system utilities ─── */
+
+/* Main content backdrop — subtle prismatic texture, light mode only.
+   Right half: image as-is. Left half: same image mirrored, so both edges
+   of the visible main area carry the prism framing (sidebar hides the
+   natural left edge of the image). */
+.main-bg {
+  position: relative;
+  isolation: isolate;
+}
+.main-bg::before,
+.main-bg::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  background-image: linear-gradient(rgba(247, 247, 248, 0.5), rgba(247, 247, 248, 0.5)), url("/bg-main.jpg");
+  background-size: cover;
+  background-position: right center;
+  background-repeat: no-repeat;
+  filter: saturate(0.75);
+  pointer-events: none;
+  z-index: -1;
+}
+.main-bg::before {
+  left: calc(220px + (100vw - 220px) / 2);
+  right: 0;
+}
+.main-bg::after {
+  left: 220px;
+  width: calc((100vw - 220px) / 2);
+  transform: scaleX(-1);
+}
+@media (max-width: 1023px) {
+  .main-bg::before { left: 50vw; }
+  .main-bg::after { left: 0; width: 50vw; }
+}
 
 /* Force lining (modern) numerals on serif financial figures */
 .font-serif {

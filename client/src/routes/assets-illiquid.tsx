@@ -53,14 +53,32 @@ function AssetsIlliquidPage() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/assets/illiquid" });
   const activeTab = (search as { tab?: string }).tab as IlliquidSubtype | undefined;
+  const openAddFlag = (search as { openAdd?: number }).openAdd === 1;
   const { data: assets, isLoading: assetsLoading } = useIlliquidAssets();
   const { format, baseCurrency, flag, rates } = useCurrency();
   const [modalSubtype, setModalSubtype] = useState<IlliquidSubtype | null>(null);
   const [editingAsset, setEditingAsset] = useState<IlliquidAsset | null>(null);
+  const [prefill, setPrefill] = useState<Partial<IlliquidAsset> | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/" });
   }, [authLoading, user, navigate]);
+
+  useEffect(() => {
+    if (!openAddFlag) return;
+    const raw = sessionStorage.getItem("pe_pending_prefill");
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw) as Partial<IlliquidAsset>;
+      setPrefill(parsed);
+      setEditingAsset(null);
+      setModalSubtype("private_equity");
+    } catch {
+      // corrupt stash, ignore
+    }
+    sessionStorage.removeItem("pe_pending_prefill");
+    navigate({ to: "/assets/illiquid", search: { tab: "private_equity", openAdd: undefined }, replace: true });
+  }, [openAddFlag, navigate]);
 
   const grouped = useMemo(() => {
     const bySubtype: Record<IlliquidSubtype, IlliquidAsset[]> = {
@@ -90,7 +108,7 @@ function AssetsIlliquidPage() {
   const tabItems = grouped[currentTab];
 
   function setTab(key: IlliquidSubtype) {
-    navigate({ to: "/assets/illiquid", search: { tab: key }, replace: true });
+    navigate({ to: "/assets/illiquid", search: { tab: key, openAdd: undefined }, replace: true });
   }
 
   if (authLoading || !user) {
@@ -210,7 +228,8 @@ function AssetsIlliquidPage() {
         open={modalSubtype !== null}
         subtype={modalSubtype}
         editAsset={editingAsset}
-        onClose={() => { setModalSubtype(null); setEditingAsset(null); }}
+        prefill={prefill}
+        onClose={() => { setModalSubtype(null); setEditingAsset(null); setPrefill(null); }}
       />
     </div>
   );
@@ -760,5 +779,6 @@ export const Route = createRoute({
   component: AssetsIlliquidPage,
   validateSearch: (search: Record<string, unknown>) => ({
     tab: typeof search.tab === "string" ? search.tab : undefined,
+    openAdd: search.openAdd === 1 || search.openAdd === "1" ? 1 : undefined,
   }),
 });

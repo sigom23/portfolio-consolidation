@@ -11,6 +11,7 @@ import {
   syncIlliquidHolding,
   deleteIlliquidHolding,
   createUpload,
+  updateUploadStatus,
   type NewIlliquidAsset,
 } from "../lib/db.js";
 import { getExchangeRates } from "../lib/forex.js";
@@ -307,23 +308,23 @@ router.delete("/illiquid/:id", async (req: Request, res: Response) => {
 // POST /api/illiquid/parse-statement — parse a PE fund statement PDF for creating a new fund
 // Does NOT create anything — returns extracted values for client-side confirmation via POST.
 router.post("/illiquid/parse-statement", upload.single("file"), async (req: Request, res: Response) => {
+  if (!req.file) {
+    res.status(400).json({ success: false, error: "No file provided" });
+    return;
+  }
+
+  // Store the PDF in uploads table
+  const uploadRecord = await createUpload(
+    req.session.userId!,
+    req.file.originalname,
+    "pdf",
+    req.file.buffer,
+    "pe_statement"
+  );
+
   try {
-    if (!req.file) {
-      res.status(400).json({ success: false, error: "No file provided" });
-      return;
-    }
-
-    // Store the PDF in uploads table
-    const uploadRecord = await createUpload(
-      req.session.userId!,
-      req.file.originalname,
-      "pdf",
-      req.file.buffer,
-      "pe_statement"
-    );
-
-    // Parse with AI
     const extracted = await parsePEStatement(req.file.buffer);
+    await updateUploadStatus(uploadRecord.id, "processed");
 
     res.json({
       success: true,
@@ -333,6 +334,7 @@ router.post("/illiquid/parse-statement", upload.single("file"), async (req: Requ
       },
     });
   } catch (err) {
+    await updateUploadStatus(uploadRecord.id, "failed");
     res.status(500).json({
       success: false,
       error: err instanceof Error ? err.message : "Failed to parse PE statement",
@@ -344,39 +346,39 @@ router.post("/illiquid/parse-statement", upload.single("file"), async (req: Requ
 // Does NOT auto-save — returns extracted values for client-side confirmation via PUT.
 // Stores the PDF in the uploads table tagged with the fund for Data Room visibility.
 router.post("/illiquid/:id/upload", upload.single("file"), async (req: Request, res: Response) => {
+  const id = parseInt(String(req.params.id), 10);
+  if (isNaN(id)) {
+    res.status(400).json({ success: false, error: "invalid id" });
+    return;
+  }
+
+  const existing = await getIlliquidAssetById(id, req.session.userId!);
+  if (!existing) {
+    res.status(404).json({ success: false, error: "not found" });
+    return;
+  }
+  if (existing.subtype !== "private_equity") {
+    res.status(400).json({ success: false, error: "upload is only supported for private equity funds" });
+    return;
+  }
+
+  if (!req.file) {
+    res.status(400).json({ success: false, error: "No file provided" });
+    return;
+  }
+
+  // Store the PDF in uploads table, tagged with the fund
+  const uploadRecord = await createUpload(
+    req.session.userId!,
+    req.file.originalname,
+    "pdf",
+    req.file.buffer,
+    "pe_statement"
+  );
+
   try {
-    const id = parseInt(String(req.params.id), 10);
-    if (isNaN(id)) {
-      res.status(400).json({ success: false, error: "invalid id" });
-      return;
-    }
-
-    const existing = await getIlliquidAssetById(id, req.session.userId!);
-    if (!existing) {
-      res.status(404).json({ success: false, error: "not found" });
-      return;
-    }
-    if (existing.subtype !== "private_equity") {
-      res.status(400).json({ success: false, error: "upload is only supported for private equity funds" });
-      return;
-    }
-
-    if (!req.file) {
-      res.status(400).json({ success: false, error: "No file provided" });
-      return;
-    }
-
-    // Store the PDF in uploads table, tagged with the fund
-    const uploadRecord = await createUpload(
-      req.session.userId!,
-      req.file.originalname,
-      "pdf",
-      req.file.buffer,
-      "pe_statement"
-    );
-
-    // Parse with AI
     const extracted = await parsePEStatement(req.file.buffer);
+    await updateUploadStatus(uploadRecord.id, "processed");
 
     res.json({
       success: true,
@@ -387,6 +389,7 @@ router.post("/illiquid/:id/upload", upload.single("file"), async (req: Request, 
       },
     });
   } catch (err) {
+    await updateUploadStatus(uploadRecord.id, "failed");
     res.status(500).json({
       success: false,
       error: err instanceof Error ? err.message : "Failed to parse PE statement",

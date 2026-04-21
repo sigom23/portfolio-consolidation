@@ -5,7 +5,7 @@ import { useUploads, useDeleteUpload, useWallets, useUploadStatement } from "../
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { WalletList } from "../components/WalletList";
-import { detectDocumentType, uploadStatement } from "../services/api";
+import { detectDocumentType, uploadStatement, parsePEStatementNew } from "../services/api";
 import { Upload, Download, Trash2 } from "lucide-react";
 
 // ============================================================
@@ -93,14 +93,32 @@ function DataRoomPage() {
 
       // Step 2: Process
       try {
-        const result = await uploadStatement(item.file, kind === "pe_statement" ? "wealth" : kind);
-        const summary = kind === "transactions"
-          ? `${result.inserted ?? 0} transaction(s) inserted`
-          : kind === "salary"
-            ? (result as any).updated ? "Salary stream updated" : "Salary stream created"
-            : `${result.holdings?.length ?? 0} holding(s) parsed`;
-        setQueue((q) => q.map((i) => i.id === item.id ? { ...i, status: "done", result: summary } : i));
-        refetchUploads();
+        if (kind === "pe_statement") {
+          const { extracted } = await parsePEStatementNew(item.file);
+          sessionStorage.setItem("pe_pending_prefill", JSON.stringify({
+            name: extracted.fund_name ?? null,
+            currency: extracted.currency ?? "USD",
+            current_value: extracted.nav,
+            committed_capital: extracted.committed_capital,
+            called_capital: extracted.called_capital,
+            distributed_capital: extracted.distributed_capital,
+            vintage_year: extracted.vintage_year,
+            strategy: extracted.strategy,
+            gp_name: extracted.gp_name,
+          }));
+          setQueue((q) => q.map((i) => i.id === item.id ? { ...i, status: "done", result: "Opening in Illiquid…" } : i));
+          refetchUploads();
+          navigate({ to: "/assets/illiquid", search: { tab: "private_equity", openAdd: 1 } });
+        } else {
+          const result = await uploadStatement(item.file, kind);
+          const summary = kind === "transactions"
+            ? `${result.inserted ?? 0} transaction(s) inserted`
+            : kind === "salary"
+              ? (result as any).updated ? "Salary stream updated" : "Salary stream created"
+              : `${result.holdings?.length ?? 0} holding(s) parsed`;
+          setQueue((q) => q.map((i) => i.id === item.id ? { ...i, status: "done", result: summary } : i));
+          refetchUploads();
+        }
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Processing failed";
         setQueue((q) => q.map((i) => i.id === item.id ? { ...i, status: "error", error: msg } : i));

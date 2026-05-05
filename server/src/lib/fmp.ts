@@ -73,10 +73,25 @@ export async function getCompanyProfile(ticker: string, exchCode?: string): Prom
   try {
     const dbCached = await getCachedCompany(symbol);
     if (dbCached) {
+      // Static company info comes from companies table; the price lives in
+      // its own cache (companies.price + price_fetched_at) populated by
+      // /api/holdings/refresh-prices. Read it here so the hover card shows
+      // the latest known price instead of 0.
+      let price = 0;
+      let priceCurrency = dbCached.currency ?? "";
+      try {
+        const dbPrice = await getCachedPrice(symbol);
+        if (dbPrice && Date.now() - dbPrice.fetchedAt.getTime() < PRICE_CACHE_TTL) {
+          price = dbPrice.price;
+          priceCurrency = dbPrice.currency || priceCurrency;
+        }
+      } catch {
+        // price cache read failed — continue with price 0
+      }
       const profile: CompanyProfile = {
         symbol: dbCached.symbol,
         companyName: dbCached.company_name ?? "",
-        price: 0, change: 0, changePercentage: 0, // dynamic fields not cached
+        price, change: 0, changePercentage: 0,
         marketCap: dbCached.market_cap ?? 0,
         sector: dbCached.sector ?? "",
         industry: dbCached.industry ?? "",
@@ -84,7 +99,7 @@ export async function getCompanyProfile(ticker: string, exchCode?: string): Prom
         ceo: dbCached.ceo ?? "",
         website: dbCached.website ?? "",
         exchange: dbCached.exchange ?? "",
-        currency: dbCached.currency ?? "",
+        currency: priceCurrency,
         range: dbCached.price_range ?? "",
         image: dbCached.image ?? "",
         ipoDate: dbCached.ipo_date ?? "",

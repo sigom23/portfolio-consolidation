@@ -177,6 +177,12 @@ export interface IlliquidAsset {
   // Private Equity
   committed_capital: number | null;
   called_capital: number | null;
+  distributed_capital: number | null;
+  vintage_year: number | null;
+  strategy: string | null;
+  gp_name: string | null;
+  geography: string | null;
+  fund_status: string | null;
 
   // Unvested Equity
   employer: string | null;

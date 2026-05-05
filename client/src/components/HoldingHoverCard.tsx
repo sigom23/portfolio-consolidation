@@ -101,8 +101,8 @@ export function HoldingHoverCard({ ticker, exchCode, figiData, children }: Props
   }, []);
 
   const chartColor = history.length >= 2 && history[history.length - 1].price >= history[0].price
-    ? "#22c55e"
-    : "#ef4444";
+    ? "#6E9E96"
+    : "#C47D6D";
 
   const hasChart = history.length > 1;
   const cardWidth = hasChart ? "w-[38rem]" : "w-80";
@@ -110,7 +110,7 @@ export function HoldingHoverCard({ ticker, exchCode, figiData, children }: Props
 
   const card = visible ? createPortal(
     <div
-      className={`fixed z-[9999] ${cardWidth} rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] shadow-2xl p-4 overflow-y-auto`}
+      className={`fixed z-[9999] ${cardWidth} rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-4 overflow-y-auto`}
       style={{
         top: coords.openAbove ? undefined : coords.top,
         bottom: coords.openAbove ? window.innerHeight - coords.top + 4 : undefined,
@@ -122,7 +122,7 @@ export function HoldingHoverCard({ ticker, exchCode, figiData, children }: Props
     >
       {loading ? (
         <div className="flex items-center justify-center py-6">
-          <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
         </div>
       ) : profile ? (
         <div className={hasChart ? "flex gap-4" : "space-y-3"}>
@@ -133,7 +133,7 @@ export function HoldingHoverCard({ ticker, exchCode, figiData, children }: Props
               <img
                 src={profile.image}
                 alt=""
-                className="w-10 h-10 rounded-lg object-cover bg-[var(--bg-tertiary)]"
+                className="w-10 h-10 rounded-[2px] object-cover bg-[var(--bg-tertiary)]"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
               />
               <div className="flex-1 min-w-0">
@@ -144,10 +144,10 @@ export function HoldingHoverCard({ ticker, exchCode, figiData, children }: Props
 
             {/* Price */}
             <div className="flex items-baseline gap-2">
-              <span className="text-lg font-bold text-[var(--text-primary)] tabular-nums">
+              <span className="text-[18px] font-medium text-[var(--text-primary)] tabular-nums">
                 {formatNativePrice(profile.price, profile.currency)}
               </span>
-              <span className={`text-xs font-medium ${profile.change >= 0 ? "text-green-500" : "text-red-500"}`}>
+              <span className={`text-xs font-medium ${profile.change >= 0 ? "text-[var(--color-positive)]" : "text-[var(--color-negative)]"}`}>
                 {profile.change >= 0 ? "+" : ""}{profile.changePercentage.toFixed(2)}%
               </span>
             </div>
@@ -194,7 +194,7 @@ export function HoldingHoverCard({ ticker, exchCode, figiData, children }: Props
                     <span className="text-[10px] text-[var(--text-muted)] tabular-nums w-10 text-right">{low.toFixed(0)}</span>
                     <div className="flex-1 relative h-1.5 bg-[var(--bg-tertiary)] rounded-full">
                       <div
-                        className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-blue-500 border-2 border-[var(--bg-secondary)]"
+                        className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-[var(--color-charcoal)] border-2 border-[var(--bg-secondary)]"
                         style={{ left: `calc(${pct}% - 5px)` }}
                       />
                     </div>
@@ -217,7 +217,7 @@ export function HoldingHoverCard({ ticker, exchCode, figiData, children }: Props
                 href={profile.website}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[10px] text-blue-500 hover:underline block"
+                className="text-[10px] text-[var(--color-charcoal)] hover:underline block"
               >
                 {profile.website.replace(/^https?:\/\//, "")}
               </a>

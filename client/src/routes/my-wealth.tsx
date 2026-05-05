@@ -7,6 +7,7 @@ import { useEffect, useMemo } from "react";
 import { motion } from "motion/react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { AnimatedNumber } from "../components/AnimatedNumber";
+import { ArrowRight } from "lucide-react";
 import type { Holding } from "../types";
 
 function currentMonthKey(): string {
@@ -100,10 +101,10 @@ function MyWealthPage() {
   const loading = holdingsLoading || propertiesLoading;
 
   const categories: Category[] = [
-    { key: "liquid", label: "Liquid", to: "/assets/liquid", value: categoryTotals.liquid, color: "#3b82f6" },
-    { key: "illiquid", label: "Illiquid", to: "/assets/illiquid", value: categoryTotals.illiquid, color: "#8b5cf6" },
-    { key: "real_estate", label: "Real Estate", to: "/assets/real-estate", value: categoryTotals.real_estate, color: "#06b6d4" },
-    { key: "crypto", label: "Crypto", to: "/assets/crypto", value: categoryTotals.crypto, color: "#f59e0b" },
+    { key: "liquid", label: "Liquid", to: "/assets/liquid", value: categoryTotals.liquid, color: "#6B7B8D" },
+    { key: "illiquid", label: "Illiquid", to: "/assets/illiquid", value: categoryTotals.illiquid, color: "#A89B8C" },
+    { key: "real_estate", label: "Real Estate", to: "/assets/real-estate", value: categoryTotals.real_estate, color: "#7D8E7B" },
+    { key: "crypto", label: "Crypto", to: "/assets/crypto", value: categoryTotals.crypto, color: "#8E87A5" },
   ];
 
   const donutData = categories
@@ -132,16 +133,16 @@ function MyWealthPage() {
   if (authLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto">
+    <div className="px-6 lg:px-8 py-8 max-w-[1100px] mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">My Wealth</h1>
+        <h1 className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)]">My Wealth</h1>
         <p className="text-sm text-[var(--text-muted)] mt-1">
           A consolidated view of your wealth
         </p>
@@ -149,26 +150,26 @@ function MyWealthPage() {
 
       {/* Net Worth hero */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const }}
-        className="hero-card rounded-2xl p-8 mb-6 transition-all"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] as const }}
+        className="rounded-[2px] border border-[var(--color-whisper)] bg-white p-8 mb-6 transition-all"
       >
         <div className="flex items-center justify-between">
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1">
+          <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)] mb-1">
             Net Worth
           </p>
           <span className="text-xs text-[var(--text-muted)]">{flag} {baseCurrency}</span>
         </div>
         {loading ? (
-          <div className="h-12 w-64 bg-[var(--bg-tertiary)] rounded animate-pulse" />
+          <div className="h-14 w-64 bg-[var(--bg-tertiary)] rounded animate-pulse mt-2" />
         ) : (
-          <p className="text-5xl font-bold text-[var(--text-primary)] tabular-nums tracking-tight">
+          <p className="text-[64px] font-serif font-normal tracking-[-0.04em] leading-[1.05] text-[var(--text-primary)] tabular-nums mt-2">
             <AnimatedNumber value={netWorth} format={format} />
           </p>
         )}
         {!loading && totalMortgageUsd > 0 && (
-          <div className="flex items-center gap-5 mt-3 text-[11px] text-[var(--text-muted)]">
+          <div className="flex items-center gap-5 mt-4 text-[11px] text-[var(--text-muted)]">
             <span>
               Assets{" "}
               <span className="font-medium text-[var(--text-secondary)] tabular-nums">
@@ -177,7 +178,7 @@ function MyWealthPage() {
             </span>
             <span>
               Liabilities{" "}
-              <span className="font-medium text-red-500 tabular-nums">
+              <span className="font-medium text-[var(--color-negative)] tabular-nums">
                 -{format(totalMortgageUsd)}
               </span>
             </span>
@@ -195,58 +196,58 @@ function MyWealthPage() {
         )}
       </motion.div>
 
-      {/* Category cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      {/* Category stat grid — strict bordered 2×2 */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.12, duration: 0.4, ease: [0.25, 1, 0.5, 1] as const }}
+        className="bg-[var(--bg-secondary)] border border-[var(--color-whisper)] rounded-[2px] mb-6 grid grid-cols-2"
+      >
         {categories.map((cat, i) => {
           const pct = netWorth > 0 ? (cat.value / netWorth) * 100 : 0;
+          const borderClasses = [
+            i % 2 === 0 ? "border-r border-[var(--color-whisper)]" : "",
+            i < 2 ? "border-b border-[var(--color-whisper)]" : "",
+          ].join(" ");
           return (
-            <motion.div
+            <Link
               key={cat.key}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + i * 0.06, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const }}
+              to={cat.to}
+              className={`block p-6 hover:bg-[var(--color-snow)] transition-colors ${borderClasses}`}
             >
-              <Link
-                to={cat.to}
-                className="block rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 hover:border-blue-500/40 hover:-translate-y-0.5 transition-all"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
-                  <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
-                    {cat.label}
-                  </p>
-                </div>
-                {loading ? (
-                  <div className="mt-2 h-7 w-28 bg-[var(--bg-tertiary)] rounded animate-pulse" />
-                ) : (
-                  <p className="mt-2 text-2xl font-semibold text-[var(--text-primary)] tabular-nums tracking-tight">
-                    {format(cat.value)}
-                  </p>
-                )}
-                <p className="mt-1 text-xs text-[var(--text-muted)] tabular-nums">
-                  {loading ? "—" : `${pct.toFixed(1)}% of net worth`}
+              <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--color-light)] mb-2">
+                {cat.label}
+              </p>
+              {loading ? (
+                <div className="h-7 w-28 bg-[var(--color-cloud)] rounded-[2px] animate-pulse" />
+              ) : (
+                <p className="text-[27px] font-serif font-normal text-[var(--color-charcoal)] tabular-nums tracking-[-0.03em]">
+                  {format(cat.value)}
                 </p>
-              </Link>
-            </motion.div>
+              )}
+              <p className="mt-1 text-[10.4px] text-[var(--color-muted)] tabular-nums">
+                {loading ? "\u2014" : `${pct.toFixed(1)}% of net worth`}
+              </p>
+            </Link>
           );
         })}
-      </div>
+      </motion.div>
 
       {/* Monthly Cash Flow strip */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.28, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.28, duration: 0.4, ease: [0.25, 1, 0.5, 1] as const }}
         className="mb-4"
       >
         <Link
           to="/cashflow"
-          className="block rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 hover:border-blue-500/40 hover:-translate-y-0.5 transition-all"
+          className="block rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 hover:border-[var(--color-charcoal)]/40 hover:bg-[var(--color-snow)] transition-all"
         >
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="min-w-0">
               <div className="flex items-baseline gap-3 flex-wrap">
-                <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
+                <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)]">
                   Cash Flow
                 </p>
                 <span className="text-xs text-[var(--text-muted)]">{currentMonthLabel()}</span>
@@ -255,8 +256,8 @@ function MyWealthPage() {
                 <div className="mt-2 h-8 w-40 bg-[var(--bg-tertiary)] rounded animate-pulse" />
               ) : (
                 <p
-                  className={`mt-1 text-2xl font-semibold tabular-nums tracking-tight ${
-                    (cashFlow?.net ?? 0) >= 0 ? "text-green-500" : "text-red-500"
+                  className={`mt-1 text-[27px] font-serif font-normal tabular-nums ${
+                    (cashFlow?.net ?? 0) >= 0 ? "text-[var(--color-positive)]" : "text-[var(--color-negative)]"
                   }`}
                 >
                   {(cashFlow?.net ?? 0) >= 0 ? "+" : "-"}
@@ -283,16 +284,16 @@ function MyWealthPage() {
             <div className="text-right shrink-0">
               {!cashFlowLoading && cashFlow && (
                 <>
-                  <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">
-                    Savings rate
+                  <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)]">
+                    Savings Rate
                   </p>
                   <p
-                    className={`text-xl font-semibold tabular-nums ${
+                    className={`text-[18px] font-serif font-normal tabular-nums ${
                       cashFlow.savingsRate >= 0.2
-                        ? "text-green-500"
+                        ? "text-[var(--color-positive)]"
                         : cashFlow.savingsRate >= 0
-                          ? "text-yellow-500"
-                          : "text-red-500"
+                          ? "text-[var(--color-pending)]"
+                          : "text-[var(--color-negative)]"
                     }`}
                   >
                     {(cashFlow.savingsRate * 100).toFixed(0)}%
@@ -308,34 +309,34 @@ function MyWealthPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Wealth Composition */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const }}
-          className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.35, duration: 0.4, ease: [0.25, 1, 0.5, 1] as const }}
+          className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6"
         >
           <h2 className="text-sm font-medium text-[var(--text-muted)] mb-4">Wealth Composition</h2>
 
           {loading ? (
             <div className="flex items-center justify-center h-48">
-              <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
             </div>
           ) : donutData.length === 0 ? (
-            <div className="flex items-center justify-center h-48 rounded-lg bg-[var(--bg-tertiary)] border border-dashed border-[var(--border-color)]">
+            <div className="flex items-center justify-center h-48 rounded-[2px] bg-[var(--bg-tertiary)] border border-dashed border-[var(--border-color)]">
               <p className="text-[var(--text-muted)] text-sm">No wealth to display yet</p>
             </div>
           ) : (
             <div className="flex items-center gap-6">
               {/* Donut */}
-              <div className="relative w-40 h-40 flex-shrink-0">
+              <div className="relative w-[180px] h-[180px] flex-shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={donutData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={48}
-                      outerRadius={68}
-                      paddingAngle={3}
+                      innerRadius={66}
+                      outerRadius={88}
+                      paddingAngle={2}
                       dataKey="value"
                       strokeWidth={0}
                     >
@@ -346,12 +347,9 @@ function MyWealthPage() {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="text-center">
-                    <p className="text-[10px] text-[var(--text-muted)]">Net Worth</p>
-                    <p className="text-sm font-bold text-[var(--text-primary)]">
-                      {format(netWorth)}
-                    </p>
-                  </div>
+                  <p className="text-[27px] font-serif font-normal text-[var(--text-primary)]">
+                    {format(netWorth)}
+                  </p>
                 </div>
               </div>
 
@@ -386,24 +384,25 @@ function MyWealthPage() {
 
         {/* Top 5 Holdings */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.42, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const }}
-          className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden flex flex-col"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.42, duration: 0.4, ease: [0.25, 1, 0.5, 1] as const }}
+          className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden flex flex-col"
         >
           <div className="px-6 py-4 flex items-center justify-between border-b border-[var(--border-color)]">
             <h2 className="text-sm font-medium text-[var(--text-muted)]">Top Holdings</h2>
             <Link
               to="/assets/liquid"
-              className="text-xs text-blue-500 hover:text-blue-400 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-[var(--color-mid)] hover:text-[var(--color-charcoal)] transition-colors"
             >
-              View all →
+              View all
+              <ArrowRight className="w-3 h-3" strokeWidth={1.5} />
             </Link>
           </div>
 
           {loading ? (
             <div className="flex-1 flex items-center justify-center p-8">
-              <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
             </div>
           ) : topHoldings.length === 0 ? (
             <div className="flex-1 flex items-center justify-center p-8">
@@ -425,10 +424,10 @@ function MyWealthPage() {
                       )}
                     </div>
                     <div className="text-right shrink-0 ml-3">
-                      <p className="text-sm font-medium text-[var(--text-primary)] tabular-nums">
+                      <p className="text-[14px] font-serif font-normal text-[var(--color-charcoal)] tabular-nums">
                         {format(h.value_usd ?? 0)}
                       </p>
-                      <p className="text-[11px] text-[var(--text-muted)] tabular-nums">
+                      <p className="text-[10.4px] text-[var(--color-light)] tabular-nums mt-0.5">
                         {pct.toFixed(1)}%
                       </p>
                     </div>

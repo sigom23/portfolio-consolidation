@@ -1,7 +1,21 @@
+import { useState, useMemo } from "react";
 import { motion } from "motion/react";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { useCurrency } from "../contexts/CurrencyContext";
+import { useUpdateTransactionCategory } from "../hooks/usePortfolio";
 import type {
   CashFlowSummary,
+  IncomeStream,
   IncomeStreamType,
   Transaction,
 } from "../types";
@@ -11,13 +25,13 @@ import type {
 // ============================================================
 
 export const TYPE_COLORS: Record<IncomeStreamType, string> = {
-  salary: "#3b82f6",
-  dividend: "#8b5cf6",
-  freelance: "#f59e0b",
-  pension: "#14b8a6",
-  interest: "#22c55e",
-  rental: "#06b6d4",
-  other: "#64748b",
+  salary: "#6B7B8D",
+  dividend: "#A89B8C",
+  freelance: "#8E87A5",
+  pension: "#6E9E96",
+  interest: "#6E9E96",
+  rental: "#7D8E7B",
+  other: "#B8B8BD",
 };
 
 export const TYPE_LABELS: Record<IncomeStreamType, string> = {
@@ -31,19 +45,19 @@ export const TYPE_LABELS: Record<IncomeStreamType, string> = {
 };
 
 export const CATEGORY_COLORS: Record<string, string> = {
-  Housing: "#3b82f6",
-  Groceries: "#10b981",
-  Transport: "#6366f1",
-  "Food & Drink": "#f97316",
-  Shopping: "#ec4899",
-  Entertainment: "#8b5cf6",
-  Health: "#ef4444",
-  Travel: "#14b8a6",
-  Subscriptions: "#a78bfa",
-  Bills: "#f59e0b",
-  Boat: "#06b6d4",
-  Income: "#22c55e",
-  Transfers: "#64748b",
+  Housing: "#6B7B8D",
+  Groceries: "#6E9E96",
+  Transport: "#8E87A5",
+  "Food & Drink": "#C4A96D",
+  Shopping: "#A89B8C",
+  Entertainment: "#A89B8C",
+  Health: "#C47D6D",
+  Travel: "#6E9E96",
+  Subscriptions: "#8E87A5",
+  Bills: "#8E87A5",
+  Boat: "#7D8E7B",
+  Income: "#6E9E96",
+  Transfers: "#B8B8BD",
   Other: "#94a3b8",
 };
 
@@ -64,7 +78,7 @@ export const CURRENCY_SYMBOLS: Record<string, string> = {
 export function getCategoryColor(cat: string, i: number): string {
   return (
     CATEGORY_COLORS[cat] ??
-    ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#6366f1"][i % 6]
+    ["#6B7B8D", "#6E9E96", "#8E87A5", "#C47D6D", "#A89B8C", "#8E87A5"][i % 6]
   );
 }
 
@@ -111,23 +125,280 @@ export function currentMonthKey(): string {
 // Shared components
 // ============================================================
 
+/** Generate last N months as YYYY-MM strings, most recent first. */
+export function lastNMonths(n: number): string[] {
+  const months: string[] = [];
+  const now = new Date();
+  for (let i = 0; i < n; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push(
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+    );
+  }
+  return months;
+}
+
+/** Format YYYY-MM to short label like "Sep 25". */
+export function monthLabel(key: string): string {
+  const [y, m] = key.split("-");
+  const d = new Date(Number(y), Number(m) - 1, 1);
+  return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+}
+
+/** 12-month pill selector with data indicators. */
+export function MonthSelector({
+  month,
+  onMonthChange,
+  monthCounts,
+}: {
+  month: string;
+  onMonthChange: (m: string) => void;
+  monthCounts: Record<string, number>;
+}) {
+  const months = lastNMonths(12);
+  return (
+    <div className="mb-5">
+      <label className="block text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)] mb-2">
+        Month
+      </label>
+      <div className="flex gap-1.5 flex-wrap">
+        {months.map((m) => {
+          const isActive = m === month;
+          const count = monthCounts[m] ?? 0;
+          const hasData = count > 0;
+          return (
+            <button
+              key={m}
+              onClick={() => onMonthChange(m)}
+              className={`relative px-3 py-1.5 rounded-[2px] text-xs font-medium transition-all ${
+                isActive
+                  ? "bg-[var(--color-charcoal)] text-white"
+                  : hasData
+                    ? "bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-color)] hover:border-[var(--color-charcoal)]/50"
+                    : "bg-[var(--bg-secondary)] text-[var(--text-muted)] border border-transparent opacity-50 hover:opacity-75"
+              }`}
+            >
+              {monthLabel(m)}
+              {hasData && !isActive && (
+                <span className="absolute top-0.5 right-0.5 w-1 h-1 rounded-full bg-[var(--color-light)]" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+
+/** Income by type donut chart. */
+export function IncomeByTypeCard({
+  streams,
+  loading,
+}: {
+  streams: IncomeStream[];
+  loading: boolean;
+}) {
+  const { format } = useCurrency();
+
+  if (loading) {
+    return (
+      <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Group active streams by type
+  const byType: Record<string, number> = {};
+  for (const s of streams) {
+    if (!s.is_active) continue;
+    const monthly = monthlyEquivalent(s);
+    byType[s.type] = (byType[s.type] ?? 0) + monthly;
+  }
+
+  const data = Object.entries(byType)
+    .filter(([, v]) => v > 0)
+    .map(([type, value]) => ({
+      name: TYPE_LABELS[type as IncomeStreamType] ?? type,
+      value,
+      color: TYPE_COLORS[type as IncomeStreamType] ?? "#94a3b8",
+    }))
+    .sort((a, b) => b.value - a.value);
+
+  const total = data.reduce((sum, d) => sum + d.value, 0);
+
+  return (
+    <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full">
+      <h3 className="text-sm font-medium text-[var(--text-muted)] mb-4">
+        Income by Type
+      </h3>
+      {data.length === 0 ? (
+        <p className="text-sm text-[var(--text-muted)] py-8 text-center">
+          No active income streams.
+        </p>
+      ) : (
+        <div className="flex items-start gap-6">
+          <div className="relative w-36 h-36 flex-shrink-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={data}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={42}
+                  outerRadius={62}
+                  paddingAngle={2}
+                  dataKey="value"
+                  strokeWidth={0}
+                >
+                  {data.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="text-center">
+                <p className="text-[10px] text-[var(--text-muted)]">Monthly</p>
+                <p className="text-xs font-bold text-[var(--text-primary)]">
+                  {format(total)}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="flex-1 space-y-2 min-w-0">
+            {data.map((entry) => {
+              const pct = total > 0 ? (entry.value / total) * 100 : 0;
+              return (
+                <div key={entry.name} className="flex items-center gap-2">
+                  <div
+                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: entry.color }}
+                  />
+                  <span className="text-[11px] text-[var(--text-secondary)] truncate flex-1">
+                    {entry.name}
+                  </span>
+                  <span className="text-[11px] font-medium text-[var(--text-primary)] tabular-nums flex-shrink-0">
+                    {pct.toFixed(1)}%
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** 6-month trend bar chart for income or expenses. */
+export function MonthlyTrendCard({
+  transactions,
+  sign,
+  loading,
+}: {
+  transactions: Transaction[];
+  sign: "income" | "expense";
+  loading: boolean;
+}) {
+  const { format } = useCurrency();
+  const isIncome = sign === "income";
+
+  if (loading) {
+    return (
+      <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Group transactions by month, last 6 months
+  const months = lastNMonths(6).reverse();
+  const byMonth: Record<string, number> = {};
+  for (const tx of transactions) {
+    const key = typeof tx.date === "string" ? tx.date.slice(0, 7) : "";
+    if (!key) continue;
+    const amt = tx.amount_usd ?? tx.amount;
+    byMonth[key] = (byMonth[key] ?? 0) + Math.abs(amt);
+  }
+
+  const data = months.map((m) => ({
+    month: monthLabel(m),
+    value: byMonth[m] ?? 0,
+  }));
+
+  const barColor = isIncome ? "#6E9E96" : "#C47D6D";
+
+  return (
+    <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full">
+      <h3 className="text-sm font-medium text-[var(--text-muted)] mb-4">
+        {isIncome ? "Income Trend" : "Expense Trend"}
+      </h3>
+      {data.every((d) => d.value === 0) ? (
+        <p className="text-sm text-[var(--text-muted)] py-8 text-center">
+          No data yet.
+        </p>
+      ) : (
+        <ResponsiveContainer width="100%" height={160}>
+          <BarChart data={data} barCategoryGap="20%">
+            <XAxis
+              dataKey="month"
+              tickLine={false}
+              axisLine={false}
+              tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+            />
+            <YAxis hide />
+            <Tooltip
+              cursor={{ fill: "var(--bg-tertiary)" }}
+              contentStyle={{
+                background: "var(--bg-secondary)",
+                border: "1px solid var(--border-color)",
+                borderRadius: 8,
+                fontSize: 12,
+              }}
+              formatter={(value) => [format(Number(value)), isIncome ? "Income" : "Expenses"]}
+            />
+            <Bar dataKey="value" fill={barColor} radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      )}
+    </div>
+  );
+}
+
 /** Category breakdown used by Overview and Expenses. */
 export function CategoryBreakdownCard({
   summary,
   loading,
+  selectedCategory,
+  onCategoryClick,
 }: {
   summary: CashFlowSummary | undefined;
   loading: boolean;
+  selectedCategory?: string | null;
+  onCategoryClick?: (category: string | null) => void;
 }) {
   const { format } = useCurrency();
   const categories = summary?.categories ?? [];
   const total = summary?.expenses ?? 0;
+  const clickable = !!onCategoryClick;
 
   return (
-    <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6">
-      <h3 className="text-sm font-medium text-[var(--text-muted)] mb-4">
-        Expenses by Category
-      </h3>
+    <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-medium text-[var(--text-muted)]">
+          Expenses by Category
+        </h3>
+        {selectedCategory && onCategoryClick && (
+          <button
+            onClick={() => onCategoryClick(null)}
+            className="text-[10px] text-[var(--color-charcoal)] hover:text-[var(--color-mid)] transition-colors"
+          >
+            Clear filter
+          </button>
+        )}
+      </div>
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -146,8 +417,14 @@ export function CategoryBreakdownCard({
           {categories.slice(0, 8).map((cat, i) => {
             const pct = total > 0 ? (cat.value / total) * 100 : 0;
             const color = getCategoryColor(cat.name, i);
+            const isSelected = selectedCategory === cat.name;
+            const isDimmed = selectedCategory && !isSelected;
             return (
-              <div key={cat.name}>
+              <div
+                key={cat.name}
+                onClick={() => clickable && onCategoryClick!(isSelected ? null : cat.name)}
+                className={`transition-opacity ${clickable ? "cursor-pointer" : ""} ${isDimmed ? "opacity-30" : ""}`}
+              >
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2 min-w-0">
                     <div
@@ -185,22 +462,37 @@ export function CategoryBreakdownCard({
   );
 }
 
-/** Top merchants list — Overview only. Kept in shared since it's conceptually peer to CategoryBreakdownCard. */
+/** Top merchants list — Overview and Expenses. */
 export function TopMerchantsCard({
   summary,
   loading,
+  selectedMerchant,
+  onMerchantClick,
 }: {
   summary: CashFlowSummary | undefined;
   loading: boolean;
+  selectedMerchant?: string | null;
+  onMerchantClick?: (merchant: string | null) => void;
 }) {
   const { format } = useCurrency();
   const merchants = summary?.topMerchants ?? [];
+  const clickable = !!onMerchantClick;
 
   return (
-    <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6">
-      <h3 className="text-sm font-medium text-[var(--text-muted)] mb-4">
-        Top Merchants
-      </h3>
+    <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-medium text-[var(--text-muted)]">
+          Top Merchants
+        </h3>
+        {selectedMerchant && onMerchantClick && (
+          <button
+            onClick={() => onMerchantClick(null)}
+            className="text-[10px] text-[var(--color-charcoal)] hover:text-[var(--color-mid)] transition-colors"
+          >
+            Clear filter
+          </button>
+        )}
+      </div>
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -216,27 +508,54 @@ export function TopMerchantsCard({
         </p>
       ) : (
         <ul className="space-y-2">
-          {merchants.slice(0, 8).map((m, i) => (
-            <li
-              key={m.name}
-              className="flex items-center justify-between py-1.5 border-b border-[var(--border-color)]/50 last:border-0"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <span className="text-xs font-medium text-[var(--text-muted)] tabular-nums w-4">
-                  {i + 1}
+          {merchants.slice(0, 8).map((m, i) => {
+            const isSelected = selectedMerchant === m.name;
+            const isDimmed = selectedMerchant && !isSelected;
+            return (
+              <li
+                key={m.name}
+                onClick={() => clickable && onMerchantClick!(isSelected ? null : m.name)}
+                className={`flex items-center justify-between py-1.5 border-b border-[var(--border-color)]/50 last:border-0 transition-opacity ${clickable ? "cursor-pointer" : ""} ${isDimmed ? "opacity-30" : ""}`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-xs font-medium text-[var(--text-muted)] tabular-nums w-4">
+                    {i + 1}
+                  </span>
+                  <span className="text-sm font-medium text-[var(--text-primary)] truncate">
+                    {m.name}
+                  </span>
+                </div>
+                <span className="text-sm font-semibold text-[var(--text-primary)] tabular-nums flex-shrink-0">
+                  {format(m.value)}
                 </span>
-                <span className="text-sm font-medium text-[var(--text-primary)] truncate">
-                  {m.name}
-                </span>
-              </div>
-              <span className="text-sm font-semibold text-[var(--text-primary)] tabular-nums flex-shrink-0">
-                {format(m.value)}
-              </span>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
+  );
+}
+
+const EXPENSE_CATEGORIES = [
+  "Housing", "Groceries", "Transport", "Food & Drink", "Shopping",
+  "Entertainment", "Health", "Travel", "Subscriptions", "Bills",
+  "Boat", "Transfers", "Other",
+];
+
+const INCOME_CATEGORIES = [
+  "Salary", "Income", "Dividend", "Freelance", "Rental", "Interest",
+  "Transfers", "Other",
+];
+
+type SortKey = "date" | "description" | "category" | "amount";
+type SortDir = "asc" | "desc";
+
+function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
+  return (
+    <svg className={`inline w-3 h-3 ml-1 transition-colors ${active ? "text-[var(--text-primary)]" : "text-[var(--text-muted)] opacity-0 group-hover:opacity-50"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={active && dir === "asc" ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"} />
+    </svg>
   );
 }
 
@@ -251,6 +570,41 @@ export function TransactionsTable({
   showAmountSign: "income" | "expense";
 }) {
   const { format, rates } = useCurrency();
+  const updateCategory = useUpdateTransactionCategory();
+  const [sortKey, setSortKey] = useState<SortKey>("date");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir(sortDir === "desc" ? "asc" : "desc");
+    } else {
+      setSortKey(key);
+      setSortDir(key === "amount" ? "desc" : "asc");
+    }
+  }
+
+  const sorted = useMemo(() => {
+    const txs = [...transactions];
+    txs.sort((a, b) => {
+      let cmp = 0;
+      switch (sortKey) {
+        case "date":
+          cmp = (a.date ?? "").localeCompare(b.date ?? "");
+          break;
+        case "description":
+          cmp = (a.description ?? "").localeCompare(b.description ?? "");
+          break;
+        case "category":
+          cmp = (a.category ?? "").localeCompare(b.category ?? "");
+          break;
+        case "amount":
+          cmp = Math.abs(a.amount) - Math.abs(b.amount);
+          break;
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+    return txs;
+  }, [transactions, sortKey, sortDir]);
 
   if (loading) {
     return (
@@ -280,19 +634,27 @@ export function TransactionsTable({
       <table className="w-full">
         <thead>
           <tr className="text-left text-xs text-[var(--text-muted)] border-b border-[var(--border-color)]">
-            <th className="px-6 py-3 font-medium">Date</th>
-            <th className="px-6 py-3 font-medium">Description</th>
-            <th className="px-6 py-3 font-medium">Category</th>
-            <th className="px-6 py-3 font-medium text-right">Amount</th>
+            <th className="px-6 py-3 font-medium cursor-pointer select-none group" onClick={() => toggleSort("date")}>
+              Date<SortIcon active={sortKey === "date"} dir={sortDir} />
+            </th>
+            <th className="px-6 py-3 font-medium cursor-pointer select-none group" onClick={() => toggleSort("description")}>
+              Description<SortIcon active={sortKey === "description"} dir={sortDir} />
+            </th>
+            <th className="px-6 py-3 font-medium cursor-pointer select-none group" onClick={() => toggleSort("category")}>
+              Category<SortIcon active={sortKey === "category"} dir={sortDir} />
+            </th>
+            <th className="px-6 py-3 font-medium text-right cursor-pointer select-none group" onClick={() => toggleSort("amount")}>
+              Amount<SortIcon active={sortKey === "amount"} dir={sortDir} />
+            </th>
           </tr>
         </thead>
         <tbody>
-          {transactions.map((tx, i) => {
+          {sorted.map((tx, i) => {
             const amountUsd =
               tx.amount_usd ?? toUsd(tx.amount, tx.currency, rates);
             const isIncome = tx.amount > 0;
             const sign = isIncome ? "+" : "-";
-            const colorClass = isIncome ? "text-green-500" : "text-red-500";
+            const colorClass = isIncome ? "text-[var(--color-positive)]" : "text-[var(--color-negative)]";
             return (
               <motion.tr
                 key={tx.id}
@@ -317,21 +679,15 @@ export function TransactionsTable({
                   )}
                 </td>
                 <td className="px-6 py-3 text-sm">
-                  {tx.category ? (
-                    <span
-                      className="inline-block px-2 py-0.5 rounded text-[10px] font-medium"
-                      style={{
-                        backgroundColor: `${
-                          CATEGORY_COLORS[tx.category] ?? "#94a3b8"
-                        }1a`,
-                        color: CATEGORY_COLORS[tx.category] ?? "#94a3b8",
-                      }}
-                    >
-                      {tx.category}
-                    </span>
-                  ) : (
-                    <span className="text-[var(--text-muted)]">—</span>
-                  )}
+                  <select
+                    value={tx.category ?? "Other"}
+                    onChange={(e) => updateCategory.mutate({ id: tx.id, category: e.target.value })}
+                    className="appearance-none cursor-pointer px-2 py-0.5 rounded-[2px] text-[10.4px] font-medium uppercase tracking-[0.12em] border border-[var(--color-whisper)] outline-none bg-transparent text-[var(--color-mid)] hover:border-[var(--color-charcoal)] transition-colors"
+                  >
+                    {(showAmountSign === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES).map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
                 </td>
                 <td className="px-6 py-3 text-sm text-right tabular-nums">
                   <div>

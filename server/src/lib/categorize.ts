@@ -1,3 +1,4 @@
+import Anthropic from "@anthropic-ai/sdk";
 import { getMerchantCategory, upsertMerchantCategory } from "./db.js";
 
 export type ExpenseCategory =
@@ -16,8 +17,12 @@ export type ExpenseCategory =
   | "Transfers"
   | "Other";
 
-// Simple keyword rules. Order matters — more specific first.
-// Each entry: [regex pattern, category]
+// Keyword rules for auto-categorization. Order matters — more specific first.
+// IMPORTANT: Only add well-known brands, national/international chains, or generic
+// category terms (e.g. "restaurant", "bakery", "pharmacy"). NEVER add local
+// businesses, personal merchants, or anything derived from a specific user's
+// statements. Those get learned automatically by the AI fallback and cached in
+// the merchant_categories DB table — not in code.
 const RULES: [RegExp, ExpenseCategory][] = [
   // Boat (user-requested)
   [/\bboat\b|marina|yacht|harbor|harbour|mooring|sailing|nautic|chandlery|boatyard|volvo penta|yanmar/i, "Boat"],
@@ -30,22 +35,25 @@ const RULES: [RegExp, ExpenseCategory][] = [
   [/\btax\b|steuer|canton|gemeinde/i, "Bills"],
 
   // Groceries
-  [/coop\b|migros|aldi|lidl|denner|volg|spar\b|manor food|globus delicatessa|caritas markt/i, "Groceries"],
+  [/coop\b|coop-\d|coop pronto|migros|aldi|lidl|denner|volg|spar\b|manor food|globus delicatessa|caritas markt/i, "Groceries"],
   [/tesco|sainsbury|asda|waitrose|whole foods|trader joe|walmart|carrefour|mercadona|edeka|rewe|penny|kaufland|billa/i, "Groceries"],
 
   // Transport
   [/\bsbb\b|\bcff\b|\bffs\b|postauto|zvv|tl lausanne|uber\b|lyft|bolt|mytaxi|\btaxi\b/i, "Transport"],
-  [/\bshell\b|bp\b|esso|tamoil|coop pronto|migrol|aral|total\b|ovomaltine gas/i, "Transport"],
+  [/\bshell\b|bp\b|esso|tamoil|migrol|aral|socar|agrola/i, "Transport"],
   [/parking|parkhaus|parcage|parkservice/i, "Transport"],
   [/swiss air|lufthansa|easyjet|ryanair|klm|british airways|\biag\b|edelweiss/i, "Travel"],
 
   // Food & Drink (restaurants / cafes / delivery)
-  [/starbucks|caf[eé]\b|restaur|pizzer|sushi|burger|kebab|take.?away|lieferando|just eat|uber eats|smood|bar\b|pub\b|brauerei|brewery|wine/i, "Food & Drink"],
+  [/starbucks|caf[eé]\b|restaur|ristorante|pizzer|sushi|burger|kebab|take.?away|lieferando|just eat|uber eats|smood|bar\b|pub\b|brauerei|brewery|wine|poke\b|espressobar|confiserie|spr[uü]ngli|boulangerie|b[aä]ckerei/i, "Food & Drink"],
   [/mcdonald|burger king|kfc|subway|chipotle|domino|papa john|five guys/i, "Food & Drink"],
 
+  // Subscriptions (before Shopping so apple.com/bill doesn't match Shopping's apple.com)
+  [/netflix|spotify|apple music|apple tv|apple\.com\/bill|disney\+?|hbo|sky |dazn|youtube premium|audible|adobe|dropbox|icloud|google one|one drive|microsoft 365|office 365|github|notion\b|evernote|chatgpt|openai|claude\.ai|anthropic|linkedin|nord vpn|express vpn|paddle\.net|obsidian|n8n|proton|1password|bitwarden|todoist|figma|linear\b|vercel/i, "Subscriptions"],
+
   // Shopping
-  [/amazon|zalando|\bh&m\b|zara|uniqlo|nike|adidas|ikea|h&m|primark|galaxus|digitec|microspot|brack|interdiscount|media markt/i, "Shopping"],
-  [/apple store|apple\.com|itunes|microsoft store|google store/i, "Shopping"],
+  [/amazon|zalando|\bh\s*&\s*m\b|zara|uniqlo|nike|adidas|ikea|primark|galaxus|digitec|microspot|brack|interdiscount|media markt|dosenbach|ochsner|manor\b|pfister/i, "Shopping"],
+  [/apple store|apple\.com\/store|itunes|microsoft store|google store/i, "Shopping"],
 
   // Entertainment
   [/cinema|kino|path[eé]|theater|theatre|opera|museum|concert|konzert|ticketmaster|starticket/i, "Entertainment"],
@@ -56,9 +64,6 @@ const RULES: [RegExp, ExpenseCategory][] = [
 
   // Travel (hotels, flights covered above)
   [/hotel|airbnb|booking\.com|expedia|trivago|hostelworld|agoda/i, "Travel"],
-
-  // Subscriptions
-  [/netflix|spotify|apple music|apple tv|disney\+?|hbo|sky |dazn|youtube premium|audible|adobe|dropbox|icloud|google one|one drive|microsoft 365|office 365|github|notion|evernote|chatgpt|openai|claude\.ai|anthropic|linkedin|nord vpn|express vpn/i, "Subscriptions"],
 
   // Bills / Telecom
   [/swisscom|sunrise|salt\b|upc\b|wingo|yallo|m-budget mobile|vodafone|o2\b|\bt-mobile\b|verizon|at&t|orange\b|deutsche telekom/i, "Bills"],
@@ -87,17 +92,19 @@ export function normalizeMerchantKey(description: string): string {
 
 /**
  * Categorize a transaction by its description.
- *  1. Look up learned cache by merchant key.
- *  2. Match against RULES and cache the result.
- *  3. Fall back to "Other".
+ *  1. Check user-specific overrides (learned from manual reclassifications).
+ *  2. Look up global cache by merchant key.
+ *  3. Match against RULES and cache the result.
+ *  4. AI fallback.
+ *  5. Fall back to "Other".
  */
-export async function categorize(description: string, amount: number): Promise<ExpenseCategory> {
+export async function categorize(description: string, amount: number, userId?: string): Promise<ExpenseCategory> {
   // Income shortcut: positive amounts without a matched rule default to Income
   const key = normalizeMerchantKey(description);
   if (!key) return amount > 0 ? "Income" : "Other";
 
-  // 1. Learned cache
-  const cached = await getMerchantCategory(key);
+  // 1. User-specific override (highest priority) + global cache
+  const cached = await getMerchantCategory(key, userId);
   if (cached) return cached as ExpenseCategory;
 
   // 2. Rule matching
@@ -108,6 +115,46 @@ export async function categorize(description: string, amount: number): Promise<E
     }
   }
 
-  // 3. Fallback: income if positive, Other otherwise
+  // 3. AI fallback — ask Claude to categorize unrecognized merchants
+  const aiCategory = await aiCategorize(description, amount).catch(() => null);
+  if (aiCategory) {
+    await upsertMerchantCategory(key, aiCategory, "ai").catch(() => {});
+    return aiCategory;
+  }
+
+  // 4. Final fallback: income if positive, Other otherwise
   return amount > 0 ? "Income" : "Other";
+}
+
+const VALID_CATEGORIES: Set<string> = new Set([
+  "Housing", "Groceries", "Transport", "Food & Drink", "Shopping",
+  "Entertainment", "Health", "Travel", "Subscriptions", "Bills",
+  "Boat", "Income", "Transfers", "Other",
+]);
+
+async function aiCategorize(description: string, amount: number): Promise<ExpenseCategory | null> {
+  if (!process.env.ANTHROPIC_API_KEY) return null;
+
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const response = await client.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 50,
+    messages: [
+      {
+        role: "user",
+        content: `Categorize this transaction into exactly one of these categories: Housing, Groceries, Transport, Food & Drink, Shopping, Entertainment, Health, Travel, Subscriptions, Bills, Income, Transfers, Other.
+
+Transaction: "${description}" (${amount > 0 ? "income" : "expense"}, ${Math.abs(amount)})
+
+Reply with ONLY the category name, nothing else.`,
+      },
+    ],
+  });
+
+  const text = response.content.find((b) => b.type === "text");
+  if (!text || text.type !== "text") return null;
+
+  const category = text.text.trim();
+  if (VALID_CATEGORIES.has(category)) return category as ExpenseCategory;
+  return null;
 }

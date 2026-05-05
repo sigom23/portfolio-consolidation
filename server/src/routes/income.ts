@@ -12,8 +12,9 @@ import {
   createTransaction,
   updateTransactionCategory,
   deleteTransaction,
+  upsertMerchantCategory,
 } from "../lib/db.js";
-import { categorize } from "../lib/categorize.js";
+import { categorize, normalizeMerchantKey } from "../lib/categorize.js";
 import { getExchangeRates } from "../lib/forex.js";
 import type { IncomeStream, IncomeStreamType, IncomeFrequency } from "../types/index.js";
 
@@ -169,7 +170,7 @@ router.post("/transactions", async (req: Request, res: Response) => {
     const category =
       typeof body.category === "string" && body.category.trim()
         ? body.category.trim()
-        : await categorize(description, body.amount);
+        : await categorize(description, body.amount, userId);
 
     const rates = await getExchangeRates("USD");
     const amountUsd =
@@ -215,6 +216,13 @@ router.put("/transactions/:id", async (req: Request, res: Response) => {
       res.status(404).json({ success: false, error: "transaction not found" });
       return;
     }
+
+    // Learn from user correction — save merchant→category for future uploads
+    const merchantKey = normalizeMerchantKey(tx.description ?? "");
+    if (merchantKey) {
+      await upsertMerchantCategory(merchantKey, category, "user", req.session.userId!).catch(() => {});
+    }
+
     res.json({ success: true, data: tx });
   } catch (err) {
     res.status(500).json({ success: false, error: err instanceof Error ? err.message : "Failed to update transaction" });
@@ -237,6 +245,29 @@ router.delete("/transactions/:id", async (req: Request, res: Response) => {
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err instanceof Error ? err.message : "Failed to delete transaction" });
+  }
+});
+
+// POST /api/transactions/reclassify — re-run categorization on all transactions using current user mappings
+router.post("/transactions/reclassify", async (req: Request, res: Response) => {
+  try {
+    const userId = req.session.userId!;
+    const all = await getTransactionsByUser(userId, { limit: 10000 });
+    let updated = 0;
+
+    for (const tx of all) {
+      const desc = tx.description ?? "";
+      if (!desc) continue;
+      const newCategory = await categorize(desc, tx.amount, userId);
+      if (newCategory !== tx.category) {
+        await updateTransactionCategory(tx.id, userId, newCategory);
+        updated++;
+      }
+    }
+
+    res.json({ success: true, data: { total: all.length, updated } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err instanceof Error ? err.message : "Reclassification failed" });
   }
 });
 
@@ -271,6 +302,8 @@ router.get("/cashflow/summary", async (req: Request, res: Response) => {
 
     let income = 0;
     let expenses = 0;
+    let incomeCount = 0;
+    let expenseCount = 0;
     const byCategory: Record<string, number> = {};
     const byMerchant: Record<string, number> = {};
 
@@ -278,8 +311,8 @@ router.get("/cashflow/summary", async (req: Request, res: Response) => {
       const ccy = (tx.currency ?? "USD").toUpperCase();
       const usd = tx.amount_usd ?? toUsd(tx.amount, ccy);
 
-      if (tx.amount > 0) income += usd;
-      else expenses += Math.abs(usd);
+      if (tx.amount > 0) { income += usd; incomeCount++; }
+      else if (tx.amount < 0) { expenses += Math.abs(usd); expenseCount++; }
 
       const category = tx.category ?? "Other";
       // Exclude transfers from both income and expense totals? Keep for summary but flag.
@@ -315,12 +348,63 @@ router.get("/cashflow/summary", async (req: Request, res: Response) => {
         net,
         savingsRate,
         transactionCount: filtered.length,
+        incomeCount,
+        expenseCount,
         categories,
         topMerchants,
       },
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err instanceof Error ? err.message : "Failed to compute summary" });
+  }
+});
+
+// GET /api/cashflow/trend?months=12 — savings rate + net per month, oldest→newest
+router.get("/cashflow/trend", async (req: Request, res: Response) => {
+  try {
+    const userId = req.session.userId!;
+    const monthsParam = parseInt(String(req.query.months ?? "12"), 10);
+    const months = Math.min(Math.max(Number.isFinite(monthsParam) ? monthsParam : 12, 1), 36);
+
+    const all = await getTransactionsByUser(userId, { limit: 50000 });
+    const rates = await getExchangeRates("USD");
+    const toUsd = (amount: number, ccy: string) =>
+      ccy === "USD" ? amount : rates[ccy] ? amount / rates[ccy] : amount;
+
+    const monthKey = (d: unknown): string => {
+      const date = typeof d === "string" ? new Date(d) : d instanceof Date ? d : null;
+      if (!date || isNaN(date.getTime())) return "";
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    };
+
+    // Seed the last N months so gaps render as empty bars
+    const now = new Date();
+    const buckets = new Map<string, { income: number; expenses: number }>();
+    for (let i = months - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      buckets.set(key, { income: 0, expenses: 0 });
+    }
+
+    for (const tx of all) {
+      const key = monthKey(tx.date);
+      const bucket = buckets.get(key);
+      if (!bucket) continue;
+      const ccy = (tx.currency ?? "USD").toUpperCase();
+      const usd = tx.amount_usd ?? toUsd(tx.amount, ccy);
+      if (tx.amount > 0) bucket.income += usd;
+      else if (tx.amount < 0) bucket.expenses += Math.abs(usd);
+    }
+
+    const trend = Array.from(buckets.entries()).map(([month, { income, expenses }]) => {
+      const net = income - expenses;
+      const savingsRate = income > 0 ? net / income : 0;
+      return { month, income, expenses, net, savingsRate };
+    });
+
+    res.json({ success: true, data: trend });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err instanceof Error ? err.message : "Failed to compute trend" });
   }
 });
 

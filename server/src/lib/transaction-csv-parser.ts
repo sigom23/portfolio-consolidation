@@ -270,5 +270,18 @@ export function parseTransactionCsv(buffer: Buffer): ParsedTransaction[] {
     });
   }
 
+  // Heuristic: if we used a single "amount" column (no separate debit/credit)
+  // and the vast majority of amounts are positive (>90%), this is likely a
+  // credit card statement where charges are positive and refunds are negative.
+  // Flip all signs so charges become negative (expenses) and refunds positive.
+  if (iAmount !== -1 && iDebit === -1 && iCredit === -1 && results.length > 0) {
+    const positiveCount = results.filter((r) => r.amount > 0).length;
+    if (positiveCount / results.length > 0.9) {
+      for (const r of results) {
+        r.amount = -r.amount;
+      }
+    }
+  }
+
   return results;
 }

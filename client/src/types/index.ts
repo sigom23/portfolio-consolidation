@@ -46,13 +46,13 @@ export interface Upload {
   file_type: string | null;
   uploaded_at: string;
   status: string;
-  upload_kind: "wealth" | "transactions" | null;
+  upload_kind: "wealth" | "transactions" | "pe_statement" | "salary" | null;
 }
 
 export interface UploadResult {
   upload: Upload;
   holdings?: Holding[];
-  kind?: "wealth" | "transactions";
+  kind?: "wealth" | "transactions" | "salary";
   parsed?: number;
   inserted?: number;
   duplicates?: number;
@@ -115,6 +115,12 @@ export interface IlliquidAsset {
 
   committed_capital: number | null;
   called_capital: number | null;
+  distributed_capital: number | null;
+  vintage_year: number | null;
+  strategy: string | null;
+  gp_name: string | null;
+  geography: string | null;
+  fund_status: string | null;
 
   employer: string | null;
   units: number | null;
@@ -286,6 +292,8 @@ export interface CashFlowSummary {
   net: number;
   savingsRate: number;
   transactionCount: number;
+  incomeCount: number;
+  expenseCount: number;
   categories: { name: string; value: number }[];
   topMerchants: { name: string; value: number }[];
 }
@@ -310,6 +318,7 @@ export interface NewIncomeStream {
   end_date?: string | null;
   is_active?: boolean;
   notes?: string | null;
+  property_id?: number | null;
 }
 
 export interface ApiResponse<T> {

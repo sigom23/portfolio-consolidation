@@ -1,6 +1,20 @@
 import { createContext, useState, useEffect, useContext, type ReactNode } from "react";
 import { fetchExchangeRates, type CurrencyInfo } from "../services/api";
 
+const LOCALE_BY_CURRENCY: Record<string, string> = {
+  CHF: "de-CH",
+  USD: "en-US",
+  EUR: "de-DE",
+  GBP: "en-GB",
+  JPY: "ja-JP",
+};
+
+// Prefer ISO code over ambiguous/national symbols. Non-breaking space keeps
+// prefix + number on one line.
+const PREFIX_BY_CURRENCY: Record<string, string> = {
+  CHF: "CHF\u00A0",
+};
+
 interface CurrencyContextValue {
   baseCurrency: string;
   setBaseCurrency: (code: string) => void;
@@ -70,10 +84,14 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
   const format = (usdValue: number) => {
     const converted = convert(usdValue);
+    const locale = LOCALE_BY_CURRENCY[baseCurrency] ?? undefined;
+    const prefix = PREFIX_BY_CURRENCY[baseCurrency] ?? symbol;
     if (baseCurrency === "JPY") {
-      return `${symbol}${Math.round(converted).toLocaleString()}`;
+      return `${prefix}${Math.round(converted).toLocaleString(locale)}`;
     }
-    return `${symbol}${converted.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const useDecimals = Math.abs(converted) < 10000;
+    const digits = useDecimals ? 2 : 0;
+    return `${prefix}${converted.toLocaleString(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
   };
 
   return (

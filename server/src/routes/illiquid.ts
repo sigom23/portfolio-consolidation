@@ -1,17 +1,22 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
+import multer from "multer";
 import { requireAuth } from "../middleware/auth.js";
 import {
   getIlliquidAssetsByUser,
   getIlliquidAssetById,
   createIlliquidAsset,
+  updateIlliquidAsset,
   deleteIlliquidAsset,
   syncIlliquidHolding,
   deleteIlliquidHolding,
+  createUpload,
+  updateUploadStatus,
   type NewIlliquidAsset,
 } from "../lib/db.js";
 import { getExchangeRates } from "../lib/forex.js";
 import { writeWealthSnapshotSafe } from "../lib/snapshots.js";
+import { parsePEStatement } from "../lib/pe-statement-parser.js";
 import {
   illiquidAssetNativeValue,
   type IlliquidAsset,
@@ -20,6 +25,15 @@ import {
 
 const router = Router();
 router.use(requireAuth);
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype === "application/pdf") cb(null, true);
+    else cb(new Error("Only PDF files are accepted"));
+  },
+});
 
 const VALID_SUBTYPES: IlliquidSubtype[] = [
   "private_equity",
@@ -157,6 +171,12 @@ router.post("/illiquid", async (req: Request, res: Response) => {
 
       committed_capital: subtype === "private_equity" ? numOrNull(body.committed_capital) : null,
       called_capital: subtype === "private_equity" ? numOrNull(body.called_capital) : null,
+      distributed_capital: subtype === "private_equity" ? numOrNull(body.distributed_capital) : null,
+      vintage_year: subtype === "private_equity" ? intOrNull(body.vintage_year) : null,
+      strategy: subtype === "private_equity" ? strOrNull(body.strategy) : null,
+      gp_name: subtype === "private_equity" ? strOrNull(body.gp_name) : null,
+      geography: subtype === "private_equity" ? strOrNull(body.geography) : null,
+      fund_status: subtype === "private_equity" ? strOrNull(body.fund_status) : null,
 
       employer: subtype === "unvested_equity" ? strOrNull(body.employer) : null,
       units: subtype === "unvested_equity" ? numOrNull(body.units) : null,
@@ -177,6 +197,80 @@ router.post("/illiquid", async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       error: err instanceof Error ? err.message : "Failed to create illiquid asset",
+    });
+  }
+});
+
+// PUT /api/illiquid/:id — update an illiquid asset + re-sync holding
+router.put("/illiquid/:id", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(String(req.params.id), 10);
+    if (isNaN(id)) {
+      res.status(400).json({ success: false, error: "invalid id" });
+      return;
+    }
+
+    const existing = await getIlliquidAssetById(id, req.session.userId!);
+    if (!existing) {
+      res.status(404).json({ success: false, error: "not found" });
+      return;
+    }
+
+    const body = req.body as Record<string, unknown>;
+    const subtype = existing.subtype;
+
+    // Build updates object — only include fields that were provided
+    const updates: Record<string, unknown> = {};
+
+    if (typeof body.name === "string" && body.name.trim()) updates.name = body.name.trim();
+    if (typeof body.currency === "string") updates.currency = body.currency.toUpperCase();
+    if (body.notes !== undefined) updates.notes = strOrNull(body.notes);
+
+    // Subtype-specific fields
+    if (subtype === "private_equity" || subtype === "pension" || subtype === "startup") {
+      if (typeof body.current_value === "number") updates.current_value = body.current_value;
+    }
+    if (subtype === "private_equity") {
+      if (body.committed_capital !== undefined) updates.committed_capital = numOrNull(body.committed_capital);
+      if (body.called_capital !== undefined) updates.called_capital = numOrNull(body.called_capital);
+      if (body.distributed_capital !== undefined) updates.distributed_capital = numOrNull(body.distributed_capital);
+      if (body.vintage_year !== undefined) updates.vintage_year = intOrNull(body.vintage_year);
+      if (body.strategy !== undefined) updates.strategy = strOrNull(body.strategy);
+      if (body.gp_name !== undefined) updates.gp_name = strOrNull(body.gp_name);
+      if (body.geography !== undefined) updates.geography = strOrNull(body.geography);
+      if (body.fund_status !== undefined) updates.fund_status = strOrNull(body.fund_status);
+    }
+    if (subtype === "unvested_equity") {
+      if (typeof body.end_value === "number") updates.end_value = body.end_value;
+      if (typeof body.vesting_years === "number") updates.vesting_years = Math.trunc(body.vesting_years);
+      if (typeof body.grant_start_date === "string") updates.grant_start_date = body.grant_start_date;
+      if (body.employer !== undefined) updates.employer = strOrNull(body.employer);
+      if (body.units !== undefined) updates.units = numOrNull(body.units);
+    }
+    if (subtype === "startup") {
+      if (body.amount_invested !== undefined) updates.amount_invested = numOrNull(body.amount_invested);
+      if (body.investment_date !== undefined) updates.investment_date = strOrNull(body.investment_date);
+    }
+
+    if (Object.keys(updates).length === 0) {
+      res.status(400).json({ success: false, error: "no valid fields to update" });
+      return;
+    }
+
+    const updated = await updateIlliquidAsset(id, req.session.userId!, updates);
+    if (!updated) {
+      res.status(404).json({ success: false, error: "not found" });
+      return;
+    }
+
+    await syncHoldingForIlliquid(req.session.userId!, updated);
+    await writeWealthSnapshotSafe(req.session.userId!, "illiquid");
+
+    res.json({ success: true, data: updated });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to update illiquid asset",
     });
   }
 });
@@ -207,6 +301,98 @@ router.delete("/illiquid/:id", async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       error: err instanceof Error ? err.message : "Failed to delete illiquid asset",
+    });
+  }
+});
+
+// POST /api/illiquid/parse-statement — parse a PE fund statement PDF for creating a new fund
+// Does NOT create anything — returns extracted values for client-side confirmation via POST.
+router.post("/illiquid/parse-statement", upload.single("file"), async (req: Request, res: Response) => {
+  if (!req.file) {
+    res.status(400).json({ success: false, error: "No file provided" });
+    return;
+  }
+
+  // Store the PDF in uploads table
+  const uploadRecord = await createUpload(
+    req.session.userId!,
+    req.file.originalname,
+    "pdf",
+    req.file.buffer,
+    "pe_statement"
+  );
+
+  try {
+    const extracted = await parsePEStatement(req.file.buffer);
+    await updateUploadStatus(uploadRecord.id, "processed");
+
+    res.json({
+      success: true,
+      data: {
+        upload_id: uploadRecord.id,
+        extracted,
+      },
+    });
+  } catch (err) {
+    await updateUploadStatus(uploadRecord.id, "failed");
+    res.status(500).json({
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to parse PE statement",
+    });
+  }
+});
+
+// POST /api/illiquid/:id/upload — parse a PE fund statement PDF and return extracted data
+// Does NOT auto-save — returns extracted values for client-side confirmation via PUT.
+// Stores the PDF in the uploads table tagged with the fund for Data Room visibility.
+router.post("/illiquid/:id/upload", upload.single("file"), async (req: Request, res: Response) => {
+  const id = parseInt(String(req.params.id), 10);
+  if (isNaN(id)) {
+    res.status(400).json({ success: false, error: "invalid id" });
+    return;
+  }
+
+  const existing = await getIlliquidAssetById(id, req.session.userId!);
+  if (!existing) {
+    res.status(404).json({ success: false, error: "not found" });
+    return;
+  }
+  if (existing.subtype !== "private_equity") {
+    res.status(400).json({ success: false, error: "upload is only supported for private equity funds" });
+    return;
+  }
+
+  if (!req.file) {
+    res.status(400).json({ success: false, error: "No file provided" });
+    return;
+  }
+
+  // Store the PDF in uploads table, tagged with the fund
+  const uploadRecord = await createUpload(
+    req.session.userId!,
+    req.file.originalname,
+    "pdf",
+    req.file.buffer,
+    "pe_statement"
+  );
+
+  try {
+    const extracted = await parsePEStatement(req.file.buffer);
+    await updateUploadStatus(uploadRecord.id, "processed");
+
+    res.json({
+      success: true,
+      data: {
+        upload_id: uploadRecord.id,
+        fund_id: id,
+        extracted,
+      },
+    });
+  } catch (err) {
+    await updateUploadStatus(uploadRecord.id, "failed");
+    res.status(500).json({
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to parse PE statement",
     });
   }
 });

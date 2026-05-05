@@ -13,6 +13,8 @@ import { CurrencyChart } from "../components/CurrencyChart";
 import { GeographyChart } from "../components/GeographyChart";
 import { SourceFilter, type SourceSelection } from "../components/SourceFilter";
 import { AnimatedNumber } from "../components/AnimatedNumber";
+import { UploadOnlyModal } from "../components/UploadOnlyModal";
+import { RefreshCw, Plus } from "lucide-react";
 import type { Holding, PortfolioSummary } from "../types";
 
 function computeSummary(holdings: Holding[]): PortfolioSummary {
@@ -41,7 +43,7 @@ const cardVariants = {
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.08, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const },
+    transition: { delay: i * 0.08, duration: 0.4, ease: [0.25, 1, 0.5, 1] as const },
   }),
 };
 
@@ -55,6 +57,7 @@ function AssetsLiquidPage() {
   const { data: geographyData, isLoading: geographyLoading } = useGeographyAllocation();
   const { format, baseCurrency, flag } = useCurrency();
   const [sourceFilter, setSourceFilter] = useState<SourceSelection>({ type: "all" });
+  const [addOpen, setAddOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -68,7 +71,7 @@ function AssetsLiquidPage() {
   const liquidHoldings = useMemo(() => {
     if (!holdings) return [];
     return holdings.filter(
-      (h) => h.asset_type !== "crypto" && h.asset_type !== "real_estate"
+      (h) => h.asset_type !== "crypto" && h.asset_type !== "real_estate" && h.asset_type !== "illiquid"
     );
   }, [holdings]);
 
@@ -98,7 +101,7 @@ function AssetsLiquidPage() {
   if (authLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -106,11 +109,11 @@ function AssetsLiquidPage() {
   const totalValue = summary.totalValue;
 
   return (
-    <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto">
+    <div className="px-6 lg:px-8 py-8 max-w-[1100px] mx-auto">
       {/* Header with actions */}
-      <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
+      <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Liquid Assets</h1>
+          <h1 className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)]">Liquid Assets</h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">
             Cash, savings, brokerage, stocks, ETFs, and bonds
           </p>
@@ -119,43 +122,43 @@ function AssetsLiquidPage() {
           <button
             onClick={() => refreshPrices.mutate()}
             disabled={refreshPrices.isPending}
-            className="flex items-center gap-2 px-3 py-2 border border-[var(--border-color)] text-[var(--text-secondary)] rounded-lg text-sm font-medium hover:bg-[var(--bg-tertiary)] transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 border border-[var(--color-faint)] text-[var(--color-mid)] rounded-full text-[14px] font-medium hover:border-[var(--color-charcoal)] hover:text-[var(--color-charcoal)] transition-colors disabled:opacity-50"
           >
-            <svg className={`w-4 h-4 ${refreshPrices.isPending ? "animate-spin" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshPrices.isPending ? "animate-spin" : ""}`} strokeWidth={1.5} />
             {refreshPrices.isPending ? "Updating..." : "Refresh"}
             {refreshPrices.isSuccess && (
-              <span className="text-green-500 text-xs">({refreshPrices.data.updated})</span>
+              <span className="text-[var(--color-positive)] text-xs">({refreshPrices.data.updated})</span>
             )}
           </button>
-          <a
-            href="/data-room"
-            className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+          <button
+            onClick={() => setAddOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--color-charcoal)] text-white rounded-full text-[14px] font-medium hover:bg-[var(--color-dark)] transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Upload
-          </a>
-          <SourceFilter
-            selected={sourceFilter}
-            onSelect={setSourceFilter}
-            uploads={uploads ?? []}
-            wallets={[]}
-          />
+            <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
+            Add
+          </button>
         </div>
       </div>
 
+      <UploadOnlyModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        title="Add Liquid Assets"
+        kind="wealth"
+        accept=".pdf,.csv,.png,.jpg,.jpeg,.webp"
+        headline="Drop a brokerage statement"
+        hint="PDF, CSV, or image — holdings will be extracted automatically"
+      />
+
       {/* Total Value Card */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const }}
-        className="hero-card rounded-2xl p-6 mb-6 transition-all"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] as const }}
+        className="rounded-[2px] border border-[var(--color-whisper)] bg-white p-6 mb-6 transition-all"
       >
         <div className="flex items-center justify-between">
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1">
+          <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)] mb-1">
             {sourceFilter.type === "all" ? "Liquid Value" : "Filtered Portfolio Value"}
           </p>
           <span className="text-xs text-[var(--text-muted)]">{flag} {baseCurrency}</span>
@@ -163,7 +166,7 @@ function AssetsLiquidPage() {
         {summaryLoading ? (
           <div className="h-10 w-56 bg-[var(--bg-tertiary)] rounded animate-pulse" />
         ) : (
-          <p className="text-4xl font-bold text-[var(--text-primary)] tabular-nums tracking-tight">
+          <p className="text-[38px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)] tabular-nums">
             <AnimatedNumber value={totalValue} format={format} />
           </p>
         )}
@@ -181,44 +184,74 @@ function AssetsLiquidPage() {
         )}
       </motion.div>
 
-      {/* Breakdown Cards */}
-      <div className="mb-6">
-        <BreakdownCards summary={summary} loading={summaryLoading} />
-      </div>
-
-      {/* Charts grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        {[
-          <PortfolioChart key="portfolio" summary={summary} loading={summaryLoading} />,
-          <CurrencyChart key="currency" holdings={filteredHoldings} loading={holdingsLoading} />,
-          <GeographyChart key="geography" regions={geographyData ?? []} loading={geographyLoading} />,
-          <SectorChart key="sector" sectors={sectorData ?? []} loading={sectorLoading} />,
-        ].map((chart, i) => (
-          <motion.div
-            key={i}
-            custom={i}
-            variants={cardVariants}
-            initial="hidden"
-            animate="visible"
+      {!summaryLoading && filteredHoldings.length === 0 ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.4, ease: [0.25, 1, 0.5, 1] as const }}
+          className="rounded-[2px] border border-[var(--color-whisper)] bg-white py-24 px-6 text-center"
+        >
+          <p className="font-serif italic text-[18px] text-[var(--color-mid)]">
+            No liquid assets connected yet.
+          </p>
+          <button
+            onClick={() => setAddOpen(true)}
+            className="inline-flex items-center gap-2 mt-6 px-6 py-2.5 border border-[var(--color-faint)] text-[var(--color-mid)] rounded-full text-[14px] font-medium hover:border-[var(--color-charcoal)] hover:text-[var(--color-charcoal)] transition-colors"
           >
-            {chart}
-          </motion.div>
-        ))}
-      </div>
+            <Plus className="w-3.5 h-3.5" strokeWidth={1.5} />
+            Add your first
+          </button>
+        </motion.div>
+      ) : (
+        <>
+          {/* Breakdown Cards */}
+          <div className="mb-6">
+            <BreakdownCards summary={summary} loading={summaryLoading} />
+          </div>
 
-      {/* Holdings Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.35, duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const }}
-      >
-        <HoldingsTable
-          holdings={filteredHoldings}
-          loading={holdingsLoading}
-          uploads={uploads ?? []}
-          wallets={[]}
-        />
-      </motion.div>
+          {/* Charts grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {[
+              <PortfolioChart key="portfolio" summary={summary} loading={summaryLoading} />,
+              <CurrencyChart key="currency" holdings={filteredHoldings} loading={holdingsLoading} />,
+              <GeographyChart key="geography" regions={geographyData ?? []} loading={geographyLoading} />,
+              <SectorChart key="sector" sectors={sectorData ?? []} loading={sectorLoading} />,
+            ].map((chart, i) => (
+              <motion.div
+                key={i}
+                custom={i}
+                variants={cardVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                {chart}
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Holdings Table */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.35, duration: 0.4, ease: [0.25, 1, 0.5, 1] as const }}
+          >
+            <div className="mb-3 flex items-center justify-end">
+              <SourceFilter
+                selected={sourceFilter}
+                onSelect={setSourceFilter}
+                uploads={uploads ?? []}
+                wallets={[]}
+              />
+            </div>
+            <HoldingsTable
+              holdings={filteredHoldings}
+              loading={holdingsLoading}
+              uploads={uploads ?? []}
+              wallets={[]}
+            />
+          </motion.div>
+        </>
+      )}
     </div>
   );
 }

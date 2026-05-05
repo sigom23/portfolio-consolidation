@@ -6,11 +6,11 @@ export interface GeographyAllocation {
 }
 
 const REGION_COLORS: Record<string, string> = {
-  "North America": "#3b82f6",
-  Europe: "#8b5cf6",
-  "Asia Pacific": "#14b8a6",
-  "Emerging Markets": "#f59e0b",
-  Unknown: "#64748b",
+  "North America": "#6B7B8D",
+  Europe: "#A89B8C",
+  "Asia Pacific": "#6E9E96",
+  "Emerging Markets": "#8E87A5",
+  Unknown: "#B8B8BD",
 };
 
 const REGION_FLAGS: Record<string, string> = {
@@ -22,7 +22,7 @@ const REGION_FLAGS: Record<string, string> = {
 
 function getColor(region: string, index: number): string {
   if (REGION_COLORS[region]) return REGION_COLORS[region];
-  const fallbacks = ["#7dd3fc", "#a78bfa", "#86efac", "#fbbf24"];
+  const fallbacks = ["#6B7B8D", "#8E87A5", "#7D8E7B", "#fbbf24"];
   return fallbacks[index % fallbacks.length];
 }
 
@@ -36,8 +36,8 @@ export function GeographyChart({ regions, loading }: Props) {
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full flex items-center justify-center transition-colors">
-        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full flex items-center justify-center transition-colors">
+        <div className="w-6 h-6 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -49,11 +49,11 @@ export function GeographyChart({ regions, loading }: Props) {
   const total = data.reduce((sum, d) => sum + d.value, 0);
 
   return (
-    <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full transition-colors">
+    <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full transition-colors">
       <h2 className="text-sm font-medium text-[var(--text-muted)] mb-4">Geography</h2>
 
       {data.length === 0 ? (
-        <div className="flex items-center justify-center h-48 rounded-lg bg-[var(--bg-tertiary)] border border-dashed border-[var(--border-color)]">
+        <div className="flex items-center justify-center h-48 rounded-[2px] bg-[var(--bg-tertiary)] border border-dashed border-[var(--border-color)]">
           <p className="text-[var(--text-muted)] text-sm">No stock holdings</p>
         </div>
       ) : (

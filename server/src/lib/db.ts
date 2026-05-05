@@ -163,14 +163,23 @@ export async function initDb(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_transactions_stream ON transactions(source_type, source_id);
     CREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_dedup ON transactions(user_id, dedup_hash) WHERE dedup_hash IS NOT NULL;
 
-    -- Learned merchant -> category mappings (cache)
+    -- Learned merchant -> category mappings (per-user cache)
     CREATE TABLE IF NOT EXISTS merchant_categories (
       id SERIAL PRIMARY KEY,
-      merchant_key TEXT NOT NULL UNIQUE,
+      merchant_key TEXT NOT NULL,
       category TEXT NOT NULL,
       source TEXT NOT NULL DEFAULT 'rule',  -- 'rule' | 'ai' | 'user'
+      user_id TEXT,
       created_at TIMESTAMP DEFAULT NOW()
     );
+
+    -- Migration: add user_id column if missing, drop old unique constraint, add new indexes
+    ALTER TABLE merchant_categories ADD COLUMN IF NOT EXISTS user_id TEXT;
+    ALTER TABLE merchant_categories DROP CONSTRAINT IF EXISTS merchant_categories_merchant_key_key;
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_merchant_categories_user_key
+      ON merchant_categories (user_id, merchant_key) WHERE user_id IS NOT NULL;
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_merchant_categories_global_key
+      ON merchant_categories (merchant_key) WHERE user_id IS NULL;
 
     ALTER TABLE uploads ADD COLUMN IF NOT EXISTS upload_kind TEXT;
 
@@ -246,6 +255,12 @@ export async function initDb(): Promise<void> {
       -- Private Equity
       committed_capital REAL,
       called_capital REAL,
+      distributed_capital REAL,
+      vintage_year INTEGER,
+      strategy TEXT,       -- 'buyout' | 'growth' | 'venture' | 'secondaries' | 'co_investment' | 'other'
+      gp_name TEXT,
+      geography TEXT,
+      fund_status TEXT,    -- 'investing' | 'harvesting' | 'largely_realized'
 
       -- Unvested Equity
       employer TEXT,
@@ -266,6 +281,14 @@ export async function initDb(): Promise<void> {
 
     -- Idempotent: in case the table was created earlier with the old USD default
     ALTER TABLE illiquid_assets ALTER COLUMN currency SET DEFAULT 'CHF';
+
+    -- PE enrichment columns (idempotent)
+    ALTER TABLE illiquid_assets ADD COLUMN IF NOT EXISTS distributed_capital REAL;
+    ALTER TABLE illiquid_assets ADD COLUMN IF NOT EXISTS vintage_year INTEGER;
+    ALTER TABLE illiquid_assets ADD COLUMN IF NOT EXISTS strategy TEXT;
+    ALTER TABLE illiquid_assets ADD COLUMN IF NOT EXISTS gp_name TEXT;
+    ALTER TABLE illiquid_assets ADD COLUMN IF NOT EXISTS geography TEXT;
+    ALTER TABLE illiquid_assets ADD COLUMN IF NOT EXISTS fund_status TEXT;
 
     -- ============================================================
     -- Wealth Snapshots
@@ -330,7 +353,7 @@ export async function createUpload(
   filename: string,
   fileType: string,
   fileData?: Buffer,
-  uploadKind: "wealth" | "transactions" = "wealth"
+  uploadKind: "wealth" | "transactions" | "pe_statement" | "salary" = "wealth"
 ): Promise<Upload> {
   const { rows } = await getPool().query(
     "INSERT INTO uploads (user_id, filename, file_type, file_data, status, upload_kind) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, user_id, filename, file_type, uploaded_at, status, upload_kind",
@@ -366,6 +389,7 @@ export async function updateUploadStatus(id: number, status: string): Promise<vo
 
 export async function deleteUpload(id: number, userId: string): Promise<boolean> {
   await getPool().query("DELETE FROM holdings WHERE source_type = 'upload' AND source_id = $1", [String(id)]);
+  await getPool().query("DELETE FROM transactions WHERE source_type = 'upload' AND source_id = $1 AND user_id = $2", [String(id), userId]);
   const { rowCount } = await getPool().query("DELETE FROM uploads WHERE id = $1 AND user_id = $2", [id, userId]);
   return (rowCount ?? 0) > 0;
 }
@@ -733,10 +757,19 @@ export async function deleteTransaction(id: number, userId: string): Promise<boo
   return (rowCount ?? 0) > 0;
 }
 
-// merchant category cache
-export async function getMerchantCategory(merchantKey: string): Promise<string | null> {
+// merchant category cache — per-user overrides take priority over global rules
+export async function getMerchantCategory(merchantKey: string, userId?: string): Promise<string | null> {
+  // Check user-specific override first
+  if (userId) {
+    const { rows } = await getPool().query(
+      "SELECT category FROM merchant_categories WHERE merchant_key = $1 AND user_id = $2",
+      [merchantKey, userId]
+    );
+    if (rows.length > 0) return (rows[0] as { category: string }).category;
+  }
+  // Fall back to global (rule/ai) cache
   const { rows } = await getPool().query(
-    "SELECT category FROM merchant_categories WHERE merchant_key = $1",
+    "SELECT category FROM merchant_categories WHERE merchant_key = $1 AND user_id IS NULL",
     [merchantKey]
   );
   return (rows[0] as { category: string } | undefined)?.category ?? null;
@@ -745,14 +778,26 @@ export async function getMerchantCategory(merchantKey: string): Promise<string |
 export async function upsertMerchantCategory(
   merchantKey: string,
   category: string,
-  source: "rule" | "ai" | "user" = "rule"
+  source: "rule" | "ai" | "user" = "rule",
+  userId?: string
 ): Promise<void> {
-  await getPool().query(
-    `INSERT INTO merchant_categories (merchant_key, category, source)
-     VALUES ($1, $2, $3)
-     ON CONFLICT(merchant_key) DO UPDATE SET category = EXCLUDED.category, source = EXCLUDED.source`,
-    [merchantKey, category, source]
-  );
+  if (userId) {
+    await getPool().query(
+      `INSERT INTO merchant_categories (merchant_key, category, source, user_id)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (user_id, merchant_key) WHERE user_id IS NOT NULL
+       DO UPDATE SET category = EXCLUDED.category, source = EXCLUDED.source`,
+      [merchantKey, category, source, userId]
+    );
+  } else {
+    await getPool().query(
+      `INSERT INTO merchant_categories (merchant_key, category, source)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (merchant_key) WHERE user_id IS NULL
+       DO UPDATE SET category = EXCLUDED.category, source = EXCLUDED.source`,
+      [merchantKey, category, source]
+    );
+  }
 }
 
 export async function deleteTransactionsByStream(userId: string, streamId: number): Promise<void> {
@@ -1158,10 +1203,11 @@ export async function createIlliquidAsset(
   const { rows } = await getPool().query(
     `INSERT INTO illiquid_assets (
        user_id, subtype, name, current_value, currency, notes,
-       committed_capital, called_capital,
+       committed_capital, called_capital, distributed_capital,
+       vintage_year, strategy, gp_name, geography, fund_status,
        employer, units, vesting_years, grant_start_date, end_value,
        amount_invested, investment_date
-     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
      RETURNING *`,
     [
       userId,
@@ -1172,6 +1218,12 @@ export async function createIlliquidAsset(
       asset.notes,
       asset.committed_capital,
       asset.called_capital,
+      asset.distributed_capital,
+      asset.vintage_year,
+      asset.strategy,
+      asset.gp_name,
+      asset.geography,
+      asset.fund_status,
       asset.employer,
       asset.units,
       asset.vesting_years,
@@ -1182,6 +1234,22 @@ export async function createIlliquidAsset(
     ]
   );
   return rows[0] as IlliquidAsset;
+}
+
+export async function updateIlliquidAsset(
+  id: number,
+  userId: string,
+  updates: Partial<Omit<IlliquidAsset, "id" | "user_id" | "created_at">>
+): Promise<IlliquidAsset | undefined> {
+  const fields = Object.keys(updates);
+  if (fields.length === 0) return undefined;
+  const setClause = fields.map((k, i) => `${k} = $${i + 3}`).join(", ");
+  const values = fields.map((k) => (updates as Record<string, unknown>)[k]);
+  const { rows } = await getPool().query(
+    `UPDATE illiquid_assets SET ${setClause}, updated_at = NOW() WHERE id = $1 AND user_id = $2 RETURNING *`,
+    [id, userId, ...values]
+  );
+  return rows[0] as IlliquidAsset | undefined;
 }
 
 export async function deleteIlliquidAsset(id: number, userId: string): Promise<boolean> {

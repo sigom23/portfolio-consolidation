@@ -4,12 +4,13 @@ import {
   fetchWallets, addWallet, deleteWallet, refreshWallet, refreshStockPrices,
   fetchSectorAllocation, fetchGeographyAllocation,
   fetchIncomeStreams, createIncomeStream, updateIncomeStream, deleteIncomeStream,
-  fetchTransactions, createManualTransaction, updateTransactionCategory, deleteTransaction,
+  fetchTransactions, createManualTransaction, updateTransactionCategory, deleteTransaction, reclassifyTransactions,
   fetchCashFlowSummary,
+  fetchCashFlowTrend,
   fetchProperties, createProperty, updateProperty, deleteProperty,
   createMortgage, updateMortgage, deleteMortgage,
   createPropertyCost, updatePropertyCost, deletePropertyCost,
-  fetchIlliquidAssets, createIlliquidAsset, deleteIlliquidAsset,
+  fetchIlliquidAssets, createIlliquidAsset, updateIlliquidAsset, deleteIlliquidAsset, parsePEStatementNew, uploadPEStatement,
 } from "../services/api";
 import type { NewIncomeStream, NewTransaction, NewProperty, NewMortgage, NewPropertyCost, NewIlliquidAsset } from "../types";
 
@@ -37,7 +38,7 @@ export function useUploads() {
 export function useUploadStatement() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ file, kind = "wealth" }: { file: File; kind?: "wealth" | "transactions" }) =>
+    mutationFn: ({ file, kind = "wealth" }: { file: File; kind?: "wealth" | "transactions" | "salary" }) =>
       uploadStatement(file, kind),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["uploads"] });
@@ -45,6 +46,7 @@ export function useUploadStatement() {
       queryClient.invalidateQueries({ queryKey: ["portfolio", "summary"] });
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["cashflow-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["income-streams"] });
     },
   });
 }
@@ -143,7 +145,7 @@ export function useCreateIncomeStream() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (stream: NewIncomeStream) => createIncomeStream(stream),
-    onSuccess: () => invalidateCashflow(queryClient),
+    onSuccess: () => { invalidateCashflow(queryClient); invalidateProperties(queryClient); },
   });
 }
 
@@ -152,7 +154,7 @@ export function useUpdateIncomeStream() {
   return useMutation({
     mutationFn: ({ id, updates }: { id: number; updates: Partial<NewIncomeStream> }) =>
       updateIncomeStream(id, updates),
-    onSuccess: () => invalidateCashflow(queryClient),
+    onSuccess: () => { invalidateCashflow(queryClient); invalidateProperties(queryClient); },
   });
 }
 
@@ -160,7 +162,7 @@ export function useDeleteIncomeStream() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => deleteIncomeStream(id),
-    onSuccess: () => invalidateCashflow(queryClient),
+    onSuccess: () => { invalidateCashflow(queryClient); invalidateProperties(queryClient); },
   });
 }
 
@@ -175,6 +177,13 @@ export function useCashFlowSummary(month?: string) {
   return useQuery({
     queryKey: ["cashflow-summary", month ?? "all"],
     queryFn: () => fetchCashFlowSummary(month),
+  });
+}
+
+export function useCashFlowTrend(months = 12) {
+  return useQuery({
+    queryKey: ["cashflow-trend", months],
+    queryFn: () => fetchCashFlowTrend(months),
   });
 }
 
@@ -199,6 +208,14 @@ export function useDeleteTransaction() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => deleteTransaction(id),
+    onSuccess: () => invalidateCashflow(queryClient),
+  });
+}
+
+export function useReclassifyTransactions() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => reclassifyTransactions(),
     onSuccess: () => invalidateCashflow(queryClient),
   });
 }
@@ -313,6 +330,37 @@ export function useCreateIlliquidAsset() {
   return useMutation({
     mutationFn: (input: NewIlliquidAsset) => createIlliquidAsset(input),
     onSuccess: () => invalidateIlliquid(queryClient),
+  });
+}
+
+export function useUpdateIlliquidAsset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, updates }: { id: number; updates: Partial<NewIlliquidAsset> }) =>
+      updateIlliquidAsset(id, updates),
+    onSuccess: () => invalidateIlliquid(queryClient),
+  });
+}
+
+export function useParsePEStatementNew() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => parsePEStatementNew(file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["uploads"] });
+    },
+  });
+}
+
+export function useUploadPEStatement() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ fundId, file }: { fundId: number; file: File }) =>
+      uploadPEStatement(fundId, file),
+    onSuccess: () => {
+      invalidateIlliquid(queryClient);
+      queryClient.invalidateQueries({ queryKey: ["uploads"] });
+    },
   });
 }
 

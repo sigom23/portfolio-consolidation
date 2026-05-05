@@ -29,7 +29,7 @@ export async function fetchHoldings(): Promise<Holding[]> {
 
 export async function uploadStatement(
   file: File,
-  kind: "wealth" | "transactions" = "wealth"
+  kind: "wealth" | "transactions" | "salary" = "wealth"
 ): Promise<UploadResult> {
   const formData = new FormData();
   formData.append("file", file);
@@ -38,6 +38,16 @@ export async function uploadStatement(
     headers: { "Content-Type": "multipart/form-data" },
   });
   if (!data.success) throw new Error(data.error ?? "Upload failed");
+  return data.data!;
+}
+
+export async function detectDocumentType(file: File): Promise<{ detected_kind: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const { data } = await api.post<ApiResponse<{ detected_kind: string }>>("/api/uploads/detect", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  if (!data.success) throw new Error(data.error ?? "Detection failed");
   return data.data!;
 }
 
@@ -232,6 +242,12 @@ export async function updateTransactionCategory(id: number, category: string): P
   return data.data!;
 }
 
+export async function reclassifyTransactions(): Promise<{ total: number; updated: number }> {
+  const { data } = await api.post<ApiResponse<{ total: number; updated: number }>>("/api/transactions/reclassify");
+  if (!data.success) throw new Error(data.error ?? "Reclassification failed");
+  return data.data!;
+}
+
 export async function deleteTransaction(id: number): Promise<void> {
   const { data } = await api.delete<ApiResponse<null>>(`/api/transactions/${id}`);
   if (!data.success) throw new Error(data.error ?? "Failed to delete transaction");
@@ -241,6 +257,19 @@ export async function fetchCashFlowSummary(month?: string): Promise<CashFlowSumm
   const qs = month ? `?month=${month}` : "";
   const { data } = await api.get<ApiResponse<CashFlowSummary>>(`/api/cashflow/summary${qs}`);
   return data.data!;
+}
+
+export interface CashFlowTrendPoint {
+  month: string;
+  income: number;
+  expenses: number;
+  net: number;
+  savingsRate: number;
+}
+
+export async function fetchCashFlowTrend(months = 12): Promise<CashFlowTrendPoint[]> {
+  const { data } = await api.get<ApiResponse<CashFlowTrendPoint[]>>(`/api/cashflow/trend?months=${months}`);
+  return data.data ?? [];
 }
 
 // Real Estate
@@ -309,6 +338,49 @@ export async function fetchIlliquidAssets(): Promise<IlliquidAsset[]> {
 export async function createIlliquidAsset(input: NewIlliquidAsset): Promise<IlliquidAsset> {
   const { data } = await api.post<ApiResponse<IlliquidAsset>>("/api/illiquid", input);
   if (!data.success) throw new Error(data.error ?? "Failed to create illiquid asset");
+  return data.data!;
+}
+
+export async function updateIlliquidAsset(id: number, updates: Partial<NewIlliquidAsset>): Promise<IlliquidAsset> {
+  const { data } = await api.put<ApiResponse<IlliquidAsset>>(`/api/illiquid/${id}`, updates);
+  if (!data.success) throw new Error(data.error ?? "Failed to update illiquid asset");
+  return data.data!;
+}
+
+export interface PEStatementResult {
+  upload_id: number;
+  fund_id: number;
+  extracted: {
+    fund_name: string | null;
+    gp_name: string | null;
+    currency: string;
+    committed_capital: number | null;
+    called_capital: number | null;
+    distributed_capital: number | null;
+    nav: number | null;
+    vintage_year: number | null;
+    strategy: string | null;
+    statement_date: string | null;
+  };
+}
+
+export async function parsePEStatementNew(file: File): Promise<PEStatementResult> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const { data } = await api.post<ApiResponse<PEStatementResult>>("/api/illiquid/parse-statement", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  if (!data.success) throw new Error(data.error ?? "Failed to parse PE statement");
+  return data.data!;
+}
+
+export async function uploadPEStatement(fundId: number, file: File): Promise<PEStatementResult> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const { data } = await api.post<ApiResponse<PEStatementResult>>(`/api/illiquid/${fundId}/upload`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  if (!data.success) throw new Error(data.error ?? "Failed to parse PE statement");
   return data.data!;
 }
 

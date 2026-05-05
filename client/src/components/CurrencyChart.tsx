@@ -2,16 +2,16 @@ import { useCurrency } from "../contexts/CurrencyContext";
 import type { Holding } from "../types";
 
 const CURRENCY_COLORS: Record<string, string> = {
-  USD: "#3b82f6",
-  EUR: "#8b5cf6",
-  GBP: "#14b8a6",
-  CHF: "#f59e0b",
-  JPY: "#ef4444",
-  CAD: "#22c55e",
-  AUD: "#06b6d4",
-  HKD: "#ec4899",
-  CNY: "#f97316",
-  KRW: "#64748b",
+  USD: "#6B7B8D",
+  EUR: "#A89B8C",
+  GBP: "#6E9E96",
+  CHF: "#8E87A5",
+  JPY: "#C47D6D",
+  CAD: "#6E9E96",
+  AUD: "#7D8E7B",
+  HKD: "#A89B8C",
+  CNY: "#C4A96D",
+  KRW: "#B8B8BD",
 };
 
 const CURRENCY_FLAGS: Record<string, string> = {
@@ -29,7 +29,7 @@ const CURRENCY_FLAGS: Record<string, string> = {
 
 function getColor(currency: string, index: number): string {
   if (CURRENCY_COLORS[currency]) return CURRENCY_COLORS[currency];
-  const fallbacks = ["#7dd3fc", "#c4b5fd", "#86efac", "#fcd34d", "#f9a8d4"];
+  const fallbacks = ["#6B7B8D", "#A89B8C", "#7D8E7B", "#C4A96D", "#B8B8BD"];
   return fallbacks[index % fallbacks.length];
 }
 
@@ -49,8 +49,8 @@ export function CurrencyChart({ holdings, loading }: Props) {
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full flex items-center justify-center transition-colors">
-        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full flex items-center justify-center transition-colors">
+        <div className="w-6 h-6 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -68,14 +68,14 @@ export function CurrencyChart({ holdings, loading }: Props) {
   const total = sorted.reduce((sum, [, v]) => sum + v, 0);
 
   return (
-    <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full transition-colors">
+    <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full transition-colors">
       <div className="flex items-baseline justify-between mb-4">
         <h2 className="text-sm font-medium text-[var(--text-muted)]">Currencies & FX Rates</h2>
         <span className="text-[10px] text-[var(--text-muted)]">vs {baseCurrency}</span>
       </div>
 
       {sorted.length === 0 ? (
-        <div className="flex items-center justify-center h-48 rounded-lg bg-[var(--bg-tertiary)] border border-dashed border-[var(--border-color)]">
+        <div className="flex items-center justify-center h-48 rounded-[2px] bg-[var(--bg-tertiary)] border border-dashed border-[var(--border-color)]">
           <p className="text-[var(--text-muted)] text-sm">No holdings</p>
         </div>
       ) : (

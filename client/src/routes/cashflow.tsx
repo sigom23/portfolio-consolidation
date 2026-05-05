@@ -1,22 +1,26 @@
 import { createRoute, useNavigate } from "@tanstack/react-router";
 import { Route as rootRoute } from "./__root";
 import { useAuth } from "../hooks/useAuth";
-import { useCashFlowSummary } from "../hooks/usePortfolio";
+import { useCashFlowSummary, useTransactions } from "../hooks/usePortfolio";
 import { useCurrency } from "../contexts/CurrencyContext";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { AnimatedNumber } from "../components/AnimatedNumber";
 import {
+  MonthSelector,
   CategoryBreakdownCard,
   TopMerchantsCard,
+  MonthlyTrendCard,
   currentMonthKey,
 } from "../components/cashflow-shared";
+import { SavingsTrendCard } from "../components/SavingsTrendCard";
 
 function CashFlowOverviewPage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [month, setMonth] = useState(currentMonthKey());
   const { data: summary, isLoading } = useCashFlowSummary(month);
+  const { data: allTx, isLoading: txLoading } = useTransactions({ limit: 2000 });
   const { format } = useCurrency();
 
   useEffect(() => {
@@ -25,10 +29,24 @@ function CashFlowOverviewPage() {
     }
   }, [authLoading, user, navigate]);
 
+  // Month counts from all transactions
+  const monthCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const tx of allTx ?? []) {
+      const key = typeof tx.date === "string" ? tx.date.slice(0, 7) : "";
+      if (key) counts[key] = (counts[key] ?? 0) + 1;
+    }
+    return counts;
+  }, [allTx]);
+
+  // Split transactions by sign for trend cards
+  const incomeTx = useMemo(() => (allTx ?? []).filter((t) => t.amount > 0), [allTx]);
+  const expenseTx = useMemo(() => (allTx ?? []).filter((t) => t.amount < 0), [allTx]);
+
   if (authLoading || !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -37,47 +55,43 @@ function CashFlowOverviewPage() {
   const expenses = summary?.expenses ?? 0;
   const net = summary?.net ?? 0;
   const savingsRate = summary?.savingsRate ?? 0;
-  const netColor = net >= 0 ? "text-green-500" : "text-red-500";
+  const netColor = net >= 0 ? "text-[var(--color-positive)]" : "text-[var(--color-negative)]";
 
   return (
-    <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
+    <div className="px-6 lg:px-8 py-8 max-w-[1100px] mx-auto">
+      {/* 1. Header */}
+      <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Cash Flow</h1>
+          <h1 className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--text-primary)]">Cash Flow</h1>
           <p className="text-sm text-[var(--text-muted)] mt-1">
             Income, expenses, and monthly net
           </p>
         </div>
       </div>
 
-      {/* Month picker */}
-      <div className="mb-4 flex items-center gap-3">
-        <label className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)]">
-          Month
-        </label>
-        <input
-          type="month"
-          value={month}
-          onChange={(e) => setMonth(e.target.value)}
-          className="px-3 py-1.5 rounded-lg bg-[var(--bg-secondary)] border border-[var(--border-color)] text-sm text-[var(--text-primary)] outline-none focus:border-blue-500 transition-colors"
-        />
-      </div>
+      {/* 2. Month Selector */}
+      <MonthSelector month={month} onMonthChange={setMonth} monthCounts={monthCounts} />
 
-      {/* Hero: Net cash flow */}
+      {/* 3. Hero: Net cash flow */}
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="hero-card rounded-2xl p-6 mb-6"
+        className="rounded-[2px] border border-[var(--color-whisper)] bg-white p-6 mb-6"
       >
-        <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1">
-          Net Cash Flow
-        </p>
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)]">
+            Net Cash Flow
+          </p>
+          <span className="text-xs text-[var(--text-muted)]">
+            {summary?.transactionCount ?? 0} transaction
+            {(summary?.transactionCount ?? 0) === 1 ? "" : "s"}
+          </span>
+        </div>
         {isLoading ? (
           <div className="h-10 w-56 bg-[var(--bg-tertiary)] rounded animate-pulse" />
         ) : (
-          <p className={`text-4xl font-bold tabular-nums tracking-tight ${netColor}`}>
+          <p className={`text-[38px] font-serif font-normal tracking-[-0.03em] tabular-nums ${netColor}`}>
             {net >= 0 ? "+" : ""}
             <AnimatedNumber value={Math.abs(net)} format={(v) => format(v)} />
           </p>
@@ -87,10 +101,10 @@ function CashFlowOverviewPage() {
           <span
             className={`font-medium ${
               savingsRate >= 0.2
-                ? "text-green-500"
+                ? "text-[var(--color-positive)]"
                 : savingsRate >= 0
-                  ? "text-yellow-500"
-                  : "text-red-500"
+                  ? "text-[var(--color-pending)]"
+                  : "text-[var(--color-negative)]"
             }`}
           >
             {(savingsRate * 100).toFixed(1)}%
@@ -98,40 +112,49 @@ function CashFlowOverviewPage() {
         </p>
       </motion.div>
 
-      {/* Income vs Expenses cards */}
+      {/* 3b. Savings rate — last 12 months */}
+      <SavingsTrendCard selectedMonth={month} onSelectMonth={setMonth} />
+
+      {/* 4. Income vs Expenses summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5"
+          className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5"
         >
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1">
+          <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)] mb-1">
             Income
           </p>
-          <p className="text-2xl font-bold text-green-500 tabular-nums tracking-tight">
+          <p className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--color-positive)] tabular-nums">
             +{format(income)}
           </p>
         </motion.div>
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.15 }}
-          className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5"
+          className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5"
         >
-          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-muted)] mb-1">
+          <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)] mb-1">
             Expenses
           </p>
-          <p className="text-2xl font-bold text-red-500 tabular-nums tracking-tight">
+          <p className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--color-negative)] tabular-nums">
             -{format(expenses)}
           </p>
         </motion.div>
       </div>
 
-      {/* Category breakdown + Top merchants */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* 5. Analytics Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
         <CategoryBreakdownCard summary={summary} loading={isLoading} />
         <TopMerchantsCard summary={summary} loading={isLoading} />
+      </div>
+
+      {/* 6. Trend Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <MonthlyTrendCard transactions={incomeTx} sign="income" loading={txLoading} />
+        <MonthlyTrendCard transactions={expenseTx} sign="expense" loading={txLoading} />
       </div>
     </div>
   );

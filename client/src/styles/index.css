@@ -1,74 +1,109 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
+/* ─── Design Tokens ─── */
+
+@theme {
+  --font-serif: 'EB Garamond', Georgia, serif;
+  --font-sans: 'Outfit', system-ui, sans-serif;
+
+  --color-charcoal: #1D1D1F;
+  --color-dark: #2C2C2E;
+  --color-mid: #6E6E73;
+  --color-muted: #999999;
+  --color-light: #B8B8BD;
+  --color-faint: #D2D2D7;
+  --color-whisper: #E8E8ED;
+  --color-cloud: #F2F2F5;
+  --color-snow: #F7F7F8;
+
+  --color-positive: #6B9E7B;
+  --color-negative: #C47D6D;
+  --color-pending: #C4A96D;
+
+  --color-viz-liquid: #6B7B8D;
+  --color-viz-illiquid: #A89B8C;
+  --color-viz-property: #7D8E7B;
+  --color-viz-crypto: #8E87A5;
+  --color-viz-cashflow: #6E9E96;
+}
+
+/* ─── Legacy variable mapping (cascade into existing components) ─── */
 
 :root {
-  --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
-  --bg-tertiary: #f1f5f9;
-  --border-color: #e2e8f0;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  --accent: #3b82f6;
-  --accent-hover: #2563eb;
-  --sidebar-bg: #1e293b;
-  --sidebar-text: #cbd5e1;
-  --sidebar-active: #3b82f6;
-  --hero-bg: #ffffff;
-  --hero-border: #e2e8f0;
+  --bg-primary: #F7F7F8;
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary: #F2F2F5;
+  --border-color: #E8E8ED;
+  --text-primary: #1D1D1F;
+  --text-secondary: #6E6E73;
+  --text-muted: #999999;
+  --accent: #1D1D1F;
+  --accent-hover: #2C2C2E;
+  --sidebar-bg: #FFFFFF;
+  --sidebar-text: #6E6E73;
+  --sidebar-active: #1D1D1F;
+  --hero-bg: #FFFFFF;
+  --hero-border: #E8E8ED;
   --hero-glow: transparent;
 }
 
-.dark {
-  --bg-primary: #0a0f1a;
-  --bg-secondary: #111827;
-  --bg-tertiary: #1e293b;
-  --border-color: rgba(255, 255, 255, 0.06);
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --accent: #60a5fa;
-  --accent-hover: #3b82f6;
-  --sidebar-bg: #060a13;
-  --sidebar-text: #94a3b8;
-  --sidebar-active: #60a5fa;
-  --hero-bg: rgba(17, 24, 39, 0.7);
-  --hero-border: rgba(96, 165, 250, 0.15);
-  --hero-glow: rgba(59, 130, 246, 0.06);
+/* ─── Base ─── */
+
+html {
+  scrollbar-gutter: stable;
 }
 
 body {
+  font-family: 'Outfit', system-ui, sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
-  transition: background-color 0.2s, color 0.2s;
 }
 
-/* Hero card glassmorphism */
+/* ─── Design system utilities ─── */
+
+/* Main content backdrop — subtle prismatic texture, light mode only.
+   Right half: image as-is. Left half: same image mirrored, so both edges
+   of the visible main area carry the prism framing (sidebar hides the
+   natural left edge of the image). */
+.main-bg {
+  position: relative;
+  isolation: isolate;
+}
+.main-bg::before,
+.main-bg::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  background-image: linear-gradient(rgba(247, 247, 248, 0.5), rgba(247, 247, 248, 0.5)), url("/bg-main.jpg");
+  background-size: cover;
+  background-position: right center;
+  background-repeat: no-repeat;
+  filter: saturate(0.75);
+  pointer-events: none;
+  z-index: -1;
+}
+.main-bg::before {
+  left: calc(220px + (100vw - 220px) / 2);
+  right: 0;
+}
+.main-bg::after {
+  left: 220px;
+  width: calc((100vw - 220px) / 2);
+  transform: scaleX(-1);
+}
+@media (max-width: 1023px) {
+  .main-bg::before { left: 50vw; }
+  .main-bg::after { left: 0; width: 50vw; }
+}
+
+/* Force lining (modern) numerals on serif financial figures */
+.font-serif {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
 .hero-card {
   background: var(--hero-bg);
   border: 1px solid var(--hero-border);
-  box-shadow: 0 0 40px var(--hero-glow);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-.dark .hero-card {
-  background: linear-gradient(
-    135deg,
-    rgba(17, 24, 39, 0.8) 0%,
-    rgba(30, 41, 59, 0.5) 100%
-  );
-  border: 1px solid rgba(96, 165, 250, 0.12);
-  box-shadow:
-    0 0 50px rgba(59, 130, 246, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
-}
-
-/* Subtle card elevation in dark mode */
-.dark .card-elevated {
-  background: rgba(17, 24, 39, 0.6);
-  border-color: rgba(255, 255, 255, 0.04);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }

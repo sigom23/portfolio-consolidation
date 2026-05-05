@@ -32,7 +32,7 @@ function SourceBadge({ holding, uploads, wallets }: { holding: Holding; uploads:
       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium ${
         isWallet
           ? "bg-purple-500/10 text-purple-500"
-          : "bg-blue-500/10 text-blue-500"
+          : "border border-[var(--color-whisper)] text-[var(--color-mid)]"
       }`}
       title={detail}
     >
@@ -58,7 +58,7 @@ function getLogoUrl(ticker: string, exchCode?: string | null): string {
 
 function TickerInitial({ ticker }: { ticker: string }) {
   const colors = [
-    "bg-blue-500/15 text-blue-500",
+    "border border-[var(--color-whisper)] text-[var(--color-mid)]",
     "bg-purple-500/15 text-purple-500",
     "bg-emerald-500/15 text-emerald-500",
     "bg-orange-500/15 text-orange-500",
@@ -110,9 +110,9 @@ export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }:
   const totalValue = filtered.reduce((sum, h) => sum + (h.value_usd ?? 0), 0);
 
   return (
-    <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden transition-colors">
+    <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] overflow-hidden transition-colors">
       <div className="px-6 py-4 border-b border-[var(--border-color)] flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-[var(--text-primary)]">Holdings</h2>
+        <h2 className="text-[18px] font-normal text-[var(--text-primary)]">Holdings</h2>
         {spamCount > 0 && (
           <button
             onClick={() => setHideSpam(!hideSpam)}
@@ -120,7 +120,7 @@ export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }:
           >
             <div
               className={`w-8 h-4 rounded-full relative transition-colors ${
-                hideSpam ? "bg-blue-500" : "bg-[var(--bg-tertiary)]"
+                hideSpam ? "bg-[var(--color-charcoal)]" : "bg-[var(--bg-tertiary)]"
               }`}
             >
               <div
@@ -210,7 +210,7 @@ export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }:
                                 exch_code: h.exch_code,
                               }}
                             >
-                              <span className="hover:text-blue-500 transition-colors cursor-default">{h.name}</span>
+                              <span className="hover:text-[var(--color-charcoal)] transition-colors cursor-default">{h.name}</span>
                             </HoldingHoverCard>
                           ) : (
                             h.name

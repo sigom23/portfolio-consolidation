@@ -3,12 +3,12 @@ import type { PortfolioSummary } from "../types";
 import { useCurrency } from "../contexts/CurrencyContext";
 
 const CATEGORY_CONFIG: { key: keyof PortfolioSummary["breakdown"]; label: string; color: string }[] = [
-  { key: "stocks", label: "Stocks", color: "#3b82f6" },
-  { key: "real_estate", label: "Real Estate", color: "#06b6d4" },
-  { key: "crypto", label: "Crypto", color: "#8b5cf6" },
-  { key: "bonds", label: "Bonds", color: "#14b8a6" },
-  { key: "cash", label: "Cash", color: "#22c55e" },
-  { key: "other", label: "Other", color: "#64748b" },
+  { key: "stocks", label: "Stocks", color: "#6B7B8D" },
+  { key: "real_estate", label: "Real Estate", color: "#7D8E7B" },
+  { key: "crypto", label: "Crypto", color: "#A89B8C" },
+  { key: "bonds", label: "Bonds", color: "#6E9E96" },
+  { key: "cash", label: "Cash", color: "#6E9E96" },
+  { key: "other", label: "Other", color: "#B8B8BD" },
 ];
 
 interface Props {
@@ -28,8 +28,8 @@ export function PortfolioChart({ summary, loading }: Props) {
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full flex items-center justify-center transition-colors">
-        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full flex items-center justify-center transition-colors">
+        <div className="w-6 h-6 border-2 border-[var(--color-light)] border-t-[var(--color-charcoal)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -44,26 +44,26 @@ export function PortfolioChart({ summary, loading }: Props) {
     .filter((d) => d.value > 0);
 
   return (
-    <div className="card-elevated rounded-xl border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full transition-colors">
+    <div className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-6 h-full transition-colors">
       <h2 className="text-sm font-medium text-[var(--text-muted)] mb-4">Asset Allocation</h2>
 
       {data.length === 0 ? (
-        <div className="flex items-center justify-center h-48 rounded-lg bg-[var(--bg-tertiary)] border border-dashed border-[var(--border-color)]">
+        <div className="flex items-center justify-center h-48 rounded-[2px] bg-[var(--bg-tertiary)] border border-dashed border-[var(--border-color)]">
           <p className="text-[var(--text-muted)] text-sm">No assets to display</p>
         </div>
       ) : (
         <div className="flex items-center gap-6">
           {/* Donut */}
-          <div className="relative w-40 h-40 flex-shrink-0">
+          <div className="relative w-[180px] h-[180px] flex-shrink-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={data}
                   cx="50%"
                   cy="50%"
-                  innerRadius={48}
-                  outerRadius={68}
-                  paddingAngle={3}
+                  innerRadius={66}
+                  outerRadius={88}
+                  paddingAngle={2}
                   dataKey="value"
                   strokeWidth={0}
                 >
@@ -74,10 +74,7 @@ export function PortfolioChart({ summary, loading }: Props) {
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="text-center">
-                <p className="text-[10px] text-[var(--text-muted)]">Total</p>
-                <p className="text-sm font-bold text-[var(--text-primary)]">{formatShort(totalValue)}</p>
-              </div>
+              <p className="text-[27px] font-serif font-normal text-[var(--text-primary)]">{formatShort(totalValue)}</p>
             </div>
           </div>
 

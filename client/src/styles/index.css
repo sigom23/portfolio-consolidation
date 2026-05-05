@@ -98,6 +98,36 @@ body {
   .main-bg::after { left: 0; width: 50vw; }
 }
 
+/* Welcome / unauthenticated landing — same prism backdrop, but
+   full-viewport (no sidebar offset). */
+.welcome-bg {
+  position: relative;
+  isolation: isolate;
+}
+.welcome-bg::before,
+.welcome-bg::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  background-image: linear-gradient(rgba(247, 247, 248, 0.5), rgba(247, 247, 248, 0.5)), url("/bg-main.jpg");
+  background-size: cover;
+  background-position: right center;
+  background-repeat: no-repeat;
+  filter: saturate(0.75);
+  pointer-events: none;
+  z-index: -1;
+}
+.welcome-bg::before {
+  left: 50vw;
+  right: 0;
+}
+.welcome-bg::after {
+  left: 0;
+  width: 50vw;
+  transform: scaleX(-1);
+}
+
 /* Force lining (modern) numerals on serif financial figures */
 .font-serif {
   font-variant-numeric: lining-nums tabular-nums;

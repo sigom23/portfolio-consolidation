@@ -8,7 +8,8 @@ function IndexPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && user) {
+    const preview = new URLSearchParams(window.location.search).has("preview");
+    if (!loading && user && !preview) {
       navigate({ to: "/my-wealth" });
     }
   }, [loading, user, navigate]);
@@ -22,19 +23,28 @@ function IndexPage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-12 px-6">
-      <div className="text-center">
-        <h1 className="font-serif text-[38px] font-light tracking-[-0.03em] text-[var(--color-charcoal)]">Wealth</h1>
-        <p className="text-[15.7px] font-light text-[var(--color-mid)] max-w-md mt-4 leading-relaxed">
-          One intelligent view of your financial life.
+    <div className="welcome-bg flex flex-col items-center justify-center min-h-screen gap-10 px-6">
+      <div className="text-center max-w-2xl">
+        <p className="text-[10.4px] font-medium uppercase tracking-[0.32em] text-[var(--color-mid)] mb-6">
+          Wealth Intelligence Platform
+        </p>
+        <h1 className="font-serif text-[clamp(40px,6vw,64px)] font-normal leading-[1.05] tracking-[-0.035em] text-[var(--color-charcoal)]">
+          Your financial life,<br />considered.
+        </h1>
+        <p className="text-[14.5px] font-light text-[var(--color-mid)] max-w-md mx-auto mt-6 leading-relaxed">
+          Cash, equity, real estate, and crypto — consolidated into one calm,
+          considered view.
         </p>
       </div>
       <button
         onClick={login}
-        className="px-8 py-3.5 border border-[var(--color-faint)] text-[var(--color-mid)] rounded-full text-[14px] font-medium hover:border-[var(--color-charcoal)] hover:text-[var(--color-charcoal)] transition-colors"
+        className="px-9 py-3.5 bg-[var(--color-charcoal)] text-white rounded-full text-[14px] font-medium hover:bg-[var(--color-dark)] transition-colors"
       >
         Get Started
       </button>
+      <p className="text-[10.4px] font-medium uppercase tracking-[0.32em] text-[var(--color-light)]">
+        Private &nbsp;·&nbsp; Local &nbsp;·&nbsp; Considered
+      </p>
     </div>
   );
 }

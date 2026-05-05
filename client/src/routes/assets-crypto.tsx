@@ -8,6 +8,7 @@ import { motion } from "motion/react";
 import { AnimatedNumber } from "../components/AnimatedNumber";
 import { useAddWallet, useDeleteWallet, useRefreshWallet } from "../hooks/usePortfolio";
 import { Plus, RefreshCw, Trash2 } from "lucide-react";
+import type { Wallet, Holding } from "../types";
 
 
 function truncateAddress(addr: string): string {

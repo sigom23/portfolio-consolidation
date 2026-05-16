@@ -2,8 +2,8 @@
 
 A comprehensive guide to building interfaces for a modern wealth intelligence platform. Every decision serves clarity.
 
-**Version:** 1.0
-**Updated:** April 2026
+**Version:** 1.1
+**Updated:** May 2026
 **Classification:** Internal
 
 ---
@@ -20,9 +20,10 @@ A comprehensive guide to building interfaces for a modern wealth intelligence pl
 8. Data Presentation
 9. Navigation
 10. Charts & Graphs
-11. The Five Screens
-12. Interaction & Motion
-13. Anti-Patterns
+11. The Screens
+12. Investment Themes
+13. Interaction & Motion
+14. Anti-Patterns
 
 ---
 
@@ -222,7 +223,7 @@ The base spacing unit is **8px**. All spacing values are multiples of this unit.
 
 ### Content Width
 
-The main content area has a maximum width of **840px** for text-heavy pages (Data Room, Concierge) and **1100px** for data-heavy pages (My Wealth, Assets, Cash Flow). The sidebar is fixed at **220px**. Page margins are 48px on desktop, 24px on mobile.
+The main content area has a maximum width of **840px** for the text-heavy Settings page and **1100px** for all data-heavy surfaces (My Wealth, the four asset routes, the three Cash Flow routes, Data Room). The sidebar is fixed at **220px**. Page margins are 48px on desktop, 24px on mobile.
 
 ### Borders & Dividers
 
@@ -298,15 +299,20 @@ Text inputs use a bottom-border only — no box, no fill. The border is Whisper 
 
 ### Navigation Sidebar
 
-Pure text labels. No icons. No colored indicators. No notification badges. The active state is just a weight shift from 400 to 600 and a Snow background. The sidebar is a quiet index — it should never compete with the main canvas for attention.
+Quiet, restrained, never competing with the main canvas. Labels use Outfit Light alongside Heroicons-style icons at 1.25px stroke in Muted color — the icons whisper at the same volume as the text. No colored indicators, no notification badges, no filled glyphs, no emoji. Sub-navigation appears as indented child links under parents that have them. The active state is just a weight shift from 400 to 600 and a Snow background — and only the leaf route highlights; parents stay quiet when a child is active.
 
 ```
 ┌──────────────┐
-│ MY WEALTH    │ ← active (bold, Snow bg)
-│ Assets       │
-│ Cash Flow    │
-│ Data Room    │
-│ Concierge    │
+│ ◇ My Wealth  │ ← parent + link
+│   Liquid     │ ← active (bold, Snow bg)
+│   Illiquid   │
+│   Real Est.  │
+│   Crypto     │
+│ ◯ Cash Flow  │ ← parent + link
+│   Income     │
+│   Expenses   │
+│ ▢ Data Room  │
+│ ⚙ Settings   │ ← sidebar footer
 └──────────────┘
 ```
 
@@ -336,19 +342,28 @@ Use subtle opacity pulsing (0.4 to 0.8) on skeleton blocks that match the exact 
 
 ## 09 — Navigation
 
-> Five items. Text only. The simplest navigation possible.
+> Four top-level surfaces. Every label is a real page — no fake group headers.
 
-The primary navigation consists of exactly five items: **My Wealth, Assets, Cash Flow, Data Room, and Concierge.** These are displayed as text labels in the left sidebar. There is no secondary navigation bar, no breadcrumbs, and no tab system at the top of pages.
+The primary navigation has four top-level surfaces, two of which expand into sub-routes:
 
-Sub-navigation within a screen (e.g., asset categories within Assets) uses the tag/filter pill component, not a secondary nav bar. This keeps the architectural navigation clean and separate from content filtering.
+- **My Wealth** — landing surface and parent of Liquid / Illiquid / Real Estate / Crypto
+- **Cash Flow** — overview and parent of Income / Expenses
+- **Data Room** — single page
+- **Settings** — sidebar footer
+
+Each top-level item is both a clickable link to a real page **and** a parent of its children where applicable. There are no fake group headers — every label in the sidebar corresponds to a real route. Sub-items appear indented under their parent.
+
+Icons sit alongside labels in Heroicons style (1.25px stroke, Muted color). They serve as visual anchors but never carry meaning beyond what the label already says. No colored badges, no notification dots, no filled icons, no emoji. The active state is a weight shift from 400 to 600 and a Snow background. Only the leaf route highlights; the parent stays quiet when one of its children is active — this prevents the "double-blue parent+child" visual noise.
+
+There is no secondary navigation bar, no breadcrumbs, no tab system at the top of pages. Sub-navigation within a screen (e.g. PE / Pension / Unvested / Startup sections on Illiquid) uses the tag/filter pill component or section headers — not another nav bar.
 
 ### The Header Bar
 
-A minimal top bar (64px height) contains: the app wordmark (Cormorant Garamond, 22px, weight 500) on the left, and a user initial circle (32px, Charcoal background, White text) on the right. Nothing else. No search bar, no notification bell, no settings gear. These exist in the sidebar or are accessed through Concierge.
+A minimal top bar (64px height) contains: the app wordmark (Cormorant Garamond, 22px, weight 500) on the left, and a user initial circle (32px, Charcoal background, White text) on the right. Nothing else. No search bar, no notification bell, no settings gear. Those live in the sidebar.
 
 ### Breadcrumbs & Back Navigation
 
-When the detail panel is open, a simple text back-link ("← Assets") appears at the top of the panel. No breadcrumb trails. The navigation structure is flat enough that breadcrumbs are never needed — you're always one click from any of the five main screens.
+When the detail panel is open, a simple text back-link ("← Real Estate") appears at the top of the panel. No breadcrumb trails. The navigation structure is flat enough that breadcrumbs are never needed — you're always one click from any of the top-level surfaces.
 
 ---
 
@@ -378,33 +393,123 @@ On hover, show a minimal tooltip: a small (max 180px wide) box with 1px Whisper 
 
 ---
 
-## 11 — The Five Screens
+## 11 — The Screens
 
-> Each screen has a single purpose, a hero metric, and a vertical reading flow.
+> Each surface has a single purpose, a hero metric (where applicable), and a vertical reading flow.
 
 ### My Wealth
 
-The home screen. The hero metric is total net worth displayed at the largest type size in the app (64px Cormorant Garamond Light). Below it: a 2×2 stat grid (liquid, illiquid, property, crypto), a 12-month wealth trend bar chart (Charcoal, progressive opacity), and a donut chart showing asset allocation. The bottom section shows "What's changed" — a simple list of recent movements (e.g., "Brokerage value +$4,200 this week") with delta indicators using signal colors. The entire page scrolls vertically.
+The home surface. Hero metric: total net worth in 64px Cormorant Garamond Light, with last-updated timestamp and an Assets/Liabilities transparency line directly below. The page then flows vertically through:
 
-### Assets
+- **2×2 category grid** — Liquid / Illiquid / Real Estate / Crypto, each showing absolute value and % of net worth. Each cell links to its dedicated route.
+- **Monthly Cash Flow strip** — current month's net surplus with inline Income/Expenses breakdown and a Savings Rate badge. Links to /cashflow.
+- **Composition donut + Top Holdings** — paired 2-column row. The donut shows asset class allocation with total value at its center in 18px serif (sized to fit the inner ring cleanly). Top Holdings lists the top 5 liquid positions with value and % of net worth.
+- **Currency Exposure** — horizontal bars showing % of gross assets by trading currency. Often the most surprising number for a HENRY user with multi-currency exposure.
+- **Investment Themes (v1.1)** — horizontal bars showing % of net worth by user-defined forward-looking theme. See section 12.
 
-Hero metric: total portfolio value. Below: filter pills for Liquid / Illiquid / Property / Crypto. Each category expands into a flat table of individual holdings. Tables show: asset name, current value (serif), allocation percentage, and period change (with signal color). A donut chart at the top shows the category breakdown. The detail panel slides in when clicking any individual asset.
+A wealth-over-time trend chart is explicitly deferred: one month of snapshot data renders as apologetic. Snapshots accumulate silently; the chart ships once 6+ months of history exist. Until then, the today-view is the entire story — and the dimensional cards (currency, themes) make that today-view richer than a chart would.
+
+### Assets — by category
+
+There is no single "Assets" page. Four sibling routes sit under My Wealth, each focused on one asset class:
+
+- **Liquid** (`/assets/liquid`) — securities only (stocks, ETFs, bonds, cash). Hero: total liquid value. Below: existing portfolio / sector / geography / currency charts and a holdings table. v1.1 adds inline theme picker to each row.
+- **Illiquid** (`/assets/illiquid`) — four sections, one per subtype (Private Equity, Pension, Unvested Equity, Startup), each as a card list with `+ Add` per section. Per-row delete on hover. v1.1 adds edit + theme picker.
+- **Real Estate** (`/assets/real-estate`) — property cards with mortgages, recurring costs, rental income. Net equity = value − mortgages, clamped at zero for the My Wealth rollup.
+- **Crypto** (`/assets/crypto`) — read-only view grouped by wallet (`source_id`). Default-on spam filter hides tokens under $1 with "Show N hidden" disclosure. Wallet management lives in Data Room.
 
 ### Cash Flow
 
-Hero metric: monthly investable surplus (the number that answers "what can I invest this month?"). Below: a 2-cell stat grid (income vs. obligations), a 12-month surplus trend bar chart, and a categorized breakdown of spending. Cash flow uses a distinct visual pattern: income bars in one direction, spending bars in the opposite, creating a waterfall effect that makes the surplus immediately visual.
+Three sibling routes sharing a `cashflow-shared.tsx` component module:
+
+- **/cashflow** (Overview) — hero: monthly net surplus. Below: savings rate, income/expense cards, category breakdown, top merchants.
+- **/cashflow/income** — income streams grid with `+ Add` CTA, recent income transactions.
+- **/cashflow/expenses** — month picker, monthly expense hero, category breakdown, expense transactions table.
+
+Rental income streams link to Real Estate properties via `property_id` so rent shows in both surfaces consistently.
 
 ### Data Room
 
-No hero metric. This screen is a flat, structured list of all source documents, connections, and records. Each item is a row with status dot, name, metadata, and status tag. Items are grouped by type (Documents, Connections, Records) with micro-label section headers. An "Upload" ghost button sits at the top-right. This screen should feel like a clean filing cabinet — orderly, trustworthy, and complete.
+No hero metric. A single flat page with two stacked sections:
 
-### Concierge
+- **Documents** — uploaded PDFs/CSVs, filterable by upload kind (wealth / transactions / salary / PE statement). Re-download and delete.
+- **Wallets** — crypto wallet addresses with refresh / add / remove.
 
-This screen does NOT look like a chatbot. The left portion shows structured insight cards — each card is a flat container with a micro-label category (e.g., "PORTFOLIO INSIGHT"), a heading in Cormorant Garamond (e.g., "Your liquid ratio has dropped below 35%"), supporting text in Outfit Light, and an action link. The right portion (or bottom on mobile) has a single-line text input for asking questions, with Concierge responses appearing as flat text blocks on Snow background — never in speech bubbles.
+This is a **sources** surface, not a review queue. Extraction runs on upload and results land directly in `holdings` and `transactions`. No "review queue" or "extraction confidence" UI — the data is authoritative on arrival.
+
+### Settings
+
+Sidebar footer link. Sections in order:
+
+- **Account** — name and email (read-only, from the OIDC profile).
+- **Preferences** — base currency selector (drives the entire app's display layer via `CurrencyContext`).
+- **Investment Themes (v1.1)** — list, add, and inline-edit themes. See section 12.
+- **Privacy & Data** — export user data (JSON), clear all holdings, delete account.
+
+### Future surfaces
+
+- **Concierge** — an AI advisor layer that reads the user's wealth and themes to suggest forward-looking moves: *"Am I overexposed to AI Infrastructure?"* / *"What's the cleanest way to add to Energy Transition without doubling my USD exposure?"* Deferred to v1.2+. The Investment Themes substrate (section 12) is what makes a real concierge feasible — without structured forward-looking buckets, an AI can only describe; with them, it can advise.
+
+When Concierge ships, it will follow the same restraint: structured insight cards (micro-label category + Cormorant heading + Outfit Light supporting text + action link), with a single-line text input for questions. Responses appear as flat text blocks on Snow background — never in speech bubbles. No chatbot iconography.
 
 ---
 
-## 12 — Interaction & Motion
+## 12 — Investment Themes
+
+> The "what futures am I betting on?" layer. Themes are user-defined forward-looking buckets that span every asset class.
+
+A single theme can contain liquid stocks, crypto, and an illiquid SAFE simultaneously — the rollup answers a question the asset-class view cannot: where are your conviction bets actually concentrated? This is the editorial layer that separates a wealth-intelligence platform from a balance sheet.
+
+### Design intent
+
+Themes use the same visual restraint as the rest of the system — no fanfare, no hero imagery on theme cards, no celebratory copy when one is added. A theme is a quiet first-class object: name, thesis prose, color swatch. Themes are renamable and editable; **not deletable in v1.1** (avoids the cascade question on tagged holdings — deferred to v1.2). One theme per holding (or none); multi-tag deferred.
+
+### Color swatches
+
+Themes have their own color palette, separate from the data viz palette (which is reserved for asset class). The two palettes overlap in muted tone intentionally — themes should feel native to the chart world without competing with it.
+
+| Swatch | Hex | Suggested use |
+|--------|-----|---------------|
+| Slate | `#6B7B8D` | Core / market exposure |
+| Mauve | `#8E87A5` | Thematic Growth (AI, climate, biotech) |
+| Sage | `#7D8E7B` | Defensive, retirement, stable |
+| Taupe | `#A89B8C` | Real assets, property |
+| Tan | `#A8957D` | Speculative, asymmetric bets |
+| Neutral | `#9BA29D` | Overflow |
+| Cool gray-blue | `#7D8B9E` | Overflow |
+| Warm brown | `#9B8B7D` | Overflow |
+
+User picks one swatch at theme creation/edit time. The color appears as a small (8px) dot in management lists, a 2px dot in inline tags, and as the bar fill in the My Wealth Themes card. **Color is for at-a-glance grouping — it never carries semantic meaning.** Two themes with the same color is allowed (and expected, once a user has more than 8 themes).
+
+### Surfaces
+
+**Settings → Investment Themes (management)** — list of themes with color swatch + name + thesis prose. Hover any row to reveal a pencil icon for inline edit (name input + thesis textarea + color palette picker). Add form opens above the list with the same fields. Empty state is unreachable in normal use thanks to seeding (below).
+
+**My Wealth → Investment Themes card** — horizontal bars ranked by % of net worth, spanning all asset classes. Each row: color dot + theme name on the left, absolute value + percent right-aligned. An **"Untagged"** segment sits at the bottom in muted gray — honest about what hasn't been categorized yet, and the natural call to action.
+
+**/themes/$id (theme detail)** — hero with theme name + editable thesis prose + total allocation. Below: a list of holdings tagged into this theme, grouped by asset class (Liquid / Illiquid / Real Estate / Crypto). This is the surface a future Concierge will converse over.
+
+**Inline theme picker** — appears on every asset edit surface (liquid table row, crypto token row, illiquid card, real estate property card). A combobox with autocomplete from existing themes plus a "Create new theme" inline action. Selecting a theme tags the holding immediately via the source-of-truth table; the sync layer carries the tag into the holdings projection so the Themes card on /my-wealth updates without a refresh.
+
+### Auto-tag heuristic (first run)
+
+On a user's first visit to themes, 5 starter themes are seeded with placeholder thesis prose:
+
+- **Core Equities** — long-term market exposure
+- **Thematic Growth** — specific bets on a future you believe in
+- **Defensive & Retirement** — capital preservation
+- **Real Assets** — property and physical
+- **Speculative** — asymmetric bets
+
+The unambiguous holdings are auto-tagged immediately: crypto → Speculative, real estate → Real Assets, pension → Defensive & Retirement, PE/startup → Speculative, unvested equity → Core Equities. **Liquid stocks and cash are intentionally left untagged** — that's the slice the user does the thinking on. The friction of categorizing those positions IS the product's primary value. The "Untagged X%" segment on the Themes card is what nudges the user into that thinking.
+
+### Editorial tone
+
+Placeholder thesis text reads as a prompt, not a label: *"What future are you betting on?"* — not *"Description."* Theme management copy avoids product-speak — say *"The futures you're betting on"* not *"Categorize your investments."* When a theme has zero holdings, show calm italic serif text (*"No holdings tagged here yet — use the theme picker on any asset page."*) — never an illustration or an empty-state graphic.
+
+---
+
+## 13 — Interaction & Motion
 
 > Motion should be felt, not seen. Every transition exists to maintain spatial awareness, not to impress.
 
@@ -436,7 +541,7 @@ No bouncing, no spring physics, no parallax effects, no animated backgrounds, no
 
 ---
 
-## 13 — Anti-Patterns
+## 14 — Anti-Patterns
 
 > The things that will instantly make this feel like every other fintech app. Avoid at all costs.
 
@@ -445,8 +550,6 @@ No bouncing, no spring physics, no parallax effects, no animated backgrounds, no
 - **Rounded cards.** No border-radius on containers. Cards use 2px radius maximum, or sharp corners. Only buttons and pills use full radius.
 
 - **Gradients.** Nowhere. Not in backgrounds, not in buttons, not in charts, not in overlays. Flat fills only.
-
-- **Icons in navigation.** The sidebar is text-only. Adding icons makes it feel like a mobile app. This is an editorial experience.
 
 - **Colored badges.** No red notification dots, no green status pills with fills. Use text labels with signal colors, or simple status dots.
 
@@ -464,4 +567,4 @@ No bouncing, no spring physics, no parallax effects, no animated backgrounds, no
 
 ---
 
-*Design System v1.0 — April 2026*
+*Design System v1.1 — May 2026*

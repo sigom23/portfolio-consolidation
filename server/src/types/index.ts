@@ -33,7 +33,20 @@ export interface Holding {
   market_sector: string | null;
   exch_code: string | null;
   value_local: number | null;
+  theme_id: number | null;
   last_updated: string;
+}
+
+// ============================================================
+// Investment Themes (v1.1)
+// ============================================================
+export interface Theme {
+  id: number;
+  user_id: string;
+  name: string;
+  thesis: string | null;
+  color: string | null;
+  created_at: string;
 }
 
 export interface Upload {
@@ -112,6 +125,7 @@ export interface Property {
   current_value: number;
   currency: string;
   notes: string | null;
+  theme_id: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -194,6 +208,8 @@ export interface IlliquidAsset {
   // Startup
   amount_invested: number | null;
   investment_date: string | null;
+
+  theme_id: number | null;
 
   created_at: string;
   updated_at: string;

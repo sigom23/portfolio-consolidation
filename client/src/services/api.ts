@@ -5,6 +5,7 @@ import type {
   PropertyWithDetails, Property, PropertyMortgage, PropertyCost,
   NewProperty, NewMortgage, NewPropertyCost,
   IlliquidAsset, NewIlliquidAsset,
+  Theme, NewTheme,
 } from "../types";
 
 const api = axios.create({
@@ -387,4 +388,25 @@ export async function uploadPEStatement(fundId: number, file: File): Promise<PES
 export async function deleteIlliquidAsset(id: number): Promise<void> {
   const { data } = await api.delete<ApiResponse<null>>(`/api/illiquid/${id}`);
   if (!data.success) throw new Error(data.error ?? "Failed to delete illiquid asset");
+}
+
+// ============================================================
+// Investment Themes (v1.1)
+// ============================================================
+
+export async function fetchThemes(): Promise<Theme[]> {
+  const { data } = await api.get<ApiResponse<Theme[]>>("/api/themes");
+  return data.data ?? [];
+}
+
+export async function createTheme(theme: NewTheme): Promise<Theme> {
+  const { data } = await api.post<ApiResponse<Theme>>("/api/themes", theme);
+  if (!data.success) throw new Error(data.error ?? "Failed to create theme");
+  return data.data!;
+}
+
+export async function updateTheme(id: number, updates: Partial<NewTheme>): Promise<Theme> {
+  const { data } = await api.patch<ApiResponse<Theme>>(`/api/themes/${id}`, updates);
+  if (!data.success) throw new Error(data.error ?? "Failed to update theme");
+  return data.data!;
 }

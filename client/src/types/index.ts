@@ -23,8 +23,23 @@ export interface Holding {
   exch_code: string | null;
   currency: string | null;
   value_local: number | null;
+  theme_id: number | null;
   last_updated: string | null;
 }
+
+// ============================================================
+// Investment Themes (v1.1)
+// ============================================================
+export interface Theme {
+  id: number;
+  user_id: string;
+  name: string;
+  thesis: string | null;
+  color: string | null;
+  created_at: string;
+}
+
+export type NewTheme = Pick<Theme, "name" | "thesis" | "color">;
 
 export interface PortfolioSummary {
   totalValue: number; // assets only (before mortgage)
@@ -131,11 +146,13 @@ export interface IlliquidAsset {
   amount_invested: number | null;
   investment_date: string | null;
 
+  theme_id: number | null;
+
   created_at: string;
   updated_at: string;
 }
 
-export type NewIlliquidAsset = Omit<IlliquidAsset, "id" | "user_id" | "created_at" | "updated_at">;
+export type NewIlliquidAsset = Omit<IlliquidAsset, "id" | "user_id" | "created_at" | "updated_at" | "theme_id">;
 
 /**
  * Vested-to-date value for an unvested equity grant, per CLAUDE.md:
@@ -190,6 +207,7 @@ export interface Property {
   current_value: number;
   currency: string;
   notes: string | null;
+  theme_id: number | null;
   created_at: string;
   updated_at: string;
 }

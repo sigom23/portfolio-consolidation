@@ -11,8 +11,9 @@ import {
   createMortgage, updateMortgage, deleteMortgage,
   createPropertyCost, updatePropertyCost, deletePropertyCost,
   fetchIlliquidAssets, createIlliquidAsset, updateIlliquidAsset, deleteIlliquidAsset, parsePEStatementNew, uploadPEStatement,
+  fetchThemes, createTheme, updateTheme,
 } from "../services/api";
-import type { NewIncomeStream, NewTransaction, NewProperty, NewMortgage, NewPropertyCost, NewIlliquidAsset } from "../types";
+import type { NewIncomeStream, NewTransaction, NewProperty, NewMortgage, NewPropertyCost, NewIlliquidAsset, NewTheme } from "../types";
 
 export function usePortfolioSummary() {
   return useQuery({
@@ -369,5 +370,39 @@ export function useDeleteIlliquidAsset() {
   return useMutation({
     mutationFn: (id: number) => deleteIlliquidAsset(id),
     onSuccess: () => invalidateIlliquid(queryClient),
+  });
+}
+
+// ============================================================
+// Investment Themes (v1.1)
+// ============================================================
+
+export function useThemes() {
+  return useQuery({
+    queryKey: ["themes"],
+    queryFn: fetchThemes,
+  });
+}
+
+export function useCreateTheme() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (theme: NewTheme) => createTheme(theme),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["themes"] });
+    },
+  });
+}
+
+export function useUpdateTheme() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, updates }: { id: number; updates: Partial<NewTheme> }) =>
+      updateTheme(id, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["themes"] });
+      // Holdings carry theme_id — invalidate so Themes card / tag UIs update
+      queryClient.invalidateQueries({ queryKey: ["holdings"] });
+    },
   });
 }

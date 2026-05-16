@@ -14,6 +14,7 @@ import type {
   PropertyWithDetails,
   IlliquidAsset,
   IlliquidSubtype,
+  Theme,
 } from "../types/index.js";
 import { illiquidAssetNativeValue } from "../types/index.js";
 
@@ -310,6 +311,29 @@ export async function initDb(): Promise<void> {
     );
 
     CREATE INDEX IF NOT EXISTS idx_snapshots_user_taken ON wealth_snapshots(user_id, taken_at DESC);
+
+    -- ============================================================
+    -- Investment Themes (v1.1)
+    -- ============================================================
+    -- User-defined forward-looking buckets. A theme can span every asset class.
+    -- theme_id on holdings is the canonical read surface; theme_id on
+    -- illiquid_assets / properties exists so the sync layer can carry the
+    -- tag through into holdings on every update.
+    CREATE TABLE IF NOT EXISTS investment_themes (
+      id SERIAL PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      thesis TEXT,
+      color TEXT,
+      created_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE(user_id, name)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_themes_user ON investment_themes(user_id);
+
+    ALTER TABLE holdings ADD COLUMN IF NOT EXISTS theme_id INTEGER REFERENCES investment_themes(id) ON DELETE SET NULL;
+    ALTER TABLE illiquid_assets ADD COLUMN IF NOT EXISTS theme_id INTEGER REFERENCES investment_themes(id) ON DELETE SET NULL;
+    ALTER TABLE properties ADD COLUMN IF NOT EXISTS theme_id INTEGER REFERENCES investment_themes(id) ON DELETE SET NULL;
   `);
 }
 
@@ -905,7 +929,7 @@ export async function getPropertyById(id: number, userId: string): Promise<Prope
 
 export async function createProperty(
   userId: string,
-  data: Omit<Property, "id" | "user_id" | "created_at" | "updated_at">
+  data: Omit<Property, "id" | "user_id" | "created_at" | "updated_at" | "theme_id">
 ): Promise<Property> {
   const { rows } = await getPool().query(
     `INSERT INTO properties
@@ -1134,10 +1158,10 @@ export async function syncPropertyHolding(
 ): Promise<void> {
   // Upsert a holdings row tied to this property (source_type='property')
   await getPool().query(
-    `INSERT INTO holdings (user_id, source_type, source_id, name, asset_type, value_usd, value_local, currency)
-     VALUES ($1, 'property', $2, $3, 'real_estate', $4, $5, $6)
+    `INSERT INTO holdings (user_id, source_type, source_id, name, asset_type, value_usd, value_local, currency, theme_id)
+     VALUES ($1, 'property', $2, $3, 'real_estate', $4, $5, $6, $7)
      ON CONFLICT DO NOTHING`,
-    [userId, String(property.id), property.name, valueUsd, property.current_value, property.currency]
+    [userId, String(property.id), property.name, valueUsd, property.current_value, property.currency, property.theme_id ?? null]
   );
 
   // ON CONFLICT DO NOTHING is only useful if we had a unique index.
@@ -1155,12 +1179,13 @@ export async function syncPropertyHolding(
     );
   }
 
-  // Finally, update the row with fresh values (in case it already existed)
+  // Finally, update the row with fresh values (in case it already existed).
+  // theme_id is carried from the source table so the user's tag survives every sync.
   await getPool().query(
     `UPDATE holdings
-       SET name = $3, value_usd = $4, value_local = $5, currency = $6, last_updated = NOW()
+       SET name = $3, value_usd = $4, value_local = $5, currency = $6, theme_id = $7, last_updated = NOW()
      WHERE user_id = $1 AND source_type = 'property' AND source_id = $2`,
-    [userId, String(property.id), property.name, valueUsd, property.current_value, property.currency]
+    [userId, String(property.id), property.name, valueUsd, property.current_value, property.currency, property.theme_id ?? null]
   );
 }
 
@@ -1175,7 +1200,7 @@ export async function deletePropertyHolding(userId: string, propertyId: number):
 // Illiquid Assets
 // ============================================================
 
-export type NewIlliquidAsset = Omit<IlliquidAsset, "id" | "user_id" | "created_at" | "updated_at">;
+export type NewIlliquidAsset = Omit<IlliquidAsset, "id" | "user_id" | "created_at" | "updated_at" | "theme_id">;
 
 export async function getIlliquidAssetsByUser(userId: string): Promise<IlliquidAsset[]> {
   const { rows } = await getPool().query(
@@ -1286,9 +1311,9 @@ export async function syncIlliquidHolding(
 
   if (rows.length === 0) {
     await getPool().query(
-      `INSERT INTO holdings (user_id, source_type, source_id, name, asset_type, value_usd, value_local, currency)
-       VALUES ($1, 'illiquid_asset', $2, $3, 'illiquid', $4, $5, $6)`,
-      [userId, String(asset.id), asset.name, valueUsd, nativeValue, asset.currency]
+      `INSERT INTO holdings (user_id, source_type, source_id, name, asset_type, value_usd, value_local, currency, theme_id)
+       VALUES ($1, 'illiquid_asset', $2, $3, 'illiquid', $4, $5, $6, $7)`,
+      [userId, String(asset.id), asset.name, valueUsd, nativeValue, asset.currency, asset.theme_id ?? null]
     );
     return;
   }
@@ -1302,11 +1327,12 @@ export async function syncIlliquidHolding(
     );
   }
 
+  // theme_id is carried from the source table so the user's tag survives every sync.
   await getPool().query(
     `UPDATE holdings
-       SET name = $3, value_usd = $4, value_local = $5, currency = $6, last_updated = NOW()
+       SET name = $3, value_usd = $4, value_local = $5, currency = $6, theme_id = $7, last_updated = NOW()
      WHERE user_id = $1 AND source_type = 'illiquid_asset' AND source_id = $2`,
-    [userId, String(asset.id), asset.name, valueUsd, nativeValue, asset.currency]
+    [userId, String(asset.id), asset.name, valueUsd, nativeValue, asset.currency, asset.theme_id ?? null]
   );
 }
 
@@ -1320,6 +1346,153 @@ export async function deleteIlliquidHolding(userId: string, assetId: number): Pr
 // Suppress unused-import warning — IlliquidSubtype is re-exported via NewIlliquidAsset's
 // subtype field, and consumers that want the union directly import it from types.
 export type { IlliquidSubtype };
+
+// ============================================================
+// Investment Themes (v1.1)
+// ============================================================
+
+export type NewTheme = Pick<Theme, "name" | "thesis" | "color">;
+
+export async function getThemesByUser(userId: string): Promise<Theme[]> {
+  const { rows } = await getPool().query(
+    "SELECT * FROM investment_themes WHERE user_id = $1 ORDER BY created_at ASC",
+    [userId]
+  );
+  return rows as Theme[];
+}
+
+export async function getThemeById(id: number, userId: string): Promise<Theme | undefined> {
+  const { rows } = await getPool().query(
+    "SELECT * FROM investment_themes WHERE id = $1 AND user_id = $2",
+    [id, userId]
+  );
+  return rows[0] as Theme | undefined;
+}
+
+export async function createTheme(userId: string, data: NewTheme): Promise<Theme> {
+  const { rows } = await getPool().query(
+    `INSERT INTO investment_themes (user_id, name, thesis, color)
+     VALUES ($1, $2, $3, $4) RETURNING *`,
+    [userId, data.name, data.thesis, data.color]
+  );
+  return rows[0] as Theme;
+}
+
+export async function updateTheme(
+  id: number,
+  userId: string,
+  updates: Partial<NewTheme>
+): Promise<Theme | undefined> {
+  const fields = Object.keys(updates);
+  if (fields.length === 0) return undefined;
+  const setClause = fields.map((k, i) => `${k} = $${i + 3}`).join(", ");
+  const values = fields.map((k) => (updates as Record<string, unknown>)[k]);
+  const { rows } = await getPool().query(
+    `UPDATE investment_themes SET ${setClause} WHERE id = $1 AND user_id = $2 RETURNING *`,
+    [id, userId, ...values]
+  );
+  return rows[0] as Theme | undefined;
+}
+
+/**
+ * Idempotent seed: if the user has no themes yet, create the 5 starter themes
+ * and apply the auto-tag heuristic so the user lands in a populated state
+ * instead of "100% untagged". Liquid stocks are left untagged on purpose —
+ * that's the slice the user does the thinking on.
+ */
+const SEED_THEMES: ReadonlyArray<NewTheme> = [
+  {
+    name: "Core Equities",
+    thesis: "Long-term market exposure. Index funds, ETFs, and conviction names I expect to hold through cycles.",
+    color: "#6B7B8D",
+  },
+  {
+    name: "Thematic Growth",
+    thesis: "Specific bets on a future I believe in — AI infrastructure, climate transition, biotech. Split into more specific themes as conviction sharpens.",
+    color: "#8E87A5",
+  },
+  {
+    name: "Defensive & Retirement",
+    thesis: "Capital preservation. Pension, bonds, cash, defensive equities. Designed to be there when other things aren't.",
+    color: "#7D8E7B",
+  },
+  {
+    name: "Real Assets",
+    thesis: "Property and physical assets. Inflation hedge and tangible wealth.",
+    color: "#A89B8C",
+  },
+  {
+    name: "Speculative",
+    thesis: "Asymmetric bets. Crypto, startups, small positions with high variance. Sized to be losable.",
+    color: "#A8957D",
+  },
+] as const;
+
+// Maps illiquid subtype → seed theme name for the auto-tag heuristic.
+const ILLIQUID_SUBTYPE_TO_THEME: Record<IlliquidSubtype, string> = {
+  pension: "Defensive & Retirement",
+  startup: "Speculative",
+  unvested_equity: "Core Equities",
+  private_equity: "Speculative",
+};
+
+export async function ensureThemesSeeded(userId: string): Promise<void> {
+  const pool = getPool();
+
+  const existing = await pool.query(
+    "SELECT id FROM investment_themes WHERE user_id = $1 LIMIT 1",
+    [userId]
+  );
+  if (existing.rows.length > 0) return;
+
+  // Create the 5 themes and capture id-by-name for auto-tagging
+  const idByName: Record<string, number> = {};
+  for (const t of SEED_THEMES) {
+    const { rows } = await pool.query(
+      `INSERT INTO investment_themes (user_id, name, thesis, color)
+       VALUES ($1, $2, $3, $4) RETURNING id, name`,
+      [userId, t.name, t.thesis, t.color]
+    );
+    idByName[rows[0].name as string] = rows[0].id as number;
+  }
+
+  // Auto-tag: crypto → Speculative (on holdings only — no source detail table)
+  await pool.query(
+    "UPDATE holdings SET theme_id = $1 WHERE user_id = $2 AND asset_type = 'crypto' AND theme_id IS NULL",
+    [idByName["Speculative"], userId]
+  );
+
+  // Auto-tag: real estate → Real Assets (both source table and holdings)
+  await pool.query(
+    "UPDATE properties SET theme_id = $1 WHERE user_id = $2 AND theme_id IS NULL",
+    [idByName["Real Assets"], userId]
+  );
+  await pool.query(
+    "UPDATE holdings SET theme_id = $1 WHERE user_id = $2 AND asset_type = 'real_estate' AND theme_id IS NULL",
+    [idByName["Real Assets"], userId]
+  );
+
+  // Auto-tag: illiquid by subtype (both source table and holdings)
+  for (const [subtype, themeName] of Object.entries(ILLIQUID_SUBTYPE_TO_THEME) as [IlliquidSubtype, string][]) {
+    const themeId = idByName[themeName];
+    if (themeId == null) continue;
+
+    await pool.query(
+      "UPDATE illiquid_assets SET theme_id = $1 WHERE user_id = $2 AND subtype = $3 AND theme_id IS NULL",
+      [themeId, userId, subtype]
+    );
+    await pool.query(
+      `UPDATE holdings h SET theme_id = $1
+       FROM illiquid_assets a
+       WHERE h.user_id = $2
+         AND h.source_type = 'illiquid_asset'
+         AND h.source_id = a.id::text
+         AND a.subtype = $3
+         AND h.theme_id IS NULL`,
+      [themeId, userId, subtype]
+    );
+  }
+}
 
 export { getPool as pool };
 export default getPool;

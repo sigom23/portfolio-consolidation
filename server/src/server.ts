@@ -18,6 +18,7 @@ import accountRoutes from "./routes/account.js";
 import incomeRoutes from "./routes/income.js";
 import propertiesRoutes from "./routes/properties.js";
 import illiquidRoutes from "./routes/illiquid.js";
+import themesRoutes from "./routes/themes.js";
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 
@@ -61,6 +62,7 @@ async function start() {
   app.use("/api", incomeRoutes);
   app.use("/api", propertiesRoutes);
   app.use("/api", illiquidRoutes);
+  app.use("/api", themesRoutes);
 
   // Serve frontend in production
   const clientDist = path.resolve(__dirname, "../../client/dist");

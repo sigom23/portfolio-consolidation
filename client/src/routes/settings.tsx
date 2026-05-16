@@ -6,6 +6,7 @@ import { useCurrency } from "../contexts/CurrencyContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { deleteAccount, exportUserData, clearAllHoldings } from "../services/api";
+import { ThemesSettingsSection } from "../components/ThemesSettingsSection";
 
 function SettingsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -117,6 +118,9 @@ function SettingsPage() {
         </div>
 
       </div>
+
+      {/* Investment Themes */}
+      <ThemesSettingsSection />
 
       {/* Privacy & Data */}
       <div className="space-y-4">

@@ -18,6 +18,7 @@ import { Route as cashflowIncomeRoute } from "./routes/cashflow-income";
 import { Route as cashflowExpensesRoute } from "./routes/cashflow-expenses";
 import { Route as dataRoomRoute } from "./routes/data-room";
 import { Route as settingsRoute } from "./routes/settings";
+import { Route as themeDetailRoute } from "./routes/theme-detail";
 
 // Legacy path redirects (old URLs still arriving from bookmarks / links)
 const dashboardRedirect = createRoute({
@@ -68,6 +69,7 @@ const routeTree = rootRoute.addChildren([
   cashflowExpensesRoute,
   dataRoomRoute,
   settingsRoute,
+  themeDetailRoute,
   dashboardRedirect,
   uploadRedirect,
   walletsRedirect,

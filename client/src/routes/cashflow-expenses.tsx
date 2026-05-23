@@ -115,13 +115,18 @@ function CashFlowExpensesPage() {
           <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)]">
             Monthly Expenses
           </p>
-          <span className="text-xs text-[var(--text-muted)]">
-            {summary?.expenseCount ?? 0} transaction
-            {summary?.expenseCount === 1 ? "" : "s"}
-          </span>
+          {(summary?.expenseCount ?? 0) > 0 && (
+            <span className="text-xs text-[var(--text-muted)]">
+              {summary!.expenseCount} transaction{summary!.expenseCount === 1 ? "" : "s"}
+            </span>
+          )}
         </div>
         {summaryLoading ? (
           <div className="h-10 w-56 bg-[var(--bg-tertiary)] rounded animate-pulse" />
+        ) : (summary?.expenseCount ?? 0) === 0 ? (
+          <p className="text-[24px] font-serif italic font-normal tracking-[-0.02em] text-[var(--color-mid)] mt-1">
+            No expenses recorded for this month.
+          </p>
         ) : (
           <p className="text-[38px] font-serif font-normal tracking-[-0.03em] text-[var(--color-negative)] tabular-nums">
             -<AnimatedNumber value={summary?.expenses ?? 0} format={format} />

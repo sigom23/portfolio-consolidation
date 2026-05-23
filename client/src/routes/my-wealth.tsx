@@ -219,35 +219,41 @@ function MyWealthPage() {
               </div>
               {cashFlowLoading ? (
                 <div className="mt-2 h-8 w-40 bg-[var(--bg-tertiary)] rounded animate-pulse" />
-              ) : (
-                <p
-                  className={`mt-1 text-[27px] font-serif font-normal tabular-nums ${
-                    (cashFlow?.net ?? 0) >= 0 ? "text-[var(--color-positive)]" : "text-[var(--color-negative)]"
-                  }`}
-                >
-                  {(cashFlow?.net ?? 0) >= 0 ? "+" : "-"}
-                  {format(Math.abs(cashFlow?.net ?? 0))}
+              ) : (cashFlow?.transactionCount ?? 0) === 0 ? (
+                <p className="mt-1 text-[18px] font-serif italic font-normal text-[var(--color-mid)]">
+                  No cash flow recorded for this month yet.
                 </p>
-              )}
-              {!cashFlowLoading && cashFlow && (
-                <div className="mt-1 flex items-center gap-4 text-[11px] text-[var(--text-muted)]">
-                  <span>
-                    Income{" "}
-                    <span className="font-medium text-[var(--text-secondary)] tabular-nums">
-                      +{format(cashFlow.income)}
-                    </span>
-                  </span>
-                  <span>
-                    Expenses{" "}
-                    <span className="font-medium text-[var(--text-secondary)] tabular-nums">
-                      -{format(cashFlow.expenses)}
-                    </span>
-                  </span>
-                </div>
+              ) : (
+                <>
+                  <p
+                    className={`mt-1 text-[27px] font-serif font-normal tabular-nums ${
+                      (cashFlow?.net ?? 0) >= 0 ? "text-[var(--color-positive)]" : "text-[var(--color-negative)]"
+                    }`}
+                  >
+                    {(cashFlow?.net ?? 0) >= 0 ? "+" : "-"}
+                    {format(Math.abs(cashFlow?.net ?? 0))}
+                  </p>
+                  {cashFlow && (
+                    <div className="mt-1 flex items-center gap-4 text-[11px] text-[var(--text-muted)]">
+                      <span>
+                        Income{" "}
+                        <span className="font-medium text-[var(--text-secondary)] tabular-nums">
+                          +{format(cashFlow.income)}
+                        </span>
+                      </span>
+                      <span>
+                        Expenses{" "}
+                        <span className="font-medium text-[var(--text-secondary)] tabular-nums">
+                          -{format(cashFlow.expenses)}
+                        </span>
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
             </div>
             <div className="text-right shrink-0">
-              {!cashFlowLoading && cashFlow && (
+              {!cashFlowLoading && cashFlow && (cashFlow.transactionCount ?? 0) > 0 && (
                 <>
                   <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)]">
                     Savings Rate

@@ -83,79 +83,90 @@ function CashFlowOverviewPage() {
           <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)]">
             Net Cash Flow
           </p>
-          <span className="text-xs text-[var(--text-muted)]">
-            {summary?.transactionCount ?? 0} transaction
-            {(summary?.transactionCount ?? 0) === 1 ? "" : "s"}
-          </span>
+          {(summary?.transactionCount ?? 0) > 0 && (
+            <span className="text-xs text-[var(--text-muted)]">
+              {summary!.transactionCount} transaction{summary!.transactionCount === 1 ? "" : "s"}
+            </span>
+          )}
         </div>
         {isLoading ? (
           <div className="h-10 w-56 bg-[var(--bg-tertiary)] rounded animate-pulse" />
-        ) : (
-          <p className={`text-[38px] font-serif font-normal tracking-[-0.03em] tabular-nums ${netColor}`}>
-            {net >= 0 ? "+" : ""}
-            <AnimatedNumber value={Math.abs(net)} format={(v) => format(v)} />
+        ) : (summary?.transactionCount ?? 0) === 0 ? (
+          <p className="text-[24px] font-serif italic font-normal tracking-[-0.02em] text-[var(--color-mid)] mt-1">
+            No transactions recorded for this month.
           </p>
+        ) : (
+          <>
+            <p className={`text-[38px] font-serif font-normal tracking-[-0.03em] tabular-nums ${netColor}`}>
+              {net >= 0 ? "+" : ""}
+              <AnimatedNumber value={Math.abs(net)} format={(v) => format(v)} />
+            </p>
+            <p className="text-xs text-[var(--text-muted)] mt-2">
+              Savings rate:{" "}
+              <span
+                className={`font-medium ${
+                  savingsRate >= 0.2
+                    ? "text-[var(--color-positive)]"
+                    : savingsRate >= 0
+                      ? "text-[var(--color-pending)]"
+                      : "text-[var(--color-negative)]"
+                }`}
+              >
+                {(savingsRate * 100).toFixed(1)}%
+              </span>
+            </p>
+          </>
         )}
-        <p className="text-xs text-[var(--text-muted)] mt-2">
-          Savings rate:{" "}
-          <span
-            className={`font-medium ${
-              savingsRate >= 0.2
-                ? "text-[var(--color-positive)]"
-                : savingsRate >= 0
-                  ? "text-[var(--color-pending)]"
-                  : "text-[var(--color-negative)]"
-            }`}
-          >
-            {(savingsRate * 100).toFixed(1)}%
-          </span>
-        </p>
       </motion.div>
 
-      {/* 3b. Savings rate — last 12 months */}
+      {/* 3b. Savings rate — last 12 months (always shown, has its own history context) */}
       <SavingsTrendCard selectedMonth={month} onSelectMonth={setMonth} />
 
-      {/* 4. Income vs Expenses summary cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5"
-        >
-          <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)] mb-1">
-            Income
-          </p>
-          <p className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--color-positive)] tabular-nums">
-            +{format(income)}
-          </p>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.15 }}
-          className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5"
-        >
-          <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)] mb-1">
-            Expenses
-          </p>
-          <p className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--color-negative)] tabular-nums">
-            -{format(expenses)}
-          </p>
-        </motion.div>
-      </div>
+      {(summary?.transactionCount ?? 0) > 0 && (
+        <>
+          {/* 4. Income vs Expenses summary cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5"
+            >
+              <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)] mb-1">
+                Income
+              </p>
+              <p className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--color-positive)] tabular-nums">
+                +{format(income)}
+              </p>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4, delay: 0.15 }}
+              className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5"
+            >
+              <p className="text-[10.4px] font-medium uppercase tracking-[0.22em] text-[var(--text-muted)] mb-1">
+                Expenses
+              </p>
+              <p className="text-[27px] font-serif font-normal tracking-[-0.03em] text-[var(--color-negative)] tabular-nums">
+                -{format(expenses)}
+              </p>
+            </motion.div>
+          </div>
 
-      {/* 5. Analytics Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <CategoryBreakdownCard summary={summary} loading={isLoading} />
-        <TopMerchantsCard summary={summary} loading={isLoading} />
-      </div>
+          {/* 5. Analytics Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+            <CategoryBreakdownCard summary={summary} loading={isLoading} />
+            <TopMerchantsCard summary={summary} loading={isLoading} />
+          </div>
 
-      {/* 6. Trend Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <MonthlyTrendCard transactions={incomeTx} sign="income" loading={txLoading} />
-        <MonthlyTrendCard transactions={expenseTx} sign="expense" loading={txLoading} />
-      </div>
+          {/* 6. Trend Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <MonthlyTrendCard transactions={incomeTx} sign="income" loading={txLoading} />
+            <MonthlyTrendCard transactions={expenseTx} sign="expense" loading={txLoading} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

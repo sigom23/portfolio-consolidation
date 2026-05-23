@@ -11,7 +11,7 @@ import {
   createMortgage, updateMortgage, deleteMortgage,
   createPropertyCost, updatePropertyCost, deletePropertyCost,
   fetchIlliquidAssets, createIlliquidAsset, updateIlliquidAsset, deleteIlliquidAsset, parsePEStatementNew, uploadPEStatement,
-  fetchThemes, createTheme, updateTheme,
+  fetchThemes, createTheme, updateTheme, updateHoldingTheme,
 } from "../services/api";
 import type { NewIncomeStream, NewTransaction, NewProperty, NewMortgage, NewPropertyCost, NewIlliquidAsset, NewTheme } from "../types";
 
@@ -403,6 +403,20 @@ export function useUpdateTheme() {
       queryClient.invalidateQueries({ queryKey: ["themes"] });
       // Holdings carry theme_id — invalidate so Themes card / tag UIs update
       queryClient.invalidateQueries({ queryKey: ["holdings"] });
+    },
+  });
+}
+
+export function useUpdateHoldingTheme() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ holdingId, themeId }: { holdingId: number; themeId: number | null }) =>
+      updateHoldingTheme(holdingId, themeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["holdings"] });
+      // Properties + illiquid carry theme_id at the source level too
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
+      queryClient.invalidateQueries({ queryKey: ["illiquid"] });
     },
   });
 }

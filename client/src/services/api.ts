@@ -410,3 +410,9 @@ export async function updateTheme(id: number, updates: Partial<NewTheme>): Promi
   if (!data.success) throw new Error(data.error ?? "Failed to update theme");
   return data.data!;
 }
+
+export async function updateHoldingTheme(holdingId: number, themeId: number | null): Promise<Holding> {
+  const { data } = await api.patch<ApiResponse<Holding>>(`/api/holdings/${holdingId}`, { theme_id: themeId });
+  if (!data.success) throw new Error(data.error ?? "Failed to tag holding");
+  return data.data!;
+}

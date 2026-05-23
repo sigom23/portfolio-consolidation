@@ -497,6 +497,22 @@ export async function updateHoldingCurrency(holdingId: number, currency: string)
   await getPool().query("UPDATE holdings SET currency = $1 WHERE id = $2", [currency, holdingId]);
 }
 
+export async function getHoldingByIdForUser(id: number, userId: string): Promise<Holding | undefined> {
+  const { rows } = await getPool().query(
+    "SELECT * FROM holdings WHERE id = $1 AND user_id = $2",
+    [id, userId]
+  );
+  return rows[0] as Holding | undefined;
+}
+
+export async function updateHoldingThemeId(id: number, userId: string, themeId: number | null): Promise<boolean> {
+  const { rowCount } = await getPool().query(
+    "UPDATE holdings SET theme_id = $1, last_updated = NOW() WHERE id = $2 AND user_id = $3",
+    [themeId, id, userId]
+  );
+  return (rowCount ?? 0) > 0;
+}
+
 export async function updateHoldingValue(holdingId: number, valueUsd: number, valueLocal?: number): Promise<void> {
   if (valueLocal !== undefined) {
     await getPool().query(

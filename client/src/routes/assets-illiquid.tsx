@@ -1,12 +1,13 @@
 import { createRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { Route as rootRoute } from "./__root";
 import { useAuth } from "../hooks/useAuth";
-import { useIlliquidAssets, useDeleteIlliquidAsset, useUploadPEStatement } from "../hooks/usePortfolio";
+import { useIlliquidAssets, useDeleteIlliquidAsset, useUploadPEStatement, useHoldings } from "../hooks/usePortfolio";
 import { useCurrency } from "../contexts/CurrencyContext";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { AnimatedNumber } from "../components/AnimatedNumber";
 import { AddIlliquidAssetModal } from "../components/AddIlliquidAssetModal";
+import { ThemePicker } from "../components/ThemePicker";
 import { Plus, Upload } from "lucide-react";
 import {
   illiquidAssetNativeValue,
@@ -669,8 +670,19 @@ function GenericTab({
 function AssetRow({ asset, onEdit }: { asset: IlliquidAsset; onEdit: () => void }) {
   const { format, rates } = useCurrency();
   const deleteMutation = useDeleteIlliquidAsset();
+  const { data: holdings } = useHoldings();
   const native = illiquidAssetNativeValue(asset);
   const valueUsd = toUsd(native, asset.currency, rates);
+
+  // The holdings row that mirrors this illiquid asset — needed for ThemePicker
+  // (it dispatches by holding source_type to also update the source table).
+  const holding = useMemo(
+    () =>
+      holdings?.find(
+        (h) => h.source_type === "illiquid_asset" && h.source_id === String(asset.id)
+      ),
+    [holdings, asset.id]
+  );
 
   function handleDelete() {
     if (!confirm(`Delete "${asset.name}"? This cannot be undone.`)) return;
@@ -685,6 +697,11 @@ function AssetRow({ asset, onEdit }: { asset: IlliquidAsset; onEdit: () => void 
           <StaleHint updatedAt={asset.updated_at} />
         </p>
         <SubtypeMeta asset={asset} />
+        {holding && (
+          <div className="mt-1.5">
+            <ThemePicker holdingId={holding.id} currentThemeId={holding.theme_id} compact />
+          </div>
+        )}
         {asset.notes && (
           <p className="mt-1 text-xs text-[var(--text-muted)] italic truncate">{asset.notes}</p>
         )}

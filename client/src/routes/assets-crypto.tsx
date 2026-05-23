@@ -6,6 +6,7 @@ import { useCurrency } from "../contexts/CurrencyContext";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { AnimatedNumber } from "../components/AnimatedNumber";
+import { ThemePicker } from "../components/ThemePicker";
 import { useAddWallet, useDeleteWallet, useRefreshWallet } from "../hooks/usePortfolio";
 import { Plus, RefreshCw, Trash2 } from "lucide-react";
 import type { Wallet, Holding } from "../types";
@@ -289,15 +290,18 @@ function AssetsCryptoPage() {
                 {group.holdings.map((h) => (
                   <div
                     key={h.id}
-                    className="px-6 py-3 flex items-center justify-between hover:bg-[var(--bg-tertiary)]/50 transition-colors"
+                    className="px-6 py-3 flex items-center justify-between gap-4 hover:bg-[var(--bg-tertiary)]/50 transition-colors"
                   >
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-sm font-medium text-[var(--text-primary)]">{h.name}</p>
-                      {h.ticker && (
-                        <p className="text-xs text-[var(--text-muted)] uppercase">{h.ticker}</p>
-                      )}
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        {h.ticker && (
+                          <p className="text-xs text-[var(--text-muted)] uppercase">{h.ticker}</p>
+                        )}
+                        <ThemePicker holdingId={h.id} currentThemeId={h.theme_id} compact />
+                      </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                       <p className="text-sm font-medium text-[var(--text-primary)] tabular-nums">
                         {format(h.value_usd ?? 0)}
                       </p>

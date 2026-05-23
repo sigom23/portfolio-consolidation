@@ -1,6 +1,7 @@
 import type { Holding, Upload, Wallet } from "../types";
 import { useCurrency } from "../contexts/CurrencyContext";
 import { HoldingHoverCard } from "./HoldingHoverCard";
+import { ThemePicker } from "./ThemePicker";
 import { useState } from "react";
 import { motion } from "motion/react";
 
@@ -140,6 +141,7 @@ export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }:
               <th className="px-6 py-3 font-medium">Name</th>
               <th className="px-6 py-3 font-medium">Ticker</th>
               <th className="px-6 py-3 font-medium">Source</th>
+              <th className="px-6 py-3 font-medium">Theme</th>
               <th className="px-6 py-3 font-medium text-right">Quantity</th>
               <th className="px-6 py-3 font-medium text-right">Weight</th>
               <th className="px-6 py-3 font-medium text-right">Value</th>
@@ -149,7 +151,7 @@ export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }:
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i} className="border-b border-[var(--border-color)]/50">
-                  {Array.from({ length: 6 }).map((_, j) => (
+                  {Array.from({ length: 7 }).map((_, j) => (
                     <td key={j} className="px-6 py-3">
                       <div className="h-4 bg-[var(--bg-tertiary)] rounded animate-pulse w-20" />
                     </td>
@@ -158,7 +160,7 @@ export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }:
               ))
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-[var(--text-muted)]">
+                <td colSpan={7} className="px-6 py-12 text-center text-[var(--text-muted)]">
                   No holdings yet. Upload a statement or connect a wallet to get started.
                 </td>
               </tr>
@@ -220,6 +222,9 @@ export function HoldingsTable({ holdings, loading, uploads = [], wallets = [] }:
                       <td className="px-6 py-3 text-sm text-[var(--text-secondary)] font-mono">{h.ticker ?? "—"}</td>
                       <td className="px-6 py-3 text-sm">
                         <SourceBadge holding={h} uploads={uploads} wallets={wallets} />
+                      </td>
+                      <td className="px-6 py-3 text-sm">
+                        <ThemePicker holdingId={h.id} currentThemeId={h.theme_id} compact />
                       </td>
                       <td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right tabular-nums">
                         {h.quantity != null ? h.quantity.toLocaleString(undefined, { maximumFractionDigits: 6 }) : "—"}

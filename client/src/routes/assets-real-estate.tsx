@@ -15,11 +15,13 @@ import {
   useCreateIncomeStream,
   useUpdateIncomeStream,
   useDeleteIncomeStream,
+  useHoldings,
 } from "../hooks/usePortfolio";
 import { useCurrency } from "../contexts/CurrencyContext";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { AnimatedNumber } from "../components/AnimatedNumber";
+import { ThemePicker } from "../components/ThemePicker";
 import { Building2, Home, Store, Trees, MapPin, Plus, type LucideIcon } from "lucide-react";
 import type {
   PropertyType,
@@ -249,12 +251,22 @@ function PropertyCard({
   onClick: () => void;
 }) {
   const meta = typeMeta(property.property_type);
+  const { data: holdings } = useHoldings();
   const appreciation = property.purchase_price
     ? ((property.current_value - property.purchase_price) / property.purchase_price) * 100
     : null;
   const roi = property.equity > 0
     ? ((property.net_monthly_income * 12) / property.equity) * 100
     : 0;
+
+  // The holdings row that mirrors this property — needed for ThemePicker
+  const holding = useMemo(
+    () =>
+      holdings?.find(
+        (h) => h.source_type === "property" && h.source_id === String(property.id)
+      ),
+    [holdings, property.id]
+  );
 
   return (
     <motion.div
@@ -265,12 +277,17 @@ function PropertyCard({
       className="rounded-[2px] border border-[var(--border-color)] bg-[var(--bg-secondary)] p-5 cursor-pointer transition-colors hover:bg-[var(--color-snow)]"
     >
       <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 min-w-0">
           <meta.Icon className="w-4 h-4 text-[var(--color-mid)] flex-shrink-0" strokeWidth={1.5} />
-          <div>
+          <div className="min-w-0">
             <h3 className="text-base font-semibold text-[var(--text-primary)] leading-tight">{property.name}</h3>
             {property.address && (
               <p className="text-[11px] text-[var(--text-muted)] truncate max-w-[180px]">{property.address}</p>
+            )}
+            {holding && (
+              <div className="mt-1.5">
+                <ThemePicker holdingId={holding.id} currentThemeId={holding.theme_id} compact />
+              </div>
             )}
           </div>
         </div>

@@ -1,7 +1,16 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { requireAuth } from "../middleware/auth.js";
-import { getHoldingsByUser, getStockHoldingsByUser, updateHoldingValue } from "../lib/db.js";
+import {
+  getHoldingsByUser,
+  getStockHoldingsByUser,
+  updateHoldingValue,
+  getHoldingByIdForUser,
+  updateHoldingThemeId,
+  getThemeById,
+  updateProperty,
+  updateIlliquidAsset,
+} from "../lib/db.js";
 import { getQuotes, getCompanyProfile, getHistoricalPrices } from "../lib/fmp.js";
 import { getExchangeRates, SUPPORTED_CURRENCIES } from "../lib/forex.js";
 import { writeWealthSnapshotSafe } from "../lib/snapshots.js";
@@ -37,6 +46,64 @@ router.get("/portfolio/summary", async (req: Request, res: Response) => {
 router.get("/holdings", async (req: Request, res: Response) => {
   const holdings = await getHoldingsByUser(req.session.userId!);
   res.json({ success: true, data: holdings });
+});
+
+// PATCH /api/holdings/:id — currently only mutates theme_id. For holdings
+// projected from a source table (property, illiquid_asset), the tag is also
+// written to the source so it survives the next sync — keeps the architecture
+// of "holdings = derived projection" intact.
+router.patch("/holdings/:id", async (req: Request, res: Response) => {
+  try {
+    const userId = req.session.userId!;
+    const id = parseInt(String(req.params.id), 10);
+    if (isNaN(id)) {
+      res.status(400).json({ success: false, error: "invalid id" });
+      return;
+    }
+    const body = req.body as Record<string, unknown>;
+
+    if (!("theme_id" in body)) {
+      res.status(400).json({ success: false, error: "no valid fields to update" });
+      return;
+    }
+    if (body.theme_id !== null && typeof body.theme_id !== "number") {
+      res.status(400).json({ success: false, error: "theme_id must be a number or null" });
+      return;
+    }
+    const themeId = body.theme_id as number | null;
+
+    const holding = await getHoldingByIdForUser(id, userId);
+    if (!holding) {
+      res.status(404).json({ success: false, error: "holding not found" });
+      return;
+    }
+
+    // Verify the theme belongs to the user (FK would catch this but the 400 is friendlier)
+    if (themeId !== null) {
+      const theme = await getThemeById(themeId, userId);
+      if (!theme) {
+        res.status(400).json({ success: false, error: "theme not found" });
+        return;
+      }
+    }
+
+    // Mirror the tag to the source-of-truth row so future syncs don't blow it away
+    if (holding.source_type === "property" && holding.source_id) {
+      await updateProperty(parseInt(holding.source_id, 10), userId, { theme_id: themeId });
+    } else if (holding.source_type === "illiquid_asset" && holding.source_id) {
+      await updateIlliquidAsset(parseInt(holding.source_id, 10), userId, { theme_id: themeId });
+    }
+
+    await updateHoldingThemeId(id, userId, themeId);
+
+    const updated = await getHoldingByIdForUser(id, userId);
+    res.json({ success: true, data: updated });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to update holding",
+    });
+  }
 });
 
 // POST /api/holdings/refresh-prices — update stock holdings with latest prices
